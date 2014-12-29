@@ -1,0 +1,65 @@
+# Author: Simon Deziel
+#         Jamie Strandboge
+# vim:syntax=apparmor
+#include <tunables/global>
+
+/usr/sbin/squid3 {
+  #include <abstractions/base>
+  #include <abstractions/kerberosclient>
+  #include <abstractions/nameservice>
+
+  capability net_raw,
+  capability setuid,
+  capability setgid,
+  capability sys_chroot,
+
+  # pinger
+  network inet raw,
+  network inet6 raw,
+
+  /etc/mtab r,
+  @{PROC}/[0-9]*/mounts r,
+  @{PROC}/mounts r,
+
+  # squid3 configuration
+  /etc/squid3/** r,
+  /{,var/}run/squid3.pid rwk,
+  /var/spool/squid3/ r,
+  /var/spool/squid3/** rwk,
+  /usr/lib/squid3/* rmix,
+  /usr/share/squid3/** r,
+  /var/log/squid3/* rw,
+
+  # squid-langpack
+  /usr/share/squid-langpack/** r,
+
+  # squid-deb-proxy
+  /etc/squid-deb-proxy/** r,
+  /{,var/}run/squid-deb-proxy.pid rwk,
+  /var/cache/squid-deb-proxy/ r,
+  /var/cache/squid-deb-proxy/** rwk,
+  /var/log/squid-deb-proxy/* rw,
+
+  # squidguard
+  /usr/bin/squidGuard Cx -> squidguard,
+  profile squidguard {
+    #include <abstractions/base>
+
+    /etc/squid/squidGuard.conf r,
+    /var/log/squid{,3}/squidGuard.log w,
+    /var/lib/squidguard/** rw,
+
+    # squidguard by default uses /var/log/squid as its logdir, however, we
+    # don't want it to access squid's logs, only its own. Explicitly deny
+    # access to squid's files but allow all others since the user may specify
+    # anything for the squidGurad 'log' directive.
+    /var/log/squid{,3}/* rw,
+    audit deny /var/log/squid{,3}/{access,cache,store}.log* rw,
+
+    # Site-specific additions and overrides. See local/README for details.
+    #include <local/usr.sbin.squid3>
+  }
+
+  # Site-specific additions and overrides. See local/README for details.
+  #include <local/usr.sbin.squid3>
+}

@@ -1,0 +1,11 @@
+Package: ecap-spaceify-injector
+Version: 1.1.0
+Architecture: i386
+Maintainer: root <root@unknown>
+Installed-Size: 4798
+Depends: libc6 (>= 2.4), libecap2, libgcc1 (>= 1:4.1.1), libstdc++6 (>= 4.4.0)
+Section: libs
+Priority: extra
+Homepage: http://www.spaceify.net
+Description: Spaceify eCAP Injector library.
+ Targeted to be used with squid3 Spaceify distribution and Spaceify core.

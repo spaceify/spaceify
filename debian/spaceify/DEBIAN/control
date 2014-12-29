@@ -1,0 +1,11 @@
+Package: spaceify
+Version: 0.1.0
+Architecture: i386
+Maintainer: Spaceify Inc. <admin@spaceify.net>
+Installed-Size: 1219
+Pre-Depends: debconf (>= 0.5)
+Depends: libc6 (>= 2.1), perl, upstart, monit, python-software-properties, python, g++, make, nodejs (>= 0.10.18), spaceify-docker, hostapd, squid3 (= 3.3.8.spaceify), curl, openssl, libssl-dev, sqlite3, libsqlite3-dev, libzip-dev, git
+Section: web
+Priority: optional
+Description: Spaceify is a smart access point platform.
+ This package will turn your computer into a Spaceify edge node and installs Spaceify core WebSocket server on your computer.

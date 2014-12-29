@@ -1,0 +1,48 @@
+Spaceify application types
+
+There are 3 different types of applications in Spaceify.
+
+1. Spacelets
+
+Spacelets are node.js programs that are run inside a docker container. Their privileges are defined in the splacelet manifest files. 
+Spacelets are embedded into web pages.
+
+2. Sandboxed applications 
+
+Sandboxed applications are spacelets that are started when spaceify starts and ended when spaceify ends. Otherwise they are identical to spacelet.
+
+3. Native applications
+
+Native applications are docker images that are run in the privileged mode. See http://blog.docker.io/2013/09/docker-can-now-run-within-docker/ for details.
+
+
+Every Spaceify application should have its own ip address for access control reasons (access control is enforced with iptables rules), this is achieved with tun/tap devices. 
+
+
+Example use cases.
+
+Bigscreen Demo
+
+Bigscreen demo consists of 3 components
+
+1. A web page that can load URL:s in a full-screen iframe
+
+This web page is started in a browser in the spaceify network. The javascript on the web page contacts servicediscovery on edge.spaceify.net
+and gets the ip and port of the "bigscreen_backend" application. It connects to the application, and starts receiving commands over jsonrpc to load URLs. 
+
+2. Bigscreen sandboxed application 
+
+Bigscreen sandboxed application, when it starts, registres itself to the service discovery with the names "bigscreen" and "bigscreen_backend". Its manifest must state that it
+provides "bigscreen" and "bigscreen_backend" services. The "bigscreen_backend" service is declared in the manifest to be an "open_local" service, it means that it can be accessed by any
+web page or application in the local network, without any privilleges. The service serves the iframe web page from one port ("bigscreen_backend") and   
+and the vimeo spacelet from another port (bigscreen), using jsonrpc. 
+
+3. Vimeo spacelet that is injected to vimeo.com
+
+The manifest of this spacelet states, that this spacelet needs the right to use the "bigscreen" service. The javascript that starts this spacelet is injected into vimeo.com.
+When the spacelet starts, it searches for "bigscreen" in the service discovery, gets the ip and port of the bigscreen javascript application, and connects to the service.
+From then on it uses jsonrpc to send commands to the "bigscreen" service.
+
+
+
+Philips HUE Demo

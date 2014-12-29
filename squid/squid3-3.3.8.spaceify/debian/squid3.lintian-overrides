@@ -1,0 +1,1 @@
+squid3 binary: setuid-binary usr/lib/squid3/pinger 4755 root/root

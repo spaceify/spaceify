@@ -1,0 +1,36 @@
+# Automatically added by dh_apparmor
+if [ "$1" = "configure" ]; then
+    APP_PROFILE="/etc/apparmor.d/usr.sbin.squid3"
+    if [ -f "$APP_PROFILE" ]; then
+        # Add the local/ include
+        LOCAL_APP_PROFILE="/etc/apparmor.d/local/usr.sbin.squid3"
+
+        test -e "$LOCAL_APP_PROFILE" || {
+            tmp=`mktemp`
+        cat <<EOM > "$tmp"
+# Site-specific additions and overrides for usr.sbin.squid3.
+# For more details, please see /etc/apparmor.d/local/README.
+EOM
+            mkdir `dirname "$LOCAL_APP_PROFILE"` 2>/dev/null || true
+            mv -f "$tmp" "$LOCAL_APP_PROFILE"
+            chmod 644 "$LOCAL_APP_PROFILE"
+        }
+
+        # Reload the profile, including any abstraction updates
+        if aa-status --enabled 2>/dev/null; then
+            apparmor_parser -r -T -W "$APP_PROFILE" || true
+        fi
+    fi
+fi
+# End automatically added section
+# Automatically added by dh_installinit
+if [ -x "/etc/init.d/squid3" ] || [ -e "/etc/init/squid3.conf" ]; then
+	if [ ! -e "/etc/init/squid3.conf" ]; then
+		update-rc.d squid3 defaults >/dev/null
+	fi
+	invoke-rc.d squid3 start || exit $?
+fi
+# End automatically added section
+# Automatically added by dh_installinit
+update-rc.d -f squid3 remove >/dev/null || exit $?
+# End automatically added section

@@ -1,0 +1,11 @@
+/etc/init/squid3.conf
+/etc/squid3/certs/openssl.conf
+/etc/squid3/certs/openssl_server.conf
+/etc/squid3/certs/mk_new_ca_dir.pl
+/etc/squid3/msntauth.conf
+/etc/squid3/squid.conf
+/etc/squid3/errorpage.css
+/etc/apparmor.d/usr.sbin.squid3
+/etc/ufw/applications.d/squid3
+/etc/logrotate.d/squid3
+/etc/resolvconf/update-libc.d/squid3

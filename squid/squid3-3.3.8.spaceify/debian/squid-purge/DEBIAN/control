@@ -1,0 +1,20 @@
+Package: squid-purge
+Source: squid3
+Version: 3.3.8.spaceify
+Architecture: i386
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Installed-Size: 99
+Depends: libc6 (>= 2.4), libgcc1 (>= 1:4.1.1), libstdc++6 (>= 4.4.0)
+Section: web
+Priority: optional
+Homepage: http://www.squid-cache.org
+Description: Full featured Web Proxy cache (HTTP proxy) - control utility
+ Squid is a high-performance proxy caching server for web clients, supporting
+ FTP, gopher, ICY and HTTP data objects.
+ .
+ Squid version 3 is a major rewrite of Squid in C++ and introduces a number of
+ new features including ICAP and ESI support.
+ .
+ This package contains a small utility that can be used to manage the disk cache
+ from the command line.
+Original-Maintainer: Luigi Gangitano <luigi@debian.org>

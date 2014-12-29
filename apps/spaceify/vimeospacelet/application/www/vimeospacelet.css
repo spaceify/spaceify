@@ -1,0 +1,100 @@
+/* vimeospacelet.html */
+@media tv
+{
+	body
+	{
+		width: 100%;
+		height: 100%;
+		margin: 0px;
+		padding: 0px;
+		overflow: hidden;
+		background-color: #000;
+		font-family: Arial, Verdana, Helvetica;
+	}
+}
+
+.vbs_playeriframe
+{
+	width: 100%;
+	height: 100%;
+	margin: 0px;
+	padding: 0px;
+	overflow: hidden;
+}
+
+.vbs_messagediv
+{
+	display: none;
+	position: absolute;
+	left: 2px;
+	top: 2px;			
+	font-size: 18px; 
+	margin: 0px;
+	padding: 10px;
+	width: auto;
+	border: 1px solid #D7D7D7;
+	vertical-align: top;
+	font-weight: bold;
+	color: #000;
+	background-color: #FFF;
+	border-radius: 4px;
+	-moz-border-radius: 4px;
+	-webkit-border-radius: 4px;
+}
+
+
+/* vimeospacelet.js */
+.vs_containerdiv
+{
+	clear: both;
+	display: inline-block;
+	margin: 0px;
+	padding: 0px;
+	width: 100%;
+	border: 1px solid #D7D7D7;
+	border-radius: 8px;
+	-moz-border-radius: 8px;
+	-webkit-border-radius: 8px;
+	vertical-align: top;
+	color: #000;
+	background-color: #D0D0D0;
+}
+
+.vs_controlsdiv
+{
+	float: left;
+	clear: left;
+	margin: 10px;
+	padding: 0px;
+	width: 100%;
+	border: none;
+	background-color: transparent;
+}
+
+.vs_bsrange
+{
+	border-radius: 8px;
+	-moz-border-radius: 8px;
+	-webkit-border-radius: 8px;
+	color: #FFFFFF;
+	border: none;
+	margin: 0px 10px 0px 10px;
+	padding: 0px;
+	background-color: transparent;
+}
+
+.vs_infotext
+{
+	clear: both;
+	float: left;
+	margin: 10px 0px 10px 10px;
+	padding: 0px;
+	background-color: transparent;
+	font-size: 80%;
+	font-family: Helvetica,Arial,sans-serif;
+}
+
+.vs_pbutton
+{
+	background-color: transparent;
+}

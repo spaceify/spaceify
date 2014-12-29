@@ -1,0 +1,72 @@
+Before you start
+----------------
+
+It might be necessary to do these repository updates before trying to get source packages (or trying to install the packages).
+= Minimum requirements for successful spaceify installation?
+
+sudo sh -c "wget -qO- https://get.docker.io/gpg | apt-key add -"
+sudo sh -c "echo deb http://get.docker.io/ubuntu docker main\ > /etc/apt/sources.list.d/docker.list"
+
+sudo apt-get install python-software-properties
+sudo add-apt-repository ppa:chris-lea/node.js
+
+sudo sh -c "echo deb [ arch=i386,amd64 ] http://spaceify.net/debs spaceify stable > /etc/apt/sources.list.d/spaceify.list"
+sudo echo "deb-src http://spaceify.net/debs source/" >> /etc/apt/sources.list.d/spaceify.list
+
+sudo apt-get update
+
+About the source codes
+----------------------
+
+Pull the latest Spaceify sources from github or do apt-get source ... to get the sources from spaceify.net.
+The sources from spaceify.net and github are usually the same but the spaceify.net files are always the latest.
+The examples here are for apt-get source ... and 64-bit build. The same instructions apply for i386 when building 
+on a 32-bit environment (substitute all amd64 references with i386).
+
+Making 64-bit Spaceify installation package
+-------------------------------------------
+- Get source from spaceify.net: apt-get source spaceify
+- Go to directory: spaceify-1.0
+- Run: dpkg-buildpackage -i.svn -us -uc
+- Build makes package spaceify_1.0_amd64.deb one directory lower than the current.
+  Copy the package to spaceify.net: /var/www/spaceify.net/web/debs/dists/spaceify/stable/binary-amd64/
+
+Making 64-bit ecap_spaceify_injector installation package
+---------------------------------------------------------
+- Get source from spaceify.net: apt-get source ecap-spaceify-injector
+- Go to directory: ecap-spaceify-injector-1.1.0
+(- Run optionally in case of errors: dh_make -l --createorig)
+- Run: dpkg-buildpackage -i.svn -us -uc
+- Build makes package ecap-spaceify-injector_1.1.0_i386.deb one directory lower than the current.
+  Copy package to spaceify.net: /var/www/spaceify.net/web/debs/dists/spaceify/stable/binary-amd64/
+
+Making 64-bit squid installation package
+----------------------------------------
+- Get source from spaceify.net: apt-get source squid
+  (Make sure the squid3 3.3.8.spaceify source is loaded.)
+- Go to directory: squid3-3.3.8.spaceify
+- Run: dpkg-buildpackage -i.svn -us -uc
+        if you get error
+                dpkg-source: error: can't build with source format '3.0 (quilt)': no upstream tarball found
+        run
+                dh_make -m --createorig
+
+        if you get error
+                .. aborting due to unexpected upstream changes ...
+        run
+                dpkg-source --commit
+                select a new patch name (eg. 101-spaceify.patch) and save the text that pops up in an editor (delete the patch afterwards if you don't really need it)
+        or
+                (unverified!) delete all previous packages, definition etc. files created by dpkg-buildpackage and start build again
+- Build makes many .deb packages one directory lower than the current.
+  Copy the packages to spaceify.net: /var/www/spaceify.net/web/debs/dists/spaceify/stable/binary-amd64/
+
+Update repository
+-----------------
+- In spaceify.net go to directory: /var/www/spaceify.net/
+- Run: ./scan-amd64
+
+Install spaceify
+----------------
+- Run: apt-get update
+- Run: apt-get install spaceify

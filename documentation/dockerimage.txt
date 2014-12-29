@@ -1,0 +1,52 @@
+Procedure for 32-bit systems.
+-----------------------------
+
+- Make a 32-bit image.
+
+sudo debootstrap raring /tmp/rootfs
+
+for d in raring raring-security raring-updates raring-backports
+do echo "deb http://archive.ubuntu.com/ubuntu ${d} main universe multiverse"
+done | sudo tee /tmp/rootfs/etc/apt/sources.list
+
+sudo tar czf /tmp/base32.tgz -C /tmp/rootfs .
+
+- Import the base image
+
+cat /tmp/base32.tgz | docker import - ubuntu
+
+Procedure for 64-bit systems.
+-----------------------------
+
+- Just pull ubuntu from central registry
+
+docker pull ubuntu
+
+Build the Dockerfile
+--------------------
+
+docker build -no-cache -rm -t ubuntu .
+
+What should be installed in the docker image - the Dockerfile?
+---------------------------------------------
+# VERSION 0.0.1
+FROM ubuntu
+MAINTAINER Spaceify Inc.
+
+RUN apt-get update
+
+RUN apt-get install -y openssh-server screen unzip
+
+RUN apt-get install -y python-software-properties python g++ make software-properties-common
+
+RUN add-apt-repository ppa:chris-lea/node.js
+RUN apt-get update
+RUN apt-get install -y nodejs
+
+RUN npm install -g fibrous
+RUN npm install -g websocket
+RUN npm install -g winston
+
+RUN mkdir -p /var/run/sshd
+
+RUN echo "root:docker123" | chpasswd

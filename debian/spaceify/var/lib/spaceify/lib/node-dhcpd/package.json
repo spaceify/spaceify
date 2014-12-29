@@ -1,0 +1,35 @@
+{
+  "name": "node-dhcpd",
+  "description": "A DHCP (server) implementation purely written in JavaScript with node.js",
+  "version": "0.0.1",
+  "author": {
+    "name": "glaszig",
+    "email": "glaszig@gmail.com"
+  },
+  "contributors": [
+    {
+      "name": "Scott McWhirter",
+      "email": "scott@cloudtone.ca",
+      "url": "http://github.com/cloudtone"
+    }
+  ],
+  "keywords": [
+    "dhcp"
+  ],
+  "main": "./lib/server",
+  "engines": {
+    "node": ">= 0.8.0"
+  },
+  "dependencies": {
+    "sprintf": ">= 0.1.1"
+  },
+  "devDependencies": {
+    "sqlite3": "= 2.1.5"
+  },
+  "readme": "# Node.js DHCP server\n\nA DHCP (server) implementation purely written in JavaScript.\n\n> This is a proof of concept which basically works but needs more polishing.\n\n## Requirements\n\nnode.js 0.8.x\n\n## Installation\n\nClone this into your `node_modules` folder.\n\n## Usage\n\n```js\nvar dhcpd = require('node-dhcpd');\nvar server = dhcpd.createServer('udp4');\n```\n\nFor an example see `demo/server.js`.\n\n## Contributing\n\n1. Fork it\n2. Create your feature branch (`git checkout -b my-new-feature`)\n3. Commit your changes (`git commit -am 'Added some feature'`)\n4. Push to the branch (`git push origin my-new-feature`)\n5. Create new Pull Request\n\n# License\n\nPublished under the [MIT license](http://opensource.org/licenses/MIT).\n",
+  "readmeFilename": "README.md",
+  "_id": "node-dhcpd@0.0.1",
+  "_shasum": "6687d19874514aa1e100fe46b13fece7699e456f",
+  "_resolved": "git+https://github.com/konobi/node-dhcpd#a0f64d64139b0232c7e119e2fed62f7e63ebb3d6",
+  "_from": "git+https://github.com/konobi/node-dhcpd"
+}

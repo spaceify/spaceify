@@ -1,0 +1,65 @@
+#!/bin/bash
+
+# DEBCONF  ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++
+if [ "$1" = "purge" -a -e /usr/share/debconf/confmodule ]; then
+	. /usr/share/debconf/confmodule
+	db_purge
+fi
+
+# CONSTANTS   ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++
+start_spaceify="# Added by spaceify"
+end_spaceify="# Added by spaceify ends"
+comm_out_spaceify="# Commented out by spaceify: "
+
+# REMOVE SPACEIFY'S ENTRIES/COMMENTS FROM CONFIGURATION FILES ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++
+# /etc/network/interfaces -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d" /etc/network/interfaces
+
+#/etc/default/docker
+sudo sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/default/docker
+
+# /etc/rc.local  -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+sudo sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/rc.local
+
+# /etc/sysctl.conf  -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d" /etc/sysctl.conf
+
+# /etc/dnsmasq.conf -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+sudo sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/dnsmasq.conf
+
+# /etc/default/hostapd -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d" /etc/default/hostapd
+
+# /etc/monit/monitrc   -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+#sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/monit/monitrc
+
+# REMOVE SPACEIFY'S FILES ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++
+sudo stop spaceify > /dev/null 2>&1 || true												# stop core first
+
+if [ "$1" = "remove" ]; then
+	sudo rm -r /var/lib/spaceify > /dev/null 2>&1 || true
+	sudo rm /etc/init/spaceify.conf > /dev/null 2>&1 || true
+fi
+
+# REMOVE SPACEIFY'S CHAINS FROM IPTABLES
+sudo iptables -t nat -D PREROUTING -j Spaceify-HTTP-Nat-Redir > /dev/null 2>&1 || true
+sudo iptables -t nat -D POSTROUTING -j Spaceify-HTTP-Nat-Masq > /dev/null 2>&1 || true
+sudo iptables -t filter -D FORWARD -j Spaceify-HTTP-Filter > /dev/null 2>&1 || true
+
+sudo iptables -t nat -F Spaceify-HTTP-Nat-Masq > /dev/null 2>&1 || true
+sudo iptables -t nat -X Spaceify-HTTP-Nat-Masq > /dev/null 2>&1 || true
+sudo iptables -t nat -F Spaceify-HTTP-Nat-Redir > /dev/null 2>&1 || true
+sudo iptables -t nat -X Spaceify-HTTP-Nat-Redir > /dev/null 2>&1 || true
+sudo iptables -t filter -F Spaceify-HTTP-Filter > /dev/null 2>&1 || true
+sudo iptables -t filter -X Spaceify-HTTP-Filter > /dev/null 2>&1 || true
+
+sudo iptables -t nat -D PREROUTING -j Spaceify-HTTPS-Nat-Redir > /dev/null 2>&1 || true
+sudo iptables -t nat -D POSTROUTING -j Spaceify-HTTPS-Nat-Masq > /dev/null 2>&1 || true
+sudo iptables -t filter -D FORWARD -j Spaceify-HTTPS-Filter > /dev/null 2>&1 || true
+
+sudo iptables -t nat -F Spaceify-HTTPS-Nat-Masq > /dev/null 2>&1 || true
+sudo iptables -t nat -X Spaceify-HTTPS-Nat-Masq > /dev/null 2>&1 || true
+sudo iptables -t nat -F Spaceify-HTTPS-Nat-Redir > /dev/null 2>&1 || true
+sudo iptables -t nat -X Spaceify-HTTPS-Nat-Redir > /dev/null 2>&1 || true
+sudo iptables -t filter -F Spaceify-HTTPS-Filter > /dev/null 2>&1 || true
+sudo iptables -t filter -X Spaceify-HTTPS-Filter > /dev/null 2>&1 || true

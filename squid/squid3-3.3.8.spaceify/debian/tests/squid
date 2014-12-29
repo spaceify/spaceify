@@ -1,0 +1,11 @@
+#!/bin/bash
+#--------------
+# Testing squid
+#--------------
+set -e
+
+# configure vsftpd
+sed -i "s/anonymous_enable[[:blank:]]*=[[:blank:]]*.*/anonymous_enable=YES/g" /etc/vsftpd.conf
+echo "seccomp_sandbox=NO" >> /etc/vsftpd.conf
+service vsftpd restart 2>&1 > /dev/null
+python `dirname $0`/test-squid.py 2>&1

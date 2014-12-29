@@ -1,0 +1,19 @@
+Package: squid3-common
+Source: squid3
+Version: 3.3.8.spaceify
+Architecture: all
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Installed-Size: 260
+Depends: squid-langpack (>= 20110214-1)
+Section: web
+Priority: optional
+Homepage: http://www.squid-cache.org
+Description: Full featured Web Proxy cache (HTTP proxy) - common files
+ Squid is a high-performance proxy caching server for web clients, supporting
+ FTP, gopher, ICY and HTTP data objects.
+ .
+ Squid version 3 is a major rewrite of Squid in C++ and introduces a number of
+ new features including ICAP and ESI support.
+ .
+ This package contains common files (MIB and icons)
+Original-Maintainer: Luigi Gangitano <luigi@debian.org>

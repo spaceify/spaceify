@@ -1,0 +1,7 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: ecap-spaceify-injector
+Source: http://spaceify.net
+
+Files: *
+Copyright: 2013-2014 admin <admin@spaceify.net>
+License: GPL-2+

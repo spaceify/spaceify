@@ -1,0 +1,43 @@
+// VERSION 4 - PROVIDED_SERVICES TABLE, DB_VERSION TO SETTINGS, SPLASH.DB DELETED - CURRENT
+
+CREATE TABLE applications(unique_name TEXT NOT NULL PRIMARY KEY, unique_directory TEXT, docker_image_id TEXT, type TEXT, inject_identifier TEXT DEFAULT NULL, inject_enabled INTEGER DEFAULT 0);
+CREATE TABLE provided_services(unique_name TEXT, service_name TEXT, service_type);
+CREATE TABLE inject_hostnames(unique_name TEXT, inject_hostname TEXT);
+CREATE TABLE inject_files(unique_name TEXT, url_or_path TEXT, file_directory TEXT DEFAULT NULL, file TEXT, inject_type TEXT, inject_order INTEGER, is_spaceify INTEGER DEFAULT 0);
+CREATE TABLE settings(language TEXT DEFAULT 'en_US', splash_ttl INTEGER DEFAULT 3600000, db_version INTEGER);
+CREATE TABLE user(edge_id TEXT NOT NULL PRIMARY KEY, edge_password TEXT, admin_password_hash TEXT, admin_salt TEXT, admin_login_count INTEGER DEFAULT 0, admin_last_login INTEGER DEFAULT 0);
+
+INSERT INTO inject_files (url_or_path, file_directory, file, inject_type, inject_order, is_spaceify) VALUES('edge.spaceify.net/', '', 'engine.io.js', 'javascript', 1, 1);
+INSERT INTO inject_files (url_or_path, file_directory, file, inject_type, inject_order, is_spaceify) VALUES('edge.spaceify.net/', '', 'spaceifyclient.js','javascript', 2, 1);
+INSERT INTO settings (language, splash_ttl, db_version) VALUES('en_US', 3600000, 4);
+
+// VERSION 3 - MAKE TAG/LOAD FILE, SPLASH DATABASE - DEPRECATED
+
+spaceify.db
+-----------
+
+CREATE TABLE applications(unique_name TEXT NOT NULL PRIMARY KEY, unique_directory TEXT, docker_image_id TEXT, type TEXT, inject_identifier TEXT DEFAULT NULL, inject_enabled INTEGER DEFAULT 0);
+CREATE TABLE inject_hostnames(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, unique_name TEXT, inject_hostname TEXT);
+CREATE TABLE inject_files(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, unique_name TEXT, url_or_path TEXT, file_directory TEXT DEFAULT NULL, file TEXT, inject_type TEXT, inject_order INTEGER, is_spaceify INTEGER DEFAULT 0);
+CREATE TABLE settings(language TEXT DEFAULT 'en_US', splash_ttl INTEGER DEFAULT 3600000);
+CREATE TABLE user(edge_id TEXT NOT NULL PRIMARY KEY, edge_password TEXT, admin_password_hash TEXT, admin_salt TEXT, admin_login_count INTEGER DEFAULT 0, admin_last_login INTEGER DEFAULT 0);
+
+INSERT INTO inject_files (url_or_path, file_directory, file, inject_type, inject_order, is_spaceify) VALUES('edge.spaceify.net/', '', 'engine.io.js', 'javascript', 1, 1);
+INSERT INTO inject_files (url_or_path, file_directory, file, inject_type, inject_order, is_spaceify) VALUES('edge.spaceify.net/', '', 'spaceifyclient.js','javascript', 2, 1);
+INSERT INTO settings (language, splash_ttl) VALUES('en_US', 3600000);
+
+splash.db - DEPRECATED
+---------
+CREATE TABLE sessions(client TEXT NOT NULL PRIMARY KEY, state TEXT DEFAULT "", timestamp INTEGER DEFAULT 0);
+CREATE TABLE leases(mac_or_duid TEXT NOT NULL PRIMARY KEY, type TEXT, ip TEXT, hostname TEXT, timestamp INTEGER DEFAULT 0);
+// timestamp = number of milliseconds between midnight of January 1, 1970 and the specified date.
+
+// VERSION 2 - INJECT AS TEXT - DEPRECATED
+CREATE TABLE applications(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, name TEXT, version TEXT, type TEXT, inject_identifier TEXT, inject_text TEXT, inject_enabled INTEGER DEFAULT 0);
+CREATE TABLE inject_urls(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, applications_id INTEGER DEFAULT NULL, inject_url TEXT);
+CREATE TABLE settings(inject_spaceifyclient TEXT);
+
+// VERSION 1 - DEPRECATED
+CREATE TABLE injects(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, spacify_id INTEGER DEFAULT NULL, pattern TEXT, subject TEXT, inject TEXT, enabled INTEGER DEFAULT 0);
+
+INSERT INTO "injects" VALUES(1,NULL,'*.vimeo.com','<head>','<link href="http://edge.spaceify.net/injects/vimeospacelet/vimeo.css" rel="stylesheet" type="text/css" media="screen"/><script type="text/javascript" src="http://edge.spaceify.net/injects/vimeospacelet/language.js"></script><script type="text/javascript" src="http://edge.spaceify.net/engine.io.js"></script><script type="text/javascript" src="http://edge.spaceify.net/spaceifyclient.js"></script><script type="text/javascript" src="http://edge.spaceify.net/injects/vimeospacelet/vimeo.js"></script>',1);

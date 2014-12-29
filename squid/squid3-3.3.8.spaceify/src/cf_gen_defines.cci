@@ -1,0 +1,860 @@
+/* Generated automatically from cf.data.pre
+ * DO NOT EDIT
+*/
+#include "autoconf.h"
+static struct { const char *name; const char *enable; int defined;} defines[] = {
+{"USE_AUTH", "--enable-auth", 
+#if USE_AUTH
+1
+#else
+0
+#endif
+},
+{"FOLLOW_X_FORWARDED_FOR", "--enable-follow-x-forwarded-for", 
+#if FOLLOW_X_FORWARDED_FOR
+1
+#else
+0
+#endif
+},
+{"FOLLOW_X_FORWARDED_FOR", "--enable-follow-x-forwarded-for", 
+#if FOLLOW_X_FORWARDED_FOR
+1
+#else
+0
+#endif
+},
+{"FOLLOW_X_FORWARDED_FOR&&USE_DELAY_POOLS", "--enable-follow-x-forwarded-for and --enable-delay-pools", 
+#if FOLLOW_X_FORWARDED_FOR&&USE_DELAY_POOLS
+1
+#else
+0
+#endif
+},
+{"FOLLOW_X_FORWARDED_FOR", "--enable-follow-x-forwarded-for", 
+#if FOLLOW_X_FORWARDED_FOR
+1
+#else
+0
+#endif
+},
+{"FOLLOW_X_FORWARDED_FOR&&LINUX_NETFILTER", "--enable-follow-x-forwarded-for and --enable-linux-netfilter", 
+#if FOLLOW_X_FORWARDED_FOR&&LINUX_NETFILTER
+1
+#else
+0
+#endif
+},
+{"USE_HTCP", "--enable-htcp", 
+#if USE_HTCP
+1
+#else
+0
+#endif
+},
+{"USE_HTCP", "--enable-htcp", 
+#if USE_HTCP
+1
+#else
+0
+#endif
+},
+{"USE_IDENT", "--enable-ident-lookups", 
+#if USE_IDENT
+1
+#else
+0
+#endif
+},
+{"USE_SSL", "--enable-ssl", 
+#if USE_SSL
+1
+#else
+0
+#endif
+},
+{"SO_MARK&&USE_LIBCAP", "Packet MARK (Linux)", 
+#if SO_MARK&&USE_LIBCAP
+1
+#else
+0
+#endif
+},
+{"SO_MARK&&USE_LIBCAP", "Packet MARK (Linux)", 
+#if SO_MARK&&USE_LIBCAP
+1
+#else
+0
+#endif
+},
+{"USE_QOS_TOS", "--enable-zph-qos", 
+#if USE_QOS_TOS
+1
+#else
+0
+#endif
+},
+{"USE_SSL", "--enable-ssl", 
+#if USE_SSL
+1
+#else
+0
+#endif
+},
+{"USE_SSL", "--enable-ssl", 
+#if USE_SSL
+1
+#else
+0
+#endif
+},
+{"USE_SSL", "--enable-ssl", 
+#if USE_SSL
+1
+#else
+0
+#endif
+},
+{"USE_SSL", "--enable-ssl", 
+#if USE_SSL
+1
+#else
+0
+#endif
+},
+{"USE_SSL", "--enable-ssl", 
+#if USE_SSL
+1
+#else
+0
+#endif
+},
+{"USE_SSL", "--enable-ssl", 
+#if USE_SSL
+1
+#else
+0
+#endif
+},
+{"USE_SSL", "--enable-ssl", 
+#if USE_SSL
+1
+#else
+0
+#endif
+},
+{"USE_SSL", "--enable-ssl", 
+#if USE_SSL
+1
+#else
+0
+#endif
+},
+{"USE_SSL", "--enable-ssl", 
+#if USE_SSL
+1
+#else
+0
+#endif
+},
+{"USE_SSL", "--enable-ssl", 
+#if USE_SSL
+1
+#else
+0
+#endif
+},
+{"USE_SSL", "--enable-ssl", 
+#if USE_SSL
+1
+#else
+0
+#endif
+},
+{"USE_SSL", "--enable-ssl", 
+#if USE_SSL
+1
+#else
+0
+#endif
+},
+{"USE_SSL", "--enable-ssl", 
+#if USE_SSL
+1
+#else
+0
+#endif
+},
+{"USE_SSL", "--enable-ssl", 
+#if USE_SSL
+1
+#else
+0
+#endif
+},
+{"USE_SSL", "--enable-ssl", 
+#if USE_SSL
+1
+#else
+0
+#endif
+},
+{"USE_SSL_CRTD", "--enable-ssl-crtd", 
+#if USE_SSL_CRTD
+1
+#else
+0
+#endif
+},
+{"USE_SSL_CRTD", "--enable-ssl-crtd", 
+#if USE_SSL_CRTD
+1
+#else
+0
+#endif
+},
+{"ICAP_CLIENT", "--enable-icap-client", 
+#if ICAP_CLIENT
+1
+#else
+0
+#endif
+},
+{"ICAP_CLIENT", "--enable-icap-client", 
+#if ICAP_CLIENT
+1
+#else
+0
+#endif
+},
+{"USE_ICMP", "--enable-icmp", 
+#if USE_ICMP
+1
+#else
+0
+#endif
+},
+{"USE_UNLINKD", "--enable-unlinkd", 
+#if USE_UNLINKD
+1
+#else
+0
+#endif
+},
+{"USE_ICMP", "--enable-icmp", 
+#if USE_ICMP
+1
+#else
+0
+#endif
+},
+{"USE_ICMP", "--enable-icmp", 
+#if USE_ICMP
+1
+#else
+0
+#endif
+},
+{"USE_HTTP_VIOLATIONS", "--enable-http-violations", 
+#if USE_HTTP_VIOLATIONS
+1
+#else
+0
+#endif
+},
+{"USE_HTTP_VIOLATIONS", "--enable-http-violations", 
+#if USE_HTTP_VIOLATIONS
+1
+#else
+0
+#endif
+},
+{"FOLLOW_X_FORWARDED_FOR&&USE_ADAPTATION", "--enable-follow-x-forwarded-for and (--enable-icap-client and/or --enable-ecap)", 
+#if FOLLOW_X_FORWARDED_FOR&&USE_ADAPTATION
+1
+#else
+0
+#endif
+},
+{"USE_HTTP_VIOLATIONS", "--enable-http-violations", 
+#if USE_HTTP_VIOLATIONS
+1
+#else
+0
+#endif
+},
+{"USE_HTTP_VIOLATIONS", "--enable-http-violations", 
+#if USE_HTTP_VIOLATIONS
+1
+#else
+0
+#endif
+},
+{"USE_HTTP_VIOLATIONS", "--enable-http-violations", 
+#if USE_HTTP_VIOLATIONS
+1
+#else
+0
+#endif
+},
+{"USE_HTTP_VIOLATIONS", "--enable-http-violations", 
+#if USE_HTTP_VIOLATIONS
+1
+#else
+0
+#endif
+},
+{"USE_HTTP_VIOLATIONS", "--enable-http-violations", 
+#if USE_HTTP_VIOLATIONS
+1
+#else
+0
+#endif
+},
+{"USE_IDENT", "--enable-ident-lookups", 
+#if USE_IDENT
+1
+#else
+0
+#endif
+},
+{"USE_SQUID_ESI", "--enable-esi", 
+#if USE_SQUID_ESI
+1
+#else
+0
+#endif
+},
+{"USE_DELAY_POOLS", "--enable-delay-pools", 
+#if USE_DELAY_POOLS
+1
+#else
+0
+#endif
+},
+{"USE_DELAY_POOLS", "--enable-delay-pools", 
+#if USE_DELAY_POOLS
+1
+#else
+0
+#endif
+},
+{"USE_DELAY_POOLS", "--enable-delay-pools", 
+#if USE_DELAY_POOLS
+1
+#else
+0
+#endif
+},
+{"USE_DELAY_POOLS", "--enable-delay-pools", 
+#if USE_DELAY_POOLS
+1
+#else
+0
+#endif
+},
+{"USE_DELAY_POOLS", "--enable-delay-pools", 
+#if USE_DELAY_POOLS
+1
+#else
+0
+#endif
+},
+{"USE_DELAY_POOLS", "--enable-delay-pools", 
+#if USE_DELAY_POOLS
+1
+#else
+0
+#endif
+},
+{"USE_DELAY_POOLS", "--enable-delay-pools", 
+#if USE_DELAY_POOLS
+1
+#else
+0
+#endif
+},
+{"USE_DELAY_POOLS", "--enable-delay-pools", 
+#if USE_DELAY_POOLS
+1
+#else
+0
+#endif
+},
+{"USE_DELAY_POOLS", "--enable-delay-pools", 
+#if USE_DELAY_POOLS
+1
+#else
+0
+#endif
+},
+{"USE_WCCP", "--enable-wccp", 
+#if USE_WCCP
+1
+#else
+0
+#endif
+},
+{"USE_WCCPv2", "--enable-wccpv2", 
+#if USE_WCCPv2
+1
+#else
+0
+#endif
+},
+{"USE_WCCP", "--enable-wccp", 
+#if USE_WCCP
+1
+#else
+0
+#endif
+},
+{"USE_WCCPv2", "--enable-wccpv2", 
+#if USE_WCCPv2
+1
+#else
+0
+#endif
+},
+{"USE_WCCPv2", "--enable-wccpv2", 
+#if USE_WCCPv2
+1
+#else
+0
+#endif
+},
+{"USE_WCCPv2", "--enable-wccpv2", 
+#if USE_WCCPv2
+1
+#else
+0
+#endif
+},
+{"USE_WCCPv2", "--enable-wccpv2", 
+#if USE_WCCPv2
+1
+#else
+0
+#endif
+},
+{"USE_WCCPv2", "--enable-wccpv2", 
+#if USE_WCCPv2
+1
+#else
+0
+#endif
+},
+{"USE_WCCPv2", "--enable-wccpv2", 
+#if USE_WCCPv2
+1
+#else
+0
+#endif
+},
+{"USE_WCCPv2", "--enable-wccpv2", 
+#if USE_WCCPv2
+1
+#else
+0
+#endif
+},
+{"USE_WCCP", "--enable-wccp", 
+#if USE_WCCP
+1
+#else
+0
+#endif
+},
+{"USE_WCCPv2", "--enable-wccpv2", 
+#if USE_WCCPv2
+1
+#else
+0
+#endif
+},
+{"USE_CACHE_DIGESTS", "--enable-cache-digests", 
+#if USE_CACHE_DIGESTS
+1
+#else
+0
+#endif
+},
+{"USE_CACHE_DIGESTS", "--enable-cache-digests", 
+#if USE_CACHE_DIGESTS
+1
+#else
+0
+#endif
+},
+{"USE_CACHE_DIGESTS", "--enable-cache-digests", 
+#if USE_CACHE_DIGESTS
+1
+#else
+0
+#endif
+},
+{"USE_CACHE_DIGESTS", "--enable-cache-digests", 
+#if USE_CACHE_DIGESTS
+1
+#else
+0
+#endif
+},
+{"USE_CACHE_DIGESTS", "--enable-cache-digests", 
+#if USE_CACHE_DIGESTS
+1
+#else
+0
+#endif
+},
+{"USE_CACHE_DIGESTS", "--enable-cache-digests", 
+#if USE_CACHE_DIGESTS
+1
+#else
+0
+#endif
+},
+{"SQUID_SNMP", "--enable-snmp", 
+#if SQUID_SNMP
+1
+#else
+0
+#endif
+},
+{"SQUID_SNMP", "--enable-snmp", 
+#if SQUID_SNMP
+1
+#else
+0
+#endif
+},
+{"SQUID_SNMP", "--enable-snmp", 
+#if SQUID_SNMP
+1
+#else
+0
+#endif
+},
+{"SQUID_SNMP", "--enable-snmp", 
+#if SQUID_SNMP
+1
+#else
+0
+#endif
+},
+{"USE_HTCP", "--enable-htcp", 
+#if USE_HTCP
+1
+#else
+0
+#endif
+},
+{"MULTICAST_MISS_STREAM", "-DMULTICAST_MISS_STREAM define", 
+#if MULTICAST_MISS_STREAM
+1
+#else
+0
+#endif
+},
+{"MULTICAST_MISS_STREAM", "-DMULTICAST_MISS_STREAM define", 
+#if MULTICAST_MISS_STREAM
+1
+#else
+0
+#endif
+},
+{"MULTICAST_MISS_STREAM", "-DMULTICAST_MISS_STREAM define", 
+#if MULTICAST_MISS_STREAM
+1
+#else
+0
+#endif
+},
+{"MULTICAST_MISS_STREAM", "-DMULTICAST_MISS_STREAM define", 
+#if MULTICAST_MISS_STREAM
+1
+#else
+0
+#endif
+},
+{"USE_ERR_LOCALES", "--enable-auto-locale", 
+#if USE_ERR_LOCALES
+1
+#else
+0
+#endif
+},
+{"USE_ERR_LOCALES", "--enable-auto-locale", 
+#if USE_ERR_LOCALES
+1
+#else
+0
+#endif
+},
+{"ICAP_CLIENT", "--enable-icap-client", 
+#if ICAP_CLIENT
+1
+#else
+0
+#endif
+},
+{"ICAP_CLIENT", "--enable-icap-client", 
+#if ICAP_CLIENT
+1
+#else
+0
+#endif
+},
+{"ICAP_CLIENT", "--enable-icap-client", 
+#if ICAP_CLIENT
+1
+#else
+0
+#endif
+},
+{"ICAP_CLIENT", "--enable-icap-client", 
+#if ICAP_CLIENT
+1
+#else
+0
+#endif
+},
+{"ICAP_CLIENT", "--enable-icap-client", 
+#if ICAP_CLIENT
+1
+#else
+0
+#endif
+},
+{"ICAP_CLIENT", "--enable-icap-client", 
+#if ICAP_CLIENT
+1
+#else
+0
+#endif
+},
+{"ICAP_CLIENT", "--enable-icap-client", 
+#if ICAP_CLIENT
+1
+#else
+0
+#endif
+},
+{"ICAP_CLIENT", "--enable-icap-client", 
+#if ICAP_CLIENT
+1
+#else
+0
+#endif
+},
+{"ICAP_CLIENT", "--enable-icap-client", 
+#if ICAP_CLIENT
+1
+#else
+0
+#endif
+},
+{"ICAP_CLIENT", "--enable-icap-client", 
+#if ICAP_CLIENT
+1
+#else
+0
+#endif
+},
+{"USE_ADAPTATION", "--enable-ecap or --enable-icap-client", 
+#if USE_ADAPTATION
+1
+#else
+0
+#endif
+},
+{"USE_ADAPTATION", "--enable-ecap or --enable-icap-client", 
+#if USE_ADAPTATION
+1
+#else
+0
+#endif
+},
+{"ICAP_CLIENT", "--enable-icap-client", 
+#if ICAP_CLIENT
+1
+#else
+0
+#endif
+},
+{"ICAP_CLIENT", "--enable-icap-client", 
+#if ICAP_CLIENT
+1
+#else
+0
+#endif
+},
+{"ICAP_CLIENT", "--enable-icap-client", 
+#if ICAP_CLIENT
+1
+#else
+0
+#endif
+},
+{"ICAP_CLIENT", "--enable-icap-client", 
+#if ICAP_CLIENT
+1
+#else
+0
+#endif
+},
+{"ICAP_CLIENT", "--enable-icap-client", 
+#if ICAP_CLIENT
+1
+#else
+0
+#endif
+},
+{"USE_ECAP", "--enable-ecap", 
+#if USE_ECAP
+1
+#else
+0
+#endif
+},
+{"USE_ECAP", "--enable-ecap", 
+#if USE_ECAP
+1
+#else
+0
+#endif
+},
+{"USE_LOADABLE_MODULES", "--enable-loadable-modules", 
+#if USE_LOADABLE_MODULES
+1
+#else
+0
+#endif
+},
+{"USE_ADAPTATION", "--enable-ecap or --enable-icap-client", 
+#if USE_ADAPTATION
+1
+#else
+0
+#endif
+},
+{"USE_ADAPTATION", "--enable-ecap or --enable-icap-client", 
+#if USE_ADAPTATION
+1
+#else
+0
+#endif
+},
+{"USE_ADAPTATION", "--enable-ecap or --enable-icap-client", 
+#if USE_ADAPTATION
+1
+#else
+0
+#endif
+},
+{"USE_ADAPTATION", "--enable-ecap or --enable-icap-client", 
+#if USE_ADAPTATION
+1
+#else
+0
+#endif
+},
+{"USE_ADAPTATION", "--enable-ecap or --enable-icap-client", 
+#if USE_ADAPTATION
+1
+#else
+0
+#endif
+},
+{"USE_ADAPTATION", "--enable-ecap or --enable-icap-client", 
+#if USE_ADAPTATION
+1
+#else
+0
+#endif
+},
+{"ICAP_CLIENT", "--enable-icap-client", 
+#if ICAP_CLIENT
+1
+#else
+0
+#endif
+},
+{"ICAP_CLIENT", "--enable-icap-client", 
+#if ICAP_CLIENT
+1
+#else
+0
+#endif
+},
+{"USE_DNSHELPER", "--disable-internal-dns", 
+#if USE_DNSHELPER
+1
+#else
+0
+#endif
+},
+{"USE_DNSHELPER", "--disable-internal-dns", 
+#if USE_DNSHELPER
+1
+#else
+0
+#endif
+},
+{"!USE_DNSHELPER", "--enable-internal-dns", 
+#if !USE_DNSHELPER
+1
+#else
+0
+#endif
+},
+{"!USE_DNSHELPER", "--enable-internal-dns", 
+#if !USE_DNSHELPER
+1
+#else
+0
+#endif
+},
+{"!USE_DNSHELPER", "--enable-internal-dns", 
+#if !USE_DNSHELPER
+1
+#else
+0
+#endif
+},
+{"!USE_DNSHELPER", "--enable-internal-dns", 
+#if !USE_DNSHELPER
+1
+#else
+0
+#endif
+},
+{"!USE_DNSHELPER", "--enable-internal-dns", 
+#if !USE_DNSHELPER
+1
+#else
+0
+#endif
+},
+{"USE_HTTP_VIOLATIONS", "--enable-http-violations", 
+#if USE_HTTP_VIOLATIONS
+1
+#else
+0
+#endif
+},
+{"_SQUID_MSWIN_", "MS Windows", 
+#if _SQUID_MSWIN_
+1
+#else
+0
+#endif
+},
+{"USE_SQUID_EUI", "--enable-eui", 
+#if USE_SQUID_EUI
+1
+#else
+0
+#endif
+},
+{(char const *)0L, (char const *)0L, 0}};

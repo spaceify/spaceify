@@ -1,0 +1,14 @@
+Source: ecap-spaceify-injector
+Priority: extra
+Maintainer: root <root@unknown>
+Build-Depends: debhelper (>= 8.0.0), autotools-dev, libecap2-dev, pkg-config, libsqlite3-dev
+Standards-Version: 3.9.4
+Section: libs
+Homepage: http://www.spaceify.net
+
+Package: ecap-spaceify-injector
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libecap2
+Description: Spaceify eCAP Injector library.
+ Targeted to be used with squid3 Spaceify distribution and Spaceify core.

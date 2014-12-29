@@ -1,0 +1,14 @@
+{
+  "provides_services": [ {"service_name": "spaceify.org/services/example/spacelet1", "service_type": "standard"} ],
+  "name": "Example spacelet 1",
+  "unique_name": "example/spacelet1",
+  "version":"1.0.0",
+  "type": "spacelet",
+  "category": "educational",
+  "shared": true,
+  "start_command": "node spacelet.js",
+  "inject_identifier": "<head>",
+  "inject_hostnames": [ "www.example.com" ],
+  "inject_files": [ { "directory": "", "name": "inject.js", "type": "javascript" } ],
+  "short_description": "Example spacelet 1 template."
+}

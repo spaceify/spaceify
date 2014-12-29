@@ -1,0 +1,2 @@
+version=3
+http://www.squid-cache.org/Versions/v3/3.3/squid-([\.\d]+)\.(?:zip|tgz|tbz|txz|(?:tar\.(?:gz|bz2|xz)))

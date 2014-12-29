@@ -1,0 +1,17 @@
+Package: squid3
+Version: 3.3.8.spaceify
+Architecture: i386
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Installed-Size: 6224
+Depends: libc6 (>= 2.15), libcap2 (>= 2.10), libcomerr2 (>= 1.01), libdb5.1, libecap2, libexpat1 (>= 2.0.1), libgcc1 (>= 1:4.1.1), libgssapi-krb5-2 (>= 1.10+dfsg~), libkrb5-3 (>= 1.6.dfsg.2), libldap-2.4-2 (>= 2.4.7), libltdl7 (>= 2.4.2), libnetfilter-conntrack3, libpam0g (>= 0.99.7.1), libsasl2-2 (>= 2.1.24), libssl1.0.0 (>= 1.0.1), libstdc++6 (>= 4.6), libxml2 (>= 2.7.4), sysv-rc (>= 2.88dsf-24) | file-rc (>= 0.8.16), netbase, adduser, logrotate (>= 3.5.4-1), squid3-common (= 3.3.8.spaceify), lsb-base, ssl-cert (>= 1.0-11ubuntu1), ecap-spaceify-injector, openssl, perl
+Suggests: squidclient, squid-cgi, squid-purge, resolvconf (>= 0.40), smbclient, ufw, winbindd, apparmor (>= 2.3)
+Section: web
+Priority: optional
+Homepage: http://www.squid-cache.org
+Description: Full featured Web Proxy cache (HTTP proxy)
+ Squid is a high-performance proxy caching server for web clients, supporting
+ FTP, gopher, ICY and HTTP data objects.
+ .
+ Squid version 3 is a major rewrite of Squid in C++ and introduces a number of
+ new features including ICAP and ESI support.
+Original-Maintainer: Luigi Gangitano <luigi@debian.org>

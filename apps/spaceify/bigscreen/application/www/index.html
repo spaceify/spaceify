@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<style type="text/css">
+		body
+		{
+			width: 100%;
+			height: 100%;
+			margin: 0px;
+			padding: 0px;
+			overflow: hidden;
+			background-color: #000;
+			font-family: Arial, Verdana, Helvetica;
+		}
+
+		.bigscreeniframe
+		{
+			width: 100%;
+			height: 100%;
+			margin: 0px;
+			padding: 0px;
+			overflow: hidden;
+		}
+
+		.messagediv
+		{
+			display: none;
+			position: absolute;
+			left: 2px;
+			top: 2px;			
+			font-size: 18px; 
+			margin: 0px;
+			padding: 10px;
+			width: auto;
+			border: 1px solid #D7D7D7;
+			vertical-align: top;
+			font-weight: bold;
+			color: #000;
+			background-color: #FFF;
+			border-radius: 4px;
+			-moz-border-radius: 4px;
+			-webkit-border-radius: 4px;
+		}
+	</style>
+
+	<title>Bigscreen</title>
+
+	<script type="text/javascript" src="engine.io.js"></script>
+	<script type="text/javascript" src="spaceifyclient.js"></script>
+
+	<script type="text/javascript">
+		var self = null;
+		var timeOut = null;
+		var isMaster = false;
+		var currentSource = "";
+		var currentAction = "";
+		var currentContent = "";
+		var bigscreenRPC = null;
+
+		var MESSAGE_TIMEOUT = 5;
+		var RECONNECT_TIMEOUT = 10;
+
+		// GET HOSTNAME FROM THE URL
+		EDGE_HOSTNAME = window.location.hostname;
+		document.domain = window.location.hostname;										// Same Origin Policy, pages loaded to bigscreen_if have the same domain
+
+		/**
+		 * DOM * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+		 */
+		window.addEventListener("load", function()
+		{
+			findService();
+		}, true);
+
+		window.addEventListener("resize", function() { resize(document.getElementById("bigscreen_if")); }, false);
+
+		function resize(obj)
+		{
+			if(obj)
+			{
+				obj.style.width = (window.innerWidth) + "px";
+				obj.style.height = (window.innerHeight) + "px";
+			}
+		}
+
+		/**
+		 * RPC CONNECTION  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+		 */
+		function findService()
+		{
+			spaceifyCore.findService("spaceify.org/services/bigscreen_backend", function(err, data)
+			{
+				if(err)
+				{
+					showMessage(err, MESSAGE_TIMEOUT);
+					close(true);
+				}
+				else
+					connect(data);				
+			});
+		}
+
+		function connect(hostdata)
+		{
+			bigscreenRPC = new SpaceifyRPC(hostdata, false, function(err, data)			// connect to command_backend
+			{
+				if(err || data !== true)
+				{
+					showMessage("Failed to connect to bigscreen command backend: " + (err && err.message ? err.message : data), MESSAGE_TIMEOUT);
+					close(true);
+				}
+				else
+				{
+					showMessage("Connected to bigscreen command backend", MESSAGE_TIMEOUT);
+					bigscreenRPC.exposeRPCMethod("showContent", self, showContent);
+					bigscreenRPC.exposeRPCMethod("setMaster", self, setMaster);
+					bigscreenRPC.setCloseEventListener(close);
+					bigscreenRPC.call("IsMaster", [], self, function(err, data) { isMaster = data; } );	// Is this bigscreen (connection) the master bigscreen
+				}
+			});
+		}
+
+		function close(isInternal)
+		{
+			if(bigscreenRPC != null)
+			{
+				bigscreenRPC.close();
+				bigscreenRPC = null;
+
+				//if((bigscreenif = document.getElementById("bigscreen_if")) != null)
+					//bigscreenif.src = "";
+				showMessage("Connection to bigscreen command backend lost", MESSAGE_TIMEOUT);
+			}
+
+			window.setTimeout(findService, RECONNECT_TIMEOUT * 1000);					// Try to reconnect
+		}
+
+		/**
+		 * EXPOSED RPC METHODS * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+		 */
+		function showContent(source, page, content, action, isSecure)					// see also pageReady
+		{
+			/**
+			 * This method is used to load the requested page into the iframe, if it is not already loaded.
+			 * If it is already loaded the content windows showContent is called to show the requested content/action.
+			 */
+			if(currentSource == source)													// compare sources, if the same applicable page is already loaded
+			{
+				var bs_if = document.getElementById("bigscreen_if");
+				if(bs_if && bs_if.contentWindow && bs_if.contentWindow.showContent)
+					bs_if.contentWindow.showContent(content, action);
+			}
+			else																		// load the requested other page otherwise
+				document.getElementById("bigscreen_if").src = (!isSecure ? "http://" : "https://") + EDGE_HOSTNAME + page;
+
+			currentSource = source;
+			currentAction = action;
+			currentContent = content;
+
+			return true;
+		}
+
+		function setMaster(state)
+		{ // Sandboxed application (bigscreen) calls this when current master big screen is closed and new master big screen must be set!!!
+			isMaster = state || isMaster;												// leave state unchanged if new state is undefined
+
+			var bs_if = document.getElementById("bigscreen_if");
+			if(bs_if && bs_if.contentWindow && bs_if.contentWindow.setMaster)			// let the child know the status of its parent
+				bs_if.contentWindow.setMaster(isMaster);
+
+			return isMaster;
+		}
+		
+		/**
+		 * SHARED FUNCTIONS  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+		 */
+		// showContent and pageReady work together. Loaded page ultimately must call pageReady(). This way bigscreen can finish the page load and notify clients the page is loaded and ready.
+		function pageReady(initialized)
+		{
+			setMaster();
+
+			if(isMaster)																// only true master sends the status
+				bigscreenRPC.call("pageReady", [currentSource, currentContent, initialized], self, function(err, data) {});
+
+			var bs_if = document.getElementById("bigscreen_if");
+			if(bs_if && bs_if.contentWindow && bs_if.contentWindow.showContent)			// finish loading the page by showing the content
+				bs_if.contentWindow.showContent(currentContent, currentAction);
+		}
+
+		/**
+		 * COMMON FUNCTIONS  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+		 */
+		function showMessage(msgobj, time)
+		{
+			var msgstr = (typeof msgobj == "object" ? msgobj.message : msgobj);
+			
+			if((div = document.getElementById("message_div")) == null)
+				return;
+
+			while(div.firstChild) div.removeChild(div.firstChild);
+
+			var text = document.createTextNode(msgstr);
+			div.appendChild(text);
+
+			div.style.display = "inline";
+
+			if(time != -1)
+			{
+				if(timeOut != null) clearTimeout(timeOut);
+				timeOut = setTimeout(function() { div.style.display = "none"; timeOut = null; }, time * 1000);
+			}
+
+			console.log(msgstr);
+		}		
+	</script>
+</head>
+
+<body>
+	<div id="message_div" class="messagediv"></div>
+	<iframe id="bigscreen_if" src="" class="bigscreeniframe" scrolling="no" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen onload="resize(this);"></iframe>
+</body>
+
+</html>

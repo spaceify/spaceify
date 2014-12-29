@@ -1,0 +1,13 @@
+Package: squid
+Source: squid3
+Version: 3.3.8.spaceify
+Architecture: i386
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Installed-Size: 54
+Depends: squid3 (= 3.3.8.spaceify)
+Section: web
+Priority: optional
+Homepage: http://www.squid-cache.org
+Description: dependency package from squid to squid3
+ Dependency package to install squid3 as the default squid.
+Original-Maintainer: Luigi Gangitano <luigi@debian.org>

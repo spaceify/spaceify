@@ -20,6 +20,12 @@ cp -r monit/* "${dst}/monit/"
 cp -r upstart/* "${dst}/upstart/"
 cp docker/Dockerfile "${dst}/docker/"
 cp ssl/openssl_client.conf "${dst}/ssl/"
+<<<<<<< HEAD
+cp CHANGELOG "${dst}"
+cp LICENSE "${dst}"
+cp README.md "${dst}"
+=======
+>>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 
 echo "Compiling Spaceify version ${vs}"
 cd $dst

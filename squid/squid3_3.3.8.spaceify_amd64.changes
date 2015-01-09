@@ -1,0 +1,53 @@
+Format: 1.8
+Date: Tue, 26 Nov 2013 10:07:22 +0200
+Source: squid3
+Binary: squid3 squid3-dbg squid3-common squidclient squid-cgi squid-purge squid
+Architecture: source all amd64
+Version: 3.3.8.spaceify
+Distribution: UNRELEASED
+Urgency: low
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Changed-By: admin <admin@spaceify.net>
+Description: 
+ squid      - dependency package from squid to squid3
+ squid-cgi  - Full featured Web Proxy cache (HTTP proxy) - control CGI
+ squid-purge - Full featured Web Proxy cache (HTTP proxy) - control utility
+ squid3     - Full featured Web Proxy cache (HTTP proxy)
+ squid3-common - Full featured Web Proxy cache (HTTP proxy) - common files
+ squid3-dbg - Full featured Web Proxy cache (HTTP proxy) - Debug symbols
+ squidclient - Full featured Web Proxy cache (HTTP proxy) - control utility
+Changes: 
+ squid3 (3.3.8.spaceify) UNRELEASED; urgency=low
+ .
+   * Spaceify distribution
+Checksums-Sha1: 
+ 2bbe7b92382b6503d2be183d87c2f42029c90b96 1210 squid3_3.3.8.spaceify.dsc
+ a083122320a685b6a357460ce047020c615833a9 4984079 squid3_3.3.8.spaceify.tar.gz
+ 970406e0b1357758c24a84bf0eae642ce81b4b94 161634 squid3-common_3.3.8.spaceify_all.deb
+ dde6d392ae784fe73d9e9e0b20917a81ca0ae555 1882246 squid3_3.3.8.spaceify_amd64.deb
+ 5f87e3104ccf7226b4034afe000a5a3e62ed7039 9781058 squid3-dbg_3.3.8.spaceify_amd64.deb
+ a7a2c58fea7e5ede02937ff6c32f6833af4e3a47 38600 squidclient_3.3.8.spaceify_amd64.deb
+ 0ebaa1d9dc9d14318c140cd74136112217579e9a 41248 squid-cgi_3.3.8.spaceify_amd64.deb
+ 31404ed2f0ebfd441bea66a4a5fa90bcebc311f4 31812 squid-purge_3.3.8.spaceify_amd64.deb
+ 5684fb211ac1d91dd8b715083933963e97cdfd70 15884 squid_3.3.8.spaceify_amd64.deb
+Checksums-Sha256: 
+ bf9d7e6c3bb6dd5761ce557d2942332b941354e267eed7cc1970aeb8b1a82e69 1210 squid3_3.3.8.spaceify.dsc
+ 75bd1a6ce17ce2c0f0a9bfe1219a6ebe459e1d11d7c9767aec6aa2792a510b29 4984079 squid3_3.3.8.spaceify.tar.gz
+ 25925ece085dab9f9eaf52b3c4a3a66f93506e36dbed366acdf1c42fbacc7ec6 161634 squid3-common_3.3.8.spaceify_all.deb
+ 51cf3adb9849cbe473548950b09df22ca0d6879f2fa49f377b67e7dee4d3f437 1882246 squid3_3.3.8.spaceify_amd64.deb
+ de1e50030b0fe3bcfd8ba98364c11dc49bff8720beff1762aed5914c4293f401 9781058 squid3-dbg_3.3.8.spaceify_amd64.deb
+ 40046a4a904a8188ec11fe3e70e25666269512aeb68c4919fcc1f23991749f08 38600 squidclient_3.3.8.spaceify_amd64.deb
+ b5e481239a43aee7ea750c5dd7910b84d284c0ebe1f71bfa31cce8fc53adfd65 41248 squid-cgi_3.3.8.spaceify_amd64.deb
+ 9884e6fe728659683775a4c882896b86ea1033d0ed0e2e402ec647326890aa60 31812 squid-purge_3.3.8.spaceify_amd64.deb
+ 41aabb849a33a73a486dbad3e58b73408460ed9629c49a5258d68b31589ef201 15884 squid_3.3.8.spaceify_amd64.deb
+Files: 
+ 5accf06ba38d8de3152d6a7827144170 1210 web optional squid3_3.3.8.spaceify.dsc
+ 0e39157b48fbcc883626afccb81974c3 4984079 web optional squid3_3.3.8.spaceify.tar.gz
+ f33c27b8f93adb07d3b6217ed08a3842 161634 web optional squid3-common_3.3.8.spaceify_all.deb
+ 39cf105044c02d3ec7513f11ea0dd67e 1882246 web optional squid3_3.3.8.spaceify_amd64.deb
+ e4b918eb45d65b77c33a7e81f5d3ea12 9781058 debug extra squid3-dbg_3.3.8.spaceify_amd64.deb
+ 544dd51900e6e8d603a425015d254a18 38600 web optional squidclient_3.3.8.spaceify_amd64.deb
+ 022e3670ded1d0ea188d986b7d189806 41248 web optional squid-cgi_3.3.8.spaceify_amd64.deb
+ b10ad31805b5d16894c7cef14e734839 31812 web optional squid-purge_3.3.8.spaceify_amd64.deb
+ a9b32df320b1df2a39abeb3b555812d9 15884 web optional squid_3.3.8.spaceify_amd64.deb
+Original-Maintainer: Luigi Gangitano <luigi@debian.org>

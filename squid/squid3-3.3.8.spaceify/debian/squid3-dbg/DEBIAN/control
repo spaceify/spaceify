@@ -1,9 +1,15 @@
 Package: squid3-dbg
 Source: squid3
 Version: 3.3.8.spaceify
+<<<<<<< HEAD
+Architecture: amd64
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Installed-Size: 46985
+=======
 Architecture: i386
 Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
 Installed-Size: 39607
+>>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 Depends: squid3 (= 3.3.8.spaceify)
 Section: debug
 Priority: extra

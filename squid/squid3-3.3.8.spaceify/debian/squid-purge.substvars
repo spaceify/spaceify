@@ -1,2 +1,6 @@
+<<<<<<< HEAD
+shlibs:Depends=libc6 (>= 2.14), libgcc1 (>= 1:4.1.1), libstdc++6 (>= 4.4.0)
+=======
 shlibs:Depends=libc6 (>= 2.4), libgcc1 (>= 1:4.1.1), libstdc++6 (>= 4.4.0)
+>>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 misc:Depends=

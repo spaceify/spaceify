@@ -120,7 +120,11 @@
 /* #undef LTDL_DLOPEN_DEPLIBS */
 
 /* Define to the system default library search path. */
+<<<<<<< HEAD
+#define LT_DLSEARCH_PATH "/lib:/usr/lib:/usr/lib/x86_64-linux-gnu/libfakeroot:/usr/local/lib:/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:/lib32:/usr/lib32:/libx32:/usr/libx32"
+=======
 #define LT_DLSEARCH_PATH "/lib:/usr/lib:/usr/lib/i386-linux-gnu/mesa-egl:/usr/lib/i386-linux-gnu/mesa:/lib/i386-linux-gnu:/usr/lib/i386-linux-gnu:/lib/i686-linux-gnu:/usr/lib/i686-linux-gnu:/usr/local/lib:/lib64:/usr/lib64:/libx32:/usr/libx32"
+>>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 
 /* The archive extension */
 #define LT_LIBEXT "a"

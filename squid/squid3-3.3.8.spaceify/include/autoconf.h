@@ -12,7 +12,11 @@
 /* #undef CACHEMGR_HOSTNAME */
 
 /* Host type from configure */
+<<<<<<< HEAD
+#define CONFIG_HOST_TYPE "x86_64-pc-linux-gnu"
+=======
 #define CONFIG_HOST_TYPE "i686-pc-linux-gnu"
+>>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 
 /* Default COSS membuf size */
 #define COSS_MEMBUF_SZ 1048576
@@ -1114,7 +1118,11 @@
 /* #undef LTDL_DLOPEN_DEPLIBS */
 
 /* Define to the system default library search path. */
+<<<<<<< HEAD
+#define LT_DLSEARCH_PATH "/lib:/usr/lib:/usr/lib/x86_64-linux-gnu/libfakeroot:/usr/local/lib:/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:/lib32:/usr/lib32:/libx32:/usr/libx32"
+=======
 #define LT_DLSEARCH_PATH "/lib:/usr/lib:/usr/lib/i386-linux-gnu/mesa-egl:/usr/lib/i386-linux-gnu/mesa:/lib/i386-linux-gnu:/usr/lib/i386-linux-gnu:/lib/i686-linux-gnu:/usr/lib/i686-linux-gnu:/usr/local/lib:/lib64:/usr/lib64:/libx32:/usr/libx32"
+>>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 
 /* The archive extension */
 #define LT_LIBEXT "a"
@@ -1180,21 +1188,41 @@
 #define SIZEOF_INT64_T 8
 
 /* The size of `long', as computed by sizeof. */
+<<<<<<< HEAD
+#define SIZEOF_LONG 8
+=======
 #define SIZEOF_LONG 4
+>>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 
 /* The size of `off_t', as computed by sizeof. */
 #define SIZEOF_OFF_T 8
 
 /* The size of `size_t', as computed by sizeof. */
+<<<<<<< HEAD
+#define SIZEOF_SIZE_T 8
+
+/* The size of `void *', as computed by sizeof. */
+#define SIZEOF_VOID_P 8
+=======
 #define SIZEOF_SIZE_T 4
 
 /* The size of `void *', as computed by sizeof. */
 #define SIZEOF_VOID_P 4
+>>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 
 /* Squid extended build info field for "squid -v" output */
 /* #undef SQUID_BUILD_INFO */
 
 /* configure command line used to configure Squid */
+<<<<<<< HEAD
+#define SQUID_CONFIGURE_OPTIONS " '--build=x86_64-linux-gnu' '--prefix=/usr' '--includedir=${prefix}/include' '--mandir=${prefix}/share/man' '--infodir=${prefix}/share/info' '--sysconfdir=/etc' '--localstatedir=/var' '--libexecdir=${prefix}/lib/squid3' '--srcdir=.' '--disable-maintainer-mode' '--disable-dependency-tracking' '--disable-silent-rules' '--datadir=/usr/share/squid3' '--sysconfdir=/etc/squid3' '--mandir=/usr/share/man' '--enable-inline' '--enable-async-io=8' '--enable-storeio=ufs,aufs,diskd,rock' '--enable-removal-policies=lru,heap' '--enable-delay-pools' '--enable-cache-digests' '--enable-underscores' '--enable-icap-client' '--enable-follow-x-forwarded-for' '--enable-auth-basic=DB,fake,getpwnam,LDAP,MSNT,MSNT-multi-domain,NCSA,NIS,PAM,POP3,RADIUS,SASL,SMB' '--enable-auth-digest=file,LDAP' '--enable-auth-negotiate=kerberos,wrapper' '--enable-auth-ntlm=fake,smb_lm' '--enable-external-acl-helpers=file_userip,kerberos_ldap_group,LDAP_group,session,SQL_session,unix_group,wbinfo_group' '--enable-url-rewrite-helpers=fake' '--enable-eui' '--enable-esi' '--enable-icmp' '--enable-zph-qos' '--enable-ecap' '--enable-ssl' '--enable-ssl-crtd' '--disable-translation' '--with-swapdir=/var/spool/squid3' '--with-logdir=/var/log/squid3' '--with-pidfile=/var/run/squid3.pid' '--with-filedescriptors=65536' '--with-large-files' '--with-default-user=proxy' '--enable-linux-netfilter' 'build_alias=x86_64-linux-gnu' 'CFLAGS=-g -O2 -fPIE -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -Wall' 'LDFLAGS=-Wl,-Bsymbolic-functions -fPIE -pie -Wl,-z,relro -Wl,-z,now' 'CPPFLAGS=-D_FORTIFY_SOURCE=2' 'CXXFLAGS=-g -O2 -fPIE -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security'"
+
+/* UDP receive buffer size */
+#define SQUID_DETECT_UDP_SO_RCVBUF 212992
+
+/* UDP send buffer size */
+#define SQUID_DETECT_UDP_SO_SNDBUF 212992
+=======
 #define SQUID_CONFIGURE_OPTIONS " '--build=i686-linux-gnu' '--prefix=/usr' '--includedir=${prefix}/include' '--mandir=${prefix}/share/man' '--infodir=${prefix}/share/info' '--sysconfdir=/etc' '--localstatedir=/var' '--libexecdir=${prefix}/lib/squid3' '--srcdir=.' '--disable-maintainer-mode' '--disable-dependency-tracking' '--disable-silent-rules' '--datadir=/usr/share/squid3' '--sysconfdir=/etc/squid3' '--mandir=/usr/share/man' '--enable-inline' '--enable-async-io=8' '--enable-storeio=ufs,aufs,diskd,rock' '--enable-removal-policies=lru,heap' '--enable-delay-pools' '--enable-cache-digests' '--enable-underscores' '--enable-icap-client' '--enable-follow-x-forwarded-for' '--enable-auth-basic=DB,fake,getpwnam,LDAP,MSNT,MSNT-multi-domain,NCSA,NIS,PAM,POP3,RADIUS,SASL,SMB' '--enable-auth-digest=file,LDAP' '--enable-auth-negotiate=kerberos,wrapper' '--enable-auth-ntlm=fake,smb_lm' '--enable-external-acl-helpers=file_userip,kerberos_ldap_group,LDAP_group,session,SQL_session,unix_group,wbinfo_group' '--enable-url-rewrite-helpers=fake' '--enable-eui' '--enable-esi' '--enable-icmp' '--enable-zph-qos' '--enable-ecap' '--enable-ssl' '--enable-ssl-crtd' '--disable-translation' '--with-swapdir=/var/spool/squid3' '--with-logdir=/var/log/squid3' '--with-pidfile=/var/run/squid3.pid' '--with-filedescriptors=65536' '--with-large-files' '--with-default-user=proxy' '--enable-linux-netfilter' 'build_alias=i686-linux-gnu' 'CFLAGS=-g -O2 -fPIE -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -Wall' 'LDFLAGS=-Wl,-Bsymbolic-functions -fPIE -pie -Wl,-z,relro -Wl,-z,now' 'CPPFLAGS=-D_FORTIFY_SOURCE=2' 'CXXFLAGS=-g -O2 -fPIE -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security'"
 
 /* UDP receive buffer size */
@@ -1202,6 +1230,7 @@
 
 /* UDP send buffer size */
 #define SQUID_DETECT_UDP_SO_SNDBUF 163840
+>>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 
 /* Maximum number of open filedescriptors */
 #define SQUID_MAXFD 65536

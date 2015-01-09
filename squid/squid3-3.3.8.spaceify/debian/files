@@ -1,7 +1,16 @@
 squid3-common_3.3.8.spaceify_all.deb web optional
+<<<<<<< HEAD
+squid3_3.3.8.spaceify_amd64.deb web optional
+squid3-dbg_3.3.8.spaceify_amd64.deb debug extra
+squidclient_3.3.8.spaceify_amd64.deb web optional
+squid-cgi_3.3.8.spaceify_amd64.deb web optional
+squid-purge_3.3.8.spaceify_amd64.deb web optional
+squid_3.3.8.spaceify_amd64.deb web optional
+=======
 squid3_3.3.8.spaceify_i386.deb web optional
 squid3-dbg_3.3.8.spaceify_i386.deb debug extra
 squidclient_3.3.8.spaceify_i386.deb web optional
 squid-cgi_3.3.8.spaceify_i386.deb web optional
 squid-purge_3.3.8.spaceify_i386.deb web optional
 squid_3.3.8.spaceify_i386.deb web optional
+>>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c

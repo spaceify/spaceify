@@ -1,3 +1,7 @@
 misc:Depends=sysv-rc (>= 2.88dsf-24) | file-rc (>= 0.8.16)
 perl:Depends=perl
+<<<<<<< HEAD
+shlibs:Depends=libc6 (>= 2.15), libcap2 (>= 2.10), libcomerr2 (>= 1.01), libdb5.3, libecap2, libexpat1 (>= 2.0.1), libgcc1 (>= 1:4.1.1), libgssapi-krb5-2 (>= 1.10+dfsg~), libkrb5-3 (>= 1.6.dfsg.2), libldap-2.4-2 (>= 2.4.7), libltdl7 (>= 2.4.2), libnetfilter-conntrack3, libpam0g (>= 0.99.7.1), libsasl2-2 (>= 2.1.24), libssl1.0.0 (>= 1.0.1), libstdc++6 (>= 4.6), libxml2 (>= 2.7.4)
+=======
 shlibs:Depends=libc6 (>= 2.3.6-6~), libc6 (>= 2.15), libcap2 (>= 2.10), libcomerr2 (>= 1.01), libdb5.1, libecap2, libexpat1 (>= 2.0.1), libgcc1 (>= 1:4.1.1), libgssapi-krb5-2 (>= 1.10+dfsg~), libkrb5-3 (>= 1.6.dfsg.2), libldap-2.4-2 (>= 2.4.7), libltdl7 (>= 2.4.2), libnetfilter-conntrack3, libpam0g (>= 0.99.7.1), libsasl2-2 (>= 2.1.24), libssl1.0.0 (>= 1.0.1), libstdc++6 (>= 4.6), libxml2 (>= 2.7.4)
+>>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c

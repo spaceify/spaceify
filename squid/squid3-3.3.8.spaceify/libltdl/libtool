@@ -2,7 +2,11 @@
 
 # libtool - Provide generalized library-building support services.
 # Generated automatically by config.status (libltdl) 2.2.10
+<<<<<<< HEAD
+# Libtool was configured on host ubuntu:
+=======
 # Libtool was configured on host mesh-26:
+>>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 # NOTE: Changes made to this file will be lost: look at ltmain.sh.
 #
 #   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2004, 2005,
@@ -72,12 +76,21 @@ ECHO="printf %s\\n"
 
 # The host system.
 host_alias=
+<<<<<<< HEAD
+host=x86_64-pc-linux-gnu
+host_os=linux-gnu
+
+# The build system.
+build_alias=x86_64-linux-gnu
+build=x86_64-pc-linux-gnu
+=======
 host=i686-pc-linux-gnu
 host_os=linux-gnu
 
 # The build system.
 build_alias=i686-linux-gnu
 build=i686-pc-linux-gnu
+>>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 build_os=linux-gnu
 
 # A sed program that does not truncate output.
@@ -102,7 +115,11 @@ NM="/usr/bin/nm -B"
 LN_S="ln -s"
 
 # What is the maximum length of a command?
+<<<<<<< HEAD
+max_cmd_len=3458764513820540925
+=======
 max_cmd_len=805306365
+>>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 
 # Object file suffix (normally "o").
 objext=o
@@ -243,10 +260,17 @@ finish_eval=""
 hardcode_into_libs=yes
 
 # Compile-time system search path for libraries.
+<<<<<<< HEAD
+sys_lib_search_path_spec="/usr/lib/gcc/x86_64-linux-gnu/4.8 /usr/lib/x86_64-linux-gnu /usr/lib /lib/x86_64-linux-gnu /lib "
+
+# Run-time system search path for libraries.
+sys_lib_dlsearch_path_spec="/lib /usr/lib /usr/lib/x86_64-linux-gnu/libfakeroot /usr/local/lib /lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu /lib32 /usr/lib32 /libx32 /usr/libx32 "
+=======
 sys_lib_search_path_spec="/usr/lib/gcc/i686-linux-gnu/4.8 /usr/lib/i386-linux-gnu /usr/lib /lib/i386-linux-gnu /lib "
 
 # Run-time system search path for libraries.
 sys_lib_dlsearch_path_spec="/lib /usr/lib /usr/lib/i386-linux-gnu/mesa-egl /usr/lib/i386-linux-gnu/mesa /lib/i386-linux-gnu /usr/lib/i386-linux-gnu /lib/i686-linux-gnu /usr/lib/i686-linux-gnu /usr/local/lib /lib64 /usr/lib64 /libx32 /usr/libx32 "
+>>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 
 # Whether dlopen is supported.
 dlopen_support=yes
@@ -255,7 +279,11 @@ dlopen_support=yes
 dlopen_self=yes
 
 # Whether dlopen of statically linked programs is supported.
+<<<<<<< HEAD
+dlopen_self_static=yes
+=======
 dlopen_self_static=no
+>>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 
 # Commands to strip libraries.
 old_striplib="strip --strip-debug"
@@ -263,7 +291,11 @@ striplib="strip --strip-unneeded"
 
 
 # The linker used to build libraries.
+<<<<<<< HEAD
+LD="/usr/bin/ld -m elf_x86_64"
+=======
 LD="/usr/bin/ld"
+>>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 
 # How to create reloadable object files.
 reload_flag=" -r"
@@ -288,7 +320,11 @@ wl="-Wl,"
 pic_flag=" -fPIC -DPIC"
 
 # Compiler flag to prevent dynamic linking.
+<<<<<<< HEAD
+link_static_flag=""
+=======
 link_static_flag="-static"
+>>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 
 # Does compiler simultaneously support -c and -o options?
 compiler_c_o="yes"

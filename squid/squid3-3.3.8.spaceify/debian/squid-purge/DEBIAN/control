@@ -1,10 +1,17 @@
 Package: squid-purge
 Source: squid3
 Version: 3.3.8.spaceify
+<<<<<<< HEAD
+Architecture: amd64
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Installed-Size: 100
+Depends: libc6 (>= 2.14), libgcc1 (>= 1:4.1.1), libstdc++6 (>= 4.4.0)
+=======
 Architecture: i386
 Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
 Installed-Size: 99
 Depends: libc6 (>= 2.4), libgcc1 (>= 1:4.1.1), libstdc++6 (>= 4.4.0)
+>>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 Section: web
 Priority: optional
 Homepage: http://www.squid-cache.org

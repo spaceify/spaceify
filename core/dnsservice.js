@@ -13,7 +13,7 @@ url2ip[Config.EDGE_HOSTNAME] = {ip: Config.EDGE_IP, ttl: 0};
 var dnsserver = new DNSServer();
 dnsserver.connect({ port: Config.DNS_PORT,						// The port and address to listen
 					v4_address: Config.EDGE_IP,
-					v6_address: null/*Config.EDGE_IP_V6*/,
+					v6_address: null,//Config.EDGE_IP_V6
 					url2ip: url2ip,								// Redirects URLs to IPs
 					default_ip: Config.EDGE_IP,					// If DNS fails return the default URL and address
 					default_hostname: Config.EDGE_HOSTNAME,

@@ -39,7 +39,7 @@ var docker = new Docker({socketPath: "/var/run/docker.sock"});
 var login = "root";
 var password ="docker123";
 
-var dockerHelper =  new DockerHelper();
+var dockerHelper = new DockerHelper();
 
 //var eventEmitter = new events.EventEmitter();
 
@@ -52,7 +52,7 @@ self.startContainer = fibrous( function(portCount, imageNameOrId, volumes, binds
 			exposed[new String(Const.FIRST_SERVICE_PORT + p)+"/tcp"] = {};
 			portOrder.push(new String(Const.FIRST_SERVICE_PORT + p)+"/tcp");
 			}
-		exposed["80/tcp"] = {};															// Add two additional ports for the spacelets/sandboxed applications/Nntive applications internal http and https servers
+		exposed["80/tcp"] = {};															// Add two additional ports for the applications internal http and https servers
 		exposed["443/tcp"] = {};
 		portOrder.push("80/tcp");
 		portOrder.push("443/tcp");
@@ -62,7 +62,6 @@ self.startContainer = fibrous( function(portCount, imageNameOrId, volumes, binds
 		bindings["80/tcp"] = [{}];
 		bindings["443/tcp"] = [{}];
 
-		//container = docker.sync.createContainer({Image: imageNameOrId, Cmd: ["/usr/sbin/sshd","-D"], PortSpecs: PortSpecs});
 		var opts = {
 			"Hostname": "",
 			"User": "",
@@ -76,7 +75,7 @@ self.startContainer = fibrous( function(portCount, imageNameOrId, volumes, binds
 			//"Cmd": ["/usr/sbin/sshd", "-D"],
 			"Cmd": ["/bin/bash"],
 			//"Dns": ["8.8.8.8", "8.8.4.4"],
-			"Dns": [Config.EDGE_IP],
+			"Dns": [Config.EDGE_IP, null],
 			"Image": imageNameOrId,
 			"Volumes": (volumes ? volumes : {}),
 			"VolumesFrom": "",
@@ -104,8 +103,7 @@ self.startContainer = fibrous( function(portCount, imageNameOrId, volumes, binds
 		throw Utility.error(false, Language.E_CONTAINER_INSPECT_FAILED.p("DockerContainer::startContainer()"), err); }
 	containerId = inspectedData.ID;
 	containerIp = inspectedData.NetworkSettings.IPAddress;
-	logger.info("containerId: " + containerId);
-	logger.info("containerIp: " + containerIp);
+	logger.info("containerId: " + containerId, "containerIp: " + containerIp);
 
 	for(i in portOrder)
 		{
@@ -113,8 +111,7 @@ self.startContainer = fibrous( function(portCount, imageNameOrId, volumes, binds
 		containerPorts.push(inspectedData.NetworkSettings.Ports[port][0].HostPort);
 		logger.info("HostPort " + port + " = " + inspectedData.NetworkSettings.Ports[port][0].HostPort);
 		}
-	//for(p = 0; p<portCount; p++)
-	//	containerPorts.push(inspectedData.NetworkSettings.PortMapping.Tcp[Const.FIRST_SERVICE_PORT + p]);
+
 	});
 
 self.stopContainer = fibrous( function(appobj)
@@ -123,9 +120,7 @@ self.stopContainer = fibrous( function(appobj)
 		if(container != null)
 			{
 			if(appobj.getStopCommand() != "")
-				dockerHelper.sync.executeCommand("cd " + Config.APPLICATION_PATH + 
-												 " && " + appobj.getStopCommand() + 
-												 " && echo stopcontainer", "stopcontainer");
+				dockerHelper.sync.executeCommand("cd " + Config.APPLICATION_PATH + " && " + appobj.getStopCommand() + " && echo stopcontainer", "stopcontainer");
 
 			container.sync.stop({"t": "0"});
 			container.sync.remove();
@@ -143,8 +138,8 @@ self.installApplication = fibrous( function(appobj)
 	var icommands = appobj.getInstallCommands();
 	for(var i=0; i<icommands.length; i++)
 		ics += " && " + icommands[i];
-	if(ics != "")
-		dockerHelper.sync.executeCommand("export NODE_PATH=/usr/lib/node_modules" + ics + " && echo icfinished", "icfinished");
+
+	dockerHelper.sync.executeCommand("export NODE_PATH=/usr/lib/node_modules" + ics + " && echo icfinished", "icfinished");
 
 	return container.sync.commit({"repo": appobj.getUniqueName()});						// Create a new image (difference) for each application by committing the currently running container
 	});
@@ -178,6 +173,11 @@ self.getPublicPorts = function()
 self.getContainerId = function()
 	{
 	return containerId;
+	}
+
+self.getStreams = function()
+	{
+	return dockerHelper.getStreams();
 	}
 
 }

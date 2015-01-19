@@ -158,11 +158,7 @@ var connectTo = fibrous( function(hostdata, isSsl)
 		{
 		throw Utility.ferror(false, Language.E_CONNECTIONHUB_CONNECTO.p("ConnectionHub::connectTo()"), {":ip": hostdata.ip, ":port": hostdata.port, ":err": err.toString()});
 		}
-<<<<<<< HEAD
-
-=======
-poista sertifikaatti ja avain poistettaessa appia
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
+// poista sertifikaatti ja avain poistettaessa appia
 	return true;
 	});
 

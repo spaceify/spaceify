@@ -29,10 +29,10 @@ self.connect = function(opts)
 	options.default_hostname = opts.default_hostname || null;
 	options.external_dns = options.external_dns || "8.8.8.8";
 
-	serverUDP4 = dns.createServer({dgram_type: "udp4"});
-	serverUDP6 = dns.createServer({dgram_type: "udp6"});
-	//serverTCP4 = dns.createTCPServer({dgram_type: "udp4"});
-	//serverTCP6 = dns.createTCPServer({dgram_type: "udp6"});
+	serverUDP4 = dns.createUDPServer({dgram_type: "udp4"});
+	serverUDP6 = dns.createUDPServer({dgram_type: "udp6"});
+	//serverTCP4 = dns.createTCPServer({dgram_type: "tcp4"});
+	//serverTCP6 = dns.createTCPServer({dgram_type: "tcp6"});
 
 	startServer(serverUDP4, options.port, options.v4_address, "udp4");
 	startServer(serverUDP6, options.port, options.v6_address, "udp6");
@@ -60,9 +60,7 @@ var startServer = function(server, port, address, type)
 		var name = question.name;
 		var type = question.type;
 
-		//console.log("DNS: " + name + " " + dns.consts.qtypeToName(type));
-
-		if(name in options.url2ip /*&& type == 1*/)																		// URLs to local IPs, IPv4 only
+		if(name in options.url2ip)// && type == 1)																		// URLs to local IPs, IPv4 only
 			{
 			response.answer.push(dns.A({
 				name: name,
@@ -73,7 +71,7 @@ var startServer = function(server, port, address, type)
 			response.send();
 			}
 		else
-			makeQuestion(question, response);
+			makeRequest(question, response);
 		});
 
 	server.on("listening", function()
@@ -97,12 +95,13 @@ var startServer = function(server, port, address, type)
 		server.serve(port);
 	}
 
-var makeQuestion = function(question, response)
+var makeRequest = function(question, response)
 	{
 	var req = dns.Request(
 		{
 		question: question,
 		server: { address: options.external_dns, port: 53, type: "udp" },
+		try_edns: true,
 		timeout: 1000/*,
 		cache: false*/
 		});
@@ -147,7 +146,39 @@ var makeQuestion = function(question, response)
 				address: options.default_ip,
 				ttl: options.ttl}));
 			}
-			
+
+		var debug = false;
+		if(debug)
+			{
+			console.log();
+			console.log("QUESTION: " + question.name + " " + dns.consts.qtypeToName(question.type));
+			console.log("ANSWERS: " + response.answer.length);
+			if(response.answer.length > 0)
+				{
+				for(i=0; i<response.answer.length; i++)
+					console.log(" => " + response.answer[i].address + " ttl: " + response.answer[i].ttl);
+				}
+
+			console.log("AUTHORITY: " + response.authority.length);
+			if(response.authority.length > 0)
+				{
+				for(i=0; i<response.authority.length; i++)
+					{
+					var auth = " => ";
+					var obj = response.authority[i];
+					auth += obj.primary + " " + obj. admin + " " + obj.serial + " " + obj.refresh + " " + obj.retry + " " + obj.expiration + " " + obj.minimum;
+					console.log(auth);
+					}
+				}
+
+			console.log("ADDITIONAL: " + response.additional.length);
+			/*if(response.additional.length > 0)
+				{
+				for(i=0; i<response.additional.length; i++)
+					console.log(" => " + response.additional[i].address);
+				}*/
+			}
+
 		response.send();
 		});
 

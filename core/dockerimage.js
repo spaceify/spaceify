@@ -40,7 +40,7 @@ self.stopContainers = fibrous( function(imageId, imageName)
 		}
 	});
 
-self.removeContainers = fibrous( function(imageId, imageName)
+self.removeContainers = fibrous( function(imageId, imageName, streams)
 	{
 	try {
 		self.sync.stopContainers(imageId, imageName);
@@ -59,6 +59,9 @@ self.removeContainers = fibrous( function(imageId, imageName)
 				container.sync.remove(/*{"force": "1"}*/);
 				}
 			});
+
+		if(streams)
+			streams.in.end();
 		}
 	catch(err)
 		{
@@ -69,10 +72,10 @@ self.removeContainers = fibrous( function(imageId, imageName)
 self.removeImage = fibrous( function(imageId, imageName)
 	{
 	try {
-		if(!self.sync.inspect(imageName))											// Image myst exist
+		if(!self.sync.inspect(imageName))											// Image must exist
 			return false;
 
-		self.sync.removeContainers(imageId, imageName);
+		self.sync.removeContainers(imageId, imageName, null);
 
 		var img = docker.getImage(imageId);
 		img.sync.remove();

@@ -33,7 +33,7 @@ self.init = function(container, callback)
 					throw Utility.ferror(false, Language.E_ATTACH_CONTAINER_INPUT.p("DockerHelper::init()"), {":err": err.toString()});
 
 				standardInput = stream;
-				callback(err, stream);
+				callback(err, null);
 				});
 			});
 		}
@@ -43,6 +43,11 @@ self.init = function(container, callback)
 		}
 	}
 
+self.getStreams = function()
+	{
+	return {in: standardInput, out: standardOutput };
+	}
+
 self.executeCommand = function(command, waitedString, callback)
 	{
 	logger.info(Utility.replace(Language.EXECUTE_COMMAND, {":command": command}));
@@ -50,8 +55,7 @@ self.executeCommand = function(command, waitedString, callback)
 	if(callback)															// only wait for data if callback is given                        
 		self.waitForOutput(waitedString, callback);
 
-	//standardInput.socket.setNoDelay(true);
-	var write = standardInput.socket.write(command + "\n", "utf8", function(err, data)
+	var write = standardInput.write(command + "\n", "utf8", function(err, data)
 		{
 		if(err)
 			Utility.ferror(true, Language.E_GENERAL_ERROR.p("DockerHelper::executeCommand()"), {":err": err.toString()});

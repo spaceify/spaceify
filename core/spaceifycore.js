@@ -65,19 +65,15 @@ self.startApplications = fibrous(function()
 self.getServiceMappingsByUniqueName = function(unique_name, service_name)
 	{ // Get spacelets, sandboxed applications or native applications service mappings identified by unique and service name. If service_name is defined return the requested service mapping. Return null if no service mappings or the requested service mapping is not found.
 	// TRY TO FIND SERVICE MAPPINGS FROM SPACELETS, SANDBOXED APPLICATIONS OR NATIVE APPLICATIONS
-	var services = spaceletManager.getByUniqueName(unique_name, "services");
-	if(services == null)
-		services = sandboxedApplicationManager.getByUniqueName(unique_name, "services");
-	/*if(services == null)
-		services = nativeApplicationManager.getByUniqueName(unique_name, "services");*/
+	_find = find("services", unique_name);
 
 	// IS THE REQUESTED SERVICE MAPPING AVAILABLE
-	if(services != null && typeof service_name != "undefined")
+	if(_find.obj != null && typeof service_name != "undefined")
 		{
-		for(s in services)
+		for(s in _find.obj)
 			{
-			if(services[s].service_name == service_name)
-				return services[s];
+			if(_find.obj[s].service_name == service_name)
+				return _find.obj[s];
 			}
 		}
 
@@ -143,19 +139,15 @@ self.registerService = fibrous( function(service_name)
 	var connobj = arguments[arguments.length - 1];										// Connection object is added by spaceify core to the end of parameters
 
 	// ALLOW REGISTRATION ONLY FROM STARTED SPACELETS, SANDBOXED APPLICATIONS AND NATIVE APPLICATIONS - APPLICATION MUST BE UP AND RUNNING BEFORE IT CAN REGISTER SERVICES
-	var app = spaceletManager.findByRemoteAddress(connobj.remoteAddress);
-	if(app == null)
-		app = sandboxedApplicationManager.findByRemoteAddress(connobj.remoteAddress);
-	/*if(app == null)
-		app = nativeApplicationManager.findByRemoteAddress(connobj.remoteAddress);*/
+	_find = find("remote_address", connobj.remoteAddress);
 
-	if(app == null)
+	if(_find.obj == null)
 		throw Utility.ferror(false, Language.E_REGISTER_SERVICE_UNKNOWN_ADDRESS.p("SpaceifyCore::registerService()"), {":address": connobj.remoteAddress});
 
 	// ToDo: Other security considerations before accepting the registration?
 
 	// APPLICATION CAN REGISTER ONLY ITS OWN SERVICES = SERVICE NAME FOUND IN THE SERVICES
-	if(!app.registerService(service_name, true))
+	if(!_find.obj.registerService(service_name, true))
 		throw Utility.ferror(false, Language.E_REGISTER_SERVICE_UNKNOWN_SERVICE_NAME.p("SpaceifyCore::registerService()"), {":name": service_name});
 
 	return true;
@@ -166,19 +158,15 @@ self.unregisterService = fibrous( function(service_name)
 	var connobj = arguments[arguments.length - 1];										// Connection object is added by spaceify core to the end of parameters
 
 	// ALLOW UNREGISTRATION ONLY FROM STARTED SPACELETS, SANDBOXED APPLICATIONS AND NATIVE APPLICATIONS - APPLICATION MUST BE UP AND RUNNING BEFORE IT CAN REGISTER SERVICES
-	var app = spaceletManager.findByRemoteAddress(connobj.remoteAddress);
-	if(app == null)
-		app = sandboxedApplicationManager.findByRemoteAddress(connobj.remoteAddress);
-	/*if(app == null)
-		app = nativeApplicationManager.findByRemoteAddress(connobj.remoteAddress);*/
+	_find = find("remote_address", connobj.remoteAddress);
 
-	if(app == null)
+	if(_find.obj == null)
 		throw Utility.error(false, Language.E_UNREGISTER_SERVICE_UNKNOWN_ADDRESS.p("SpaceifyCore::unregisterService()"), {address: connobj.remoteAddress});
 
 	// ToDo: Other security considerations before accepting the unregistration?
 
 	// APPLICATION CAN UNREGISTER ONLY ITS OWN SERVICES = SERVICE NAME FOUND IN THE SERVICES
-	if(!app.registerService(service_name, false))
+	if(!_find.obj.registerService(service_name, false))
 		throw Utility.error(false, Language.E_UNREGISTER_SERVICE_UNKNOWN_SERVICE_NAME.p("SpaceifyCore::unregisterService()"), {name: service_name});
 
 	return true;
@@ -189,42 +177,40 @@ self.findService = fibrous( function(service_name)
 	var connobj = arguments[arguments.length - 1];										// Connection object is added by spaceify core to the end of parameters
 
 	// TRY TO FIND THE SERVICE
-	var service = spaceletManager.findService(service_name, connobj.remoteAddress);
-	if(service == null)
-		service = sandboxedApplicationManager.findService(service_name, connobj.remoteAddress);
-	/*if(service == null)
-		service = nativeApplicationManager.findService(service_name);*/
+	_find = find("service", {service_name: service_name, ip: connobj.remoteAddress});
 
-	if(service == null)
+	if(_find.obj == null)
 		throw Utility.ferror(false, Language.E_FIND_SERVICE_UNKNOWN.p("SpaceifyCore::findService()"), {":name": service_name});
 
-	if(!service.registered)
+	if(!_find.obj.registered)
 		throw Utility.error(false, Language.E_FIND_SERVICE_UNREGISTERED.p("SpaceifyCore::findService()"));
 
 	// ToDo:
 	// SPACELET, SANDBOXED APPLICATION OR NATIVE APPLICATION CAN ASK SERVICES THAT ARE LISTED IN THEIR MANIFESTS REQUIRED SERVICES?
 	// or anybody can ask any service?
-	/*if(service_type == Const.OPEN_LOCAL)												// UNLESS SERVICE TYPE IS OPEN LOCAL
+	/*if(_find.obj.service_type == Const.OPEN_LOCAL)											// UNLESS SERVICE TYPE IS OPEN_LOCAL
+		{
+		if((client = self.find("remote_address", connobj.remoteAddress)) == null)
+			throw Utility.error(false, Language.E_FIND_SERVICE_UNKNOWN_ADDRESS.p("SpaceifyCore::findService()"));
+
+		// ip not from local source
+		}
+	else if(_find.obj.service_type == Const.STANDARD)
 		{
 		// ToDo: accept without any other checks
-		}
-	else if(service_type == Const.STANDARD)
-		{
-		if((client = findClientByRemoteAddress(connobj.remoteAddress)) == null)
-			throw Utility.error(false, Language.E_FIND_SERVICE_UNKNOWN_ADDRESS.p("SpaceifyCore::findService()"));
 		}*/
 
-	return service;
+	return _find.obj;
 	});
 
 self.initialized = fibrous( function(status, reason)
 	{ // status: true = application (spacelet, sandboxed aplication, native application) initialized itself succesfully, false = application failed to initialize itself
 	var connobj = arguments[arguments.length - 1];										// Connection object is added by spaceify core to the end of parameters
-	
-	if((client = findClientByRemoteAddress(connobj.remoteAddress)) != null)
-		client.manager.initialized(client.application, status);
 
-	if(reason != null)																	// Log reason string
+	if((_find = find("remote_address", connobj.remoteAddress)) != null)
+		_find.manager.initialized(_find.obj, status);
+
+	if(reason != null)																	// Output reason string
 		logger.error(reason);
 
 	return true;
@@ -517,7 +503,7 @@ self.getApplicationData = fibrous(function(unique_name)
 			for(var i=0; i<spacelets.length; i++)
 				{
 				manifest = Utility.sync.loadManifest(Config.SPACELETS_PATH + spacelets[i].unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY + Const.MANIFEST, true, true);
-				manifest.service_mappings = spaceletManager.getByUniqueName(manifest.unique_name, "services");
+				manifest.service_mappings = spaceletManager.find("services", manifest.unique_name);
 				manifest.is_running = spaceletManager.isRunning(manifest.unique_name);
 				app_data.spacelets.push(manifest);
 				}
@@ -526,7 +512,7 @@ self.getApplicationData = fibrous(function(unique_name)
 			for(var i=0; i<sandboxed.length; i++)
 				{
 				manifest = Utility.sync.loadManifest(Config.SANDBOXEDAPPS_PATH + sandboxed[i].unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY + Const.MANIFEST, true, true);
-				manifest.service_mappings = sandboxedApplicationManager.getByUniqueName(manifest.unique_name, "services");
+				manifest.service_mappings = sandboxedApplicationManager.find("services", manifest.unique_name);
 				manifest.is_running = sandboxedApplicationManager.isRunning(manifest.unique_name);
 				app_data.sandboxed.push(manifest);
 				}
@@ -535,7 +521,7 @@ self.getApplicationData = fibrous(function(unique_name)
 			for(var i=0; i<native.length; i++)
 				{
 				manifest = Utility.sync.loadManifest(Config.NATIVEAPPS_PATH + native[i].unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY + Const.MANIFEST, true, true);
-				manifest.service_mappings = nativeApplicationManager.getByUniqueName(manifest.unique_name, "services");
+				manifest.service_mappings = nativeApplicationManager.find("services", manifest.unique_name);
 				manifest.is_running = nativeApplicationManager.isRunning(manifest.unique_name);
 				app_data.native.push(Utility.parseManifest(manifest));
 				}*/
@@ -557,26 +543,24 @@ self.getApplicationData = fibrous(function(unique_name)
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 // PRIVATE  // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-var findClientByRemoteAddress = function(remoteAddress)
+var find = function(_param, _find)
 	{
-	var man = null, app = null;
+	var obj = spaceletManager.find(_param, _find);
+	var man = spaceletManager;
 
-	app = spaceletManager.findByRemoteAddress(remoteAddress);
-	man = spaceletManager;
-
-	if(app == null)
+	if(obj == null)
 		{
-		app = sandboxedApplicationManager.findByRemoteAddress(remoteAddress);
+		obj = sandboxedApplicationManager.find(_param, _find);
 		man = sandboxedApplicationManager;
 		}
 
-	/*if(app == null)
+	/*if(obj == null)
 		{
-		app = nativeApplicationManager.findByRemoteAddress(remoteAddress);
+		obj = nativeApplicationManager.find(_param, _find);
 		man = nativeApplicationManager;
 		}*/
 
-	return (app != null ? {"application": app, "manager": man} : null);
+	return {obj: obj, manager: (obj == null ? null : man)};
 	}
 
 var checkSessionTTL = fibrous( function()

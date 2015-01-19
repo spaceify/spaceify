@@ -175,15 +175,15 @@ var language =
 	"LOGGED_IN_SPACEIFY_NET": "Logged in to spaceify.net - edge_id: :edge_id",
 	"LOGGING_IN_SPACEIFY_NET_FAILED": "Logging in to spaceify.net failed: :result",
 	"LOGGED_OUT_SPACEIFY_NET": "Logged out of spaceify.net",
-	
+
 	// AppManager
-	"TRYING_TO_INSTALL": "Trying to install package :package from :from",
+	"TRYING_TO_GET": "Trying to get package from :from",
 	"TRYING_TO_PUBLISH": "Trying to publish :what",
-	"LOCAL_DIRECTORY": "a local directory.",
-	"LOCAL_ARCHIVE": "a local Zip archive.",
-	"GIT_REPOSITORY": "the GitHub repository.",
-	"REMOTE_ARCHIVE": "a remote Zip archive.",
-	"SPACEIFY_REGISTRY": "the Spaceify registry.",
+	"LOCAL_DIRECTORY": "local directory :package.",
+	"LOCAL_ARCHIVE": "local Zip archive :package.",
+	"GIT_REPOSITORY": "the GitHub repository :package.",
+	"REMOTE_ARCHIVE": "remote Zip archive :package.",
+	"SPACEIFY_REGISTRY": "the Spaceify registry :package.",
 	"DOWNLOADING_GITUHB": "(:pos/:count) Downloading :what (:bytes bytes) from :where",
 	"POSTING_PACKAGE": "Please wait, posting the package to the Spaceify registry.",
 	"PACKAGE_POST_ERROR": "Failed to publish the package.",
@@ -206,6 +206,7 @@ var language =
 	"ALREADY_RUNNING": "Application :app is already running.",
 	"SERVICE_ALREADY_REGISTERED": "Service name :name is already registered by application :app",
 	"PACKAGE_INSTALL_ERROR": "Failed to get the requested package.",
+	"GET_SOURCES_OK": "Application :app@:version source codes are now copied.",
 
 	"REQUIRED_SERVICE_NOT_AVAILABLE": "Required service :name is not registered to the Spaceify core. Because suggested application is not defined Spaceify core can not try to install an application which implements the service. See http://:name for applications that implement the service and install suitable application manually.",
 	"REQUIRED_SERVICE_ALREADY_REGISTERED": "Required service :name is registered by application :app@:version",

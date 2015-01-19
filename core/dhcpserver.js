@@ -63,7 +63,7 @@ var removeLease = function(mac_addr, cb)
 		});
 	}
 
-var saveToFile = function(lease, type)
+self.saveToFile = function(lease, type)
 	{
 	pubSub.open(Config.LEASES_PATH);
 

@@ -18,15 +18,15 @@ var Const = require("./constants");
 var Utility = require("./utility");
 var Language = require("./language");
 var AppManager = require("./appmanager");
-var WebSocketRPCClient = require("./websocketrpcclient");
-var WebSocketRPCServer = require("./websocketrpcserver");
+var appManagerRPCClient = require("./websocketrpcclient");
+var spmRPCServer = require("./websocketrpcserver");
 
 function SPM()
 {
 var self = this;
 
-var webSocketRPCServer = null;
-var websocketRPCClient = null;
+var spmRPCServer = null;
+var appManagerRPCClient = null;
 var appManager = new AppManager();
 
 var INSTALL = "install";
@@ -35,6 +35,7 @@ var START = "start";
 var STOP = "stop";
 var RESTART = "restart";
 var PUBLISH = "publish";
+var SOURCE = "source";
 var LIST = "list";
 var HELP = "help";
 var QUICKHELP = "quickhelp";
@@ -45,10 +46,12 @@ var SANDBOXED = "sandboxed";
 var NATIVE = "native";
 var VERBOSE = "verbose";
 
-var commands = "install|publish|remove|start|stop|restart|list|help";
+var commands = INSTALL+"|"+REMOVE+"|"+START+"|"+STOP+"|"+RESTART+"|"+PUBLISH+"|"+SOURCE+"|"+LIST+"|"+HELP;
 var oper_regex = new RegExp("^(" + commands + ")$");
-var options = "authenticate|certificate|spacelet|sandboxed|native";
+var options = AUTHENTICATE+"|"+CERTIFICATE+"|"+SPACELET+"|"+SANDBOXED+"|"+NATIVE+"|"+VERBOSE;
 var opts_regex = new RegExp("^(" + options + ")$");
+
+
 
 self.start = fibrous( function()
 	{
@@ -58,8 +61,8 @@ self.start = fibrous( function()
 	var certificate = false;
 	var type = [];
 	var verbose = false;
-	var username = null;
-	var password = null;
+	var username = "";
+	var password = "";
 
 	logger.force();
 	logger.force("Spaceify Package Manager v" + Const.SPM_VERSION);
@@ -95,12 +98,12 @@ self.start = fibrous( function()
 			package = process.argv[process.argv.length - 1].trim();								// package is the last argument
 
 		// OPTIONS
-		if((authenticate && command == INSTALL) || command == PUBLISH)
+		if((authenticate && (command == INSTALL || command == SOURCE)) || command == PUBLISH)
 			{
 			var auth_host = "";
 			if(command == INSTALL)
 				auth_host = package;
-			else if(command == PUBLISH)
+			else if(command == PUBLISH || command == SOURCE)
 				auth_host = Config.REGISTRY_HOSTNAME;
 
 			logger.force(Utility.replace(Language.AUTHENTICATION, {":auth_host": auth_host}));
@@ -112,14 +115,16 @@ self.start = fibrous( function()
 		logger.force(Utility.ucfirst(command) + " " + package);
 		logger.force();
 
-		openWebSocketServer.sync();																// Open a WebSocket server for relaying messages from the running AppManager
+		openSPMServer.sync();																	// Open a WebSocket server for relaying messages from the running AppManager
 
-		connectAppManager.sync();																// Try to open a JSON-RPC connection to AppManager
+		connectAppManagerClient.sync();															// Try to open a JSON-RPC connection to the AppManager
 
 		if(command == INSTALL)
 			install.sync(package, username, password, certificate);
 		else if(command == PUBLISH)
 			publish.sync(package, username, password);
+		else if(command == SOURCE)
+			source.sync(package, username, password);
 		else if(command == REMOVE)
 			remove.sync(package);
 		else if(command == START)
@@ -139,50 +144,48 @@ self.start = fibrous( function()
 		}
 	finally
 		{
-		closeAppManager();
-		closeWebSocketServer();
+		closeAppManagerClient();
+		closeSPMServer();
 		}
 	});
 
-var connectAppManager = fibrous( function()
+var connectAppManagerClient = fibrous( function()
 	{
 	try {
-		websocketRPCClient = new WebSocketRPCClient();
-		websocketRPCClient.sync.connect({hostname: null, port: Config.APPMAN_PORT_WEBSOCKET, isSsl: false, persistent: true, owner: "spm"});
+		appManagerRPCClient = new appManagerRPCClient();
+		appManagerRPCClient.sync.connect({hostname: null, port: Config.APPMAN_PORT_WEBSOCKET, isSsl: false, persistent: true, owner: "spm"});
 		}
 	catch(err)
 		{
-		websocketRPCClient = null;
+		appManagerRPCClient = null;
 		}
 	});
 
-var closeAppManager = function()
+var closeAppManagerClient = function()
 	{
-	if(websocketRPCClient)
-		websocketRPCClient.close();
-	websocketRPCClient = null;
+	if(appManagerRPCClient)
+		appManagerRPCClient.close();
+	appManagerRPCClient = null;
 	}
 
-var openWebSocketServer = fibrous( function()
+var openSPMServer = fibrous( function()
 	{
 	try {
-		webSocketRPCServer = new WebSocketRPCServer();
-		webSocketRPCServer.exposeRPCMethod("messages", self, self.messages);
-		webSocketRPCServer.connect.sync({hostname: null, port: Config.SPM_PORT_WEBSOCKET, isSsl: false, owner: "spm"});
+		spmRPCServer = new spmRPCServer();
+		spmRPCServer.exposeRPCMethod("messages", self, self.messages);
+		spmRPCServer.connect.sync({hostname: null, port: Config.SPM_PORT_WEBSOCKET, isSsl: false, owner: "spm"});
 		}
 	catch(err)
 		{
-		webSocketRPCServer = null;
+		spmRPCServer = null;
 		}
 	});
 
-var closeWebSocketServer = function()
+var closeSPMServer = function()
 	{
-	if(webSocketRPCServer != null)
-		{
-		webSocketRPCServer.sync.close();
-		webSocketRPCServer = null;
-		}
+	if(spmRPCServer != null)
+		spmRPCServer.sync.close();
+	spmRPCServer = null;
 	}
 
 self.messages = fibrous( function(message, literal)
@@ -207,16 +210,16 @@ var install = fibrous( function(package, username, password, certificate)
 
 	for(var i=0; i<packages.length; i++)
 		{
-		if(!websocketRPCClient)
-			suga = appManager.sync.installApplication(packages[i] + (versions[i] ? Const.PACKAGE_DELIMITER + versions[i] : ""), (i == 0 ? false : true), username, password, certificate);
+		if(appManagerRPCClient == null)
+			suggested_applications = appManager.sync.installApplication(packages[i] + (versions[i] ? Const.PACKAGE_DELIMITER + versions[i] : ""), (i == 0 ? false : true), username, password, certificate);
 		else
-			suga = websocketRPCClient.sync.call("installApplication", [packages[i], (i == 0 ? false : true), username, password, certificate, true], self);
+			suggested_applications = appManagerRPCClient.sync.call("installApplication", [packages[i], (i == 0 ? false : true), username, password, certificate, true], self);
 
 		logger.force();
 
-		for(var j=0; j<suga.length; j++)
+		for(var j=0; j<suggested_applications.length; j++)
 			{
-			var app = Utility.splitPackageName(suga[j]);
+			var app = Utility.splitPackageName(suggested_applications[j]);
 
 			if(packages.indexOf(app[0]) == -1)										// Install suggested applications only once
 				{
@@ -232,36 +235,41 @@ var publish = fibrous( function(package, username, password)
 	appManager.sync.publishPackage(package, username, password);
 	});
 
+var source = fibrous( function(package, username, password)
+	{
+	appManager.sync.sourceCode(package, username, password);
+	});
+
 var remove = fibrous( function(unique_name)
 	{
-	if(!websocketRPCClient)
+	if(appManagerRPCClient == null)
 		appManager.sync.removeApplication(unique_name);
 	else
-		websocketRPCClient.sync.call("removeApplication", [unique_name, true], self);
+		appManagerRPCClient.sync.call("removeApplication", [unique_name, true], self);
 	});
 
 var start = fibrous( function(unique_name)
 	{
-	if(!websocketRPCClient)
+	if(appManagerRPCClient == null)
 		appManager.sync.startApplication(unique_name);
 	else
-		websocketRPCClient.sync.call("startApplication", [unique_name, true], self);
+		appManagerRPCClient.sync.call("startApplication", [unique_name, true], self);
 	});
 
 var stop = fibrous( function(unique_name)
 	{
-	if(!websocketRPCClient)
+	if(appManagerRPCClient == null)
 		appManager.sync.stopApplication(unique_name);
 	else
-		websocketRPCClient.sync.call("stopApplication", [unique_name, true], self);
+		appManagerRPCClient.sync.call("stopApplication", [unique_name, true], self);
 	});
 
 var restart = fibrous( function(unique_name)
 	{
-	if(!websocketRPCClient)
+	if(appManagerRPCClient == null)
 		appManager.sync.restartApplication(unique_name);
 	else
-		websocketRPCClient.sync.call("restartApplication", [unique_name, true], self);
+		appManagerRPCClient.sync.call("restartApplication", [unique_name, true], self);
 	});
 
 var list = fibrous( function(type, bVerbose)
@@ -271,10 +279,10 @@ var list = fibrous( function(type, bVerbose)
 	var sandboxedHeader = false;
 	var nativeHeader = false;
 
-	if(!websocketRPCClient)
+	if(appManagerRPCClient == null)
 		apps = appManager.sync.listApplications(type);
 	else
-		apps = websocketRPCClient.sync.call("listApplications", [type], self);
+		apps = appManagerRPCClient.sync.call("listApplications", [type], self);
 
 	if(apps.length == 0)
 		logger.force(Language.NO_APPLICATIONS);

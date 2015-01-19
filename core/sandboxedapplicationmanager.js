@@ -142,7 +142,6 @@ self.stopAll = fibrous(function(remove)
 	for(i in sandboxedApplications)
 		{
 		self.sync.stop(sandboxedApplications[i]);
-
 		if(remove)
 			delete sandboxedApplications[i];
 		}
@@ -150,15 +149,12 @@ self.stopAll = fibrous(function(remove)
 
 self.stopByUniqueName = fibrous(function(unique_name, remove)
 	{
-	for(i in sandboxedApplications)
+	sandboxedApplication = self.find("unique_name", unique_name);
+	if(sandboxedApplication)
 		{
-		if(sandboxedApplications[i].getUniqueName() == unique_name)
-			{
-			self.sync.stop(sandboxedApplications[i]);
-
-			if(remove)
-				delete sandboxedApplications[i];
-			}
+		self.sync.stop(sandboxedApplication);
+		if(remove)
+			delete sandboxedApplication;
 		}
 	});
 
@@ -187,65 +183,8 @@ self.remove = function(sandboxedApplication)
 
 self.isRunning = function(unique_name)
 	{
-	var app = findByUniqueName(unique_name);
+	var app = self.find("unique_name", unique_name);
 	return (app ? app.isRunning() : false);
-	}
-
-self.findByRemoteAddress = function(ip)
-	{
-	for(i in sandboxedApplications)
-		{
-		var dc = sandboxedApplications[i].getDockerContainer();
-
-		if(dc != null && dc.getIpAddress() == ip)
-			return sandboxedApplications[i];
-		}
-
-	return null;
-	}
-
-self.findService = function(service_name, ip)
-	{
-	for(i in sandboxedApplications)
-		{
-		var service = sandboxedApplications[i].getService(service_name);
-
-		if(service != null && service.ip == ip && (service_name == Const.CLIENT_HTTP_SERVER || service_name == Const.CLIENT_HTTPS_SERVER))	// Application can find its own http(s) services
-			return service;		
-		else if(service != null)
-			return service;
-		}
-
-	return null;
-	}
-
-self.getByUniqueName = function(unique_name, parameter)
-	{ // Get requested parameter of an application identified by unique_name.
-	unique_name = unique_name.toLowerCase();
-
-	for(i in sandboxedApplications)
-		{
-		if(sandboxedApplications[i].getUniqueName() == unique_name)
-			{
-			if(parameter == "services")
-				return sandboxedApplications[i].getServiceMappings();
-			else if(parameter == "path")
-				return sandboxedApplications[i].getInstallationPath();
-			}
-		}
-
-	return null;
-	}
-
-var findByUniqueName = function(unique_name)
-	{
-	for(i in sandboxedApplications)
-		{
-		if(sandboxedApplications[i].getUniqueName() == unique_name)
-			return sandboxedApplications[i];
-		}
-
-	return null;
 	}
 
 self.initialized = function(sandboxedApplication, success)
@@ -254,6 +193,43 @@ self.initialized = function(sandboxedApplication, success)
 
 	if((dc = sandboxedApplication.getDockerContainer()) != null)
 		dc.sendClientReadyToStdIn();
+	}
+
+self.find = function(_param, _find)
+	{ // Find based on _param and _find object
+	unique_name = _param.toLowerCase();
+
+	for(i in sandboxedApplications)
+		{
+		var unique_name = sandboxedApplications[i].getUniqueName();
+
+		if(_param == "path" && _find == unique_name)
+			return sandboxedApplications[i].getInstallationPath();
+		else if(_param == "unique_name" && _find == unique_name)
+			return sandboxedApplications[i];
+		else if(_param == "services" && _find == unique_name)
+			return sandboxedApplications[i].getServiceMappings();
+		else if(_param == "service")
+			{
+			var service = sandboxedApplications[i].getService(_find.service_name);
+			if(service != null || (service != null && service.ip == _find.ip && (_find.service_name == Const.CLIENT_HTTP_SERVER || _find.service_name == Const.CLIENT_HTTPS_SERVER)))	// Application can find its own http(s) services
+				return service;
+			}
+		else if(_param == "remote_address")
+			{
+			var dc = sandboxedApplications[i].getDockerContainer();
+			if(dc != null && dc.getIpAddress() == _find)
+				return sandboxedApplications[i];
+			}
+		else if(_param == "streams")
+			{
+			var dc = sandboxedApplications[i].getDockerContainer();
+			if(dc != null && dc.getContainerId() == _find)
+				return dc.getStreams();
+			}
+		}
+
+	return null;
 	}
 
 }

@@ -38,7 +38,7 @@ self.start = function(unique_name, callback)
 		isStarting = true;
 
 		try {
-			var fspacelet = findByUniqueName(unique_name);								// Spacelet by this unique name alredy exists?
+			var fspacelet = self.find("unique_name", unique_name);						// Spacelet by this unique name alredy exists?
 
 			/*
 			// SHARE SPACELET OR START A NEW
@@ -157,7 +157,6 @@ self.stopAll = fibrous(function(remove)
 	for(i in spacelets)
 		{
 		self.sync.stop(spacelets[i]);
-
 		if(remove)
 			delete spacelets[i];
 		}
@@ -165,15 +164,12 @@ self.stopAll = fibrous(function(remove)
 
 self.stopByUniqueName = fibrous(function(unique_name, remove)
 	{
-	for(i in spacelets)
+	spacelet = self.find("unique_name", unique_name);
+	if(spacelet)
 		{
-		if(spacelets[i].getUniqueName() == unique_name)
-			{
-			self.sync.stop(spacelets[i]);
-
-			if(remove)
-				delete spacelets[i];
-			}
+		self.sync.stop(spacelet);
+		if(remove)
+			delete spacelet;
 		}
 	});
 
@@ -202,65 +198,8 @@ var remove = function(spacelet)
 
 self.isRunning = function(unique_name)
 	{
-	var spacelet = findByUniqueName(unique_name);
+	var spacelet = self.find("unique_name", unique_name);
 	return (spacelet ? spacelet.isRunning() : false);
-	}
-
-self.findByRemoteAddress = function(ip)
-	{
-	for(i in spacelets)
-		{
-		var dc = spacelets[i].getDockerContainer();
-
-		if(dc != null && dc.getIpAddress() == ip)
-			return spacelets[i];
-		}
-
-	return null;
-	}
-
-self.findService = function(service_name, ip)
-	{
-	for(i in spacelets)
-		{
-		var service = spacelets[i].getService(service_name);
-
-		if(service != null && service.ip == ip && (service_name == Const.CLIENT_HTTP_SERVER || service_name == Const.CLIENT_HTTPS_SERVER))	// Application can find its own http(s) services
-			return service;		
-		else if(service != null)
-			return service;
-		}
-
-	return null;
-	}
-
-self.getByUniqueName = function(unique_name, parameter)
-	{ // Get requested parameter of a spacelet identified by unique_name
-	unique_name = unique_name.toLowerCase();
-
-	for(i in spacelets)
-		{
-		if(spacelets[i].getUniqueName() == unique_name)
-			{
-			if(parameter == "services")
-				return spacelets[i].getServiceMappings();
-			else if(parameter == "path")
-				return spacelets[i].getInstallationPath();
-			}
-		}
-
-	return null;
-	}
-
-var findByUniqueName = function(unique_name)
-	{
-	for(i in spacelets)
-		{
-		if(spacelets[i].getUniqueName() == unique_name)
-			return spacelets[i];
-		}
-
-	return null;
 	}
 
 self.initialized = function(spacelet, success)
@@ -269,6 +208,43 @@ self.initialized = function(spacelet, success)
 
 	if((dc = spacelet.getDockerContainer()) != null)
 		dc.sendClientReadyToStdIn();
+	}
+
+self.find = function(_param, _find)
+	{ // Find based on _param and _find object
+	unique_name = _param.toLowerCase();
+
+	for(i in spacelets)
+		{
+		var unique_name = spacelets[i].getUniqueName();
+
+		if(_param == "path" && _find == unique_name)
+			return spacelets[i].getInstallationPath();
+		else if(_param == "unique_name" && _find == unique_name)
+			return spacelets[i];
+		else if(_param == "services" && _find == unique_name)
+			return spacelets[i].getServiceMappings();
+		else if(_param == "service")
+			{
+			var service = spacelets[i].getService(_find.service_name);
+			if(service != null || (service != null && service.ip == _find.ip && (_find.service_name == Const.CLIENT_HTTP_SERVER || _find.service_name == Const.CLIENT_HTTPS_SERVER)))	// Application can find its own http(s) services
+				return service;
+			}
+		else if(_param == "remote_address")
+			{
+			var dc = spacelets[i].getDockerContainer();
+			if(dc != null && dc.getIpAddress() == _find)
+				return spacelets[i];
+			}
+		else if(_param == "streams")
+			{
+			var dc = spacelets[i].getDockerContainer();
+			if(dc != null && dc.getContainerId() == _find)
+				return dc.getStreams();
+			}
+		}
+
+	return null;
 	}
 
 }

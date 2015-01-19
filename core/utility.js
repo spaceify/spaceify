@@ -41,13 +41,13 @@ self.loadRemoteFile = fibrous( function(fileUrl)
 	return result;
 	});
 
-self.loadRemoteFileToLocalFile = fibrous( function(fileUrl, targetFileName, bThrows) 
+self.loadRemoteFileToLocalFile = fibrous( function(fileUrl, targetDir, targetFile, bThrows) 
 	{
 	try {
 		var result = self.sync.loadRemoteFile(fileUrl);
 
 		if(result.statusCode == 200)
-			fs.sync.writeFile(targetFileName, result.body);
+			self.sync.writeFile(targetDir, targetFile, result.body);
 
 		return true;
 		}
@@ -62,7 +62,7 @@ self.loadRemoteFileToLocalFile = fibrous( function(fileUrl, targetFileName, bThr
 
 self.isLocalFile = fibrous( function(filepath)
 	{
-console.log(__dirname);
+//console.log(__dirname);
 	try {
 		var fd = fs.sync.open(filepath, "r");
 		fs.sync.close(fd);
@@ -113,34 +113,34 @@ self.deleteDirectory = fibrous( function(source, bThrows)						// Recursively de
 		}
 	});
 
-self.copyDirectory = fibrous( function(source, target, bThrows)					// Recursively copy source directory content to target directory.
-	{
+self.copyDirectory = fibrous( function(source, target, bThrows)
+	{ // Recursively copy source directory content to target directory.
 	try {
 		var stats = fs.sync.stat(source);
-		if(typeof stats != "undefined" && stats.isDirectory())
+		if(typeof stats == "undefined" || !stats.isDirectory()) return;
+
+		var mode = parseInt("0" + (stats.mode & 0777).toString(8), 8);
+
+		mkdirp.sync(target, mode);
+
+		fs.sync.readdir(source).forEach(function(file, index)
 			{
-			var mode = parseInt("0" + (stats.mode & 0777).toString(8), 8);
-			mkdirp.sync(target, mode);
+			var sourcePath = source + file;
+			var targetPath = target + file;
 
-			fs.sync.readdir(source).forEach(function(file, index)
+			stats = fs.sync.stat(sourcePath);
+			if(stats.isDirectory())
 				{
-				var sourcePath = source + file;
-				var targetPath = target + file;
-
-				stats = fs.sync.stat(sourcePath);
-				if(stats.isDirectory())
-					{
-					self.sync.copyDirectory(sourcePath + "/", targetPath + "/", bThrows);
-					}
-				else
-					{
-					mode = parseInt("0" + (stats.mode & 0777).toString(8), 8);
-					var readStream = fs.createReadStream(sourcePath, {"autoClose": true});
-					var writeStream = fs.createWriteStream(targetPath, {"mode": mode});
-					readStream.pipe(writeStream);
-					}
-				});
-			}
+				self.sync.copyDirectory(sourcePath + "/", targetPath + "/", bThrows);
+				}
+			else
+				{
+				mode = parseInt("0" + (stats.mode & 0777).toString(8), 8);
+				var readStream = fs.createReadStream(sourcePath, {"autoClose": true});
+				var writeStream = fs.createWriteStream(targetPath, {"mode": mode});
+				readStream.pipe(writeStream);
+				}
+			});
 		}
 	catch(err)
 		{
@@ -150,7 +150,7 @@ self.copyDirectory = fibrous( function(source, target, bThrows)					// Recursive
 	});
 
 self.moveDirectory = fibrous( function(source, target, bThrows)
-{
+	{
 	try {
 		self.sync.copyDirectory(source, target, true);
 		self.sync.deleteDirectory(source, true);
@@ -160,7 +160,7 @@ self.moveDirectory = fibrous( function(source, target, bThrows)
 		if(bThrows)
 			throw err;
 		}
-});
+	});
 
 self.deleteFile = fibrous( function(source, bThrows)
 	{
@@ -208,29 +208,68 @@ self.moveFile = fibrous( function(sourceFile, targetFile, bThrows)
 		}
 });
 
-self.zipDirectory = fibrous( function(source, target, zipfile)			// Recursively add files to a zip archive
+self.zipDirectory = fibrous( function(source, target, zipfile)			// Recursively add files to the zip archive zipfile
 	{
 	try {
 		var stats = fs.sync.stat(source);
-		if(typeof stats != "undefined" && stats.isDirectory())
-			{
-			var zipFile = new zipper(zipfile);
+		if(typeof stats == "undefined" || !stats.isDirectory()) return;
 
-			fs.sync.readdir(source).forEach(function(file, index)
-				{
-				var sourcePath = source + file;
-				var targetPath = target + (target != "" ? "/" : "") + file;
-				if(fs.sync.stat(sourcePath).isDirectory())
-					self.sync.zipDirectory(sourcePath + "/", targetPath, zipfile);
-				else
-					zipFile.sync.addFile(sourcePath, targetPath);
-				});
-			}
+		var zipa = new zipper(zipfile);
+
+		fs.sync.readdir(source).forEach(function(file, index)
+			{
+			var sourcePath = source + file;
+			var targetPath = target + (target != "" ? "/" : "") + file;
+			if(fs.sync.stat(sourcePath).isDirectory())
+				self.sync.zipDirectory(sourcePath + "/", targetPath, zipfile);
+			else
+				zipa.sync.addFile(sourcePath, targetPath);
+			});
 		}
 	catch(err)
 		{
 		throw err;
 		}
+	});
+
+self.getFileFromZip = function(zipFilename, filename, extractPath, deleteAfter)
+	{ // Get a text file from a zip file. Extracts file to the extractPath if path is defined. Deletes archive if requested.
+	var regex = new RegExp(filename + "$", "i");
+	var zip = new AdmZip(zipFilename);
+	var zipEntries = zip.getEntries();
+	for(ze in zipEntries)
+		{
+		if(zipEntries[ze].entryName.search(regex) != -1)
+			{
+			if(extractPath)
+				zip.extractAllTo(extractPath, true);
+
+			return zip.readAsText(zipEntries[ze].entryName);
+			}
+		}
+
+	if(deleteAfter)
+		self.sync.deleteFile(zipFilename);
+	
+	return null;
+	}
+
+self.unZip = function(zipFilename, extractPath, deleteAfter)
+	{ // Extracts archive to extractPath. Deletes archive if requested.
+	var zip = new AdmZip(zipFilename);
+	zip.extractAllTo(extractPath, true);
+
+	if(deleteAfter)
+		self.sync.deleteFile(zipFilename);
+
+	return null;
+	}
+
+self.writeFile = fibrous( function(targetDir, targetFile, data)
+	{
+	mkdirp.sync(targetDir);
+
+	fs.sync.writeFile(targetDir + targetFile, data);
 	});
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -478,25 +517,6 @@ var checkInjectFilesArray = function(iarr)
 		}
 
 	return true;
-	}
-
-self.getFileFromZip = function(zipFilename, filename, extractPath)
-	{ // Get a text file from a zip file. Extracts file to the extractPath if filename is found from the zipfile. Returns the file as text.
-	var regex = new RegExp(filename + "$", "i");
-	var zip = new AdmZip(zipFilename);
-	var zipEntries = zip.getEntries();
-	for(ze in zipEntries)
-		{
-		if(zipEntries[ze].entryName.search(regex) != -1)
-			{
-			if(extractPath)
-				zip.extractAllTo(extractPath, true);
-
-			return zip.readAsText(zipEntries[ze].entryName);
-			}
-		}
-
-	return null;
 	}
 
 self.makeCertName = function(unique_name)

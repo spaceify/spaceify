@@ -26,7 +26,7 @@ module.exports = function()
 	"WWW_DIRECTORY": "www/",
 	"WWW_PATH": dirname + "/www/",
 
-	"WORK_PATH": "/tmp/",
+	"WORK_PATH": "/tmp/packet/",
 
 	"LOCAL_TEMPLATE_PATH": dirname + "/www/templates/",
 	"LOCAL_LANGUAGE_PATH": dirname + "/www/languages/",

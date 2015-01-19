@@ -122,7 +122,7 @@ self.close = fibrous( function()
 	if(wsServer)
 		{
 		logger.info(Utility.replace(Language.WEBSOCKET_CLOSING, {":owner": options.owner, ":class": options.class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port, ":subprotocol": "json-rpc"}));
-		
+
 		wsServer.shutDown();
 		wsServer = null;
 		}

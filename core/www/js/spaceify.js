@@ -50,11 +50,7 @@ self.isSecure = function()
 	return (protocol == "http" ? false : true);
 	}
 
-self.getString = function(str)
-	{
-	return (csmarty != null ? csmarty.getConfig(str) : "");
-	}
-self.getConfig = function(str)
+self.getString = self.getConfig = function(str)
 	{
 	return (csmarty != null ? csmarty.getConfig(str) : "");
 	}
@@ -289,6 +285,21 @@ var renderTile = function(manifest, id)
 		{
 		spaceify.load($SN.getEdgeURL() + "/templates/app_tile.tpl", function(err, data)
 			{
+			var image = $SN.getEdgeURL() + "/images/dicon.png";											// Show default image or applcations custom image
+			if(manifest.images)
+				{
+				for(var i=0; i<manifest.images.length; i++)
+					{
+					if(manifest.images[i].name.search("/^(icon\.)/i" != -1))
+						{
+						image = $SN.getEdgeURL() + (manifest.images[i].directory ? manifest.images[i].directory : "") + "/images/" + manifest.images[i].name;
+						image += "?type=" + manifest.type + "&app=" + manifest.unique_name;
+						}
+					}
+				}
+
+			var developer = (manifest.developer ? manifest.developer.name : null);
+
 			var tpl = spaceify.newjSmart(data);
 			var content = tpl.fetch({	name: manifest.name,
 										unique_name: manifest.unique_name,
@@ -296,6 +307,8 @@ var renderTile = function(manifest, id)
 										version: manifest.version,
 										category: manifest.category,
 										edge_hostname: EDGE_HOSTNAME,
+										image: image,
+										developer: developer,
 										protocol: spaceify.getProtocol(),
 										imgOrdinal: ordinal++,
 										options: (/*manifest.is_running && */bOptions && bSessionId)
@@ -319,9 +332,6 @@ self.showOptionsDialog = function(unique_name)
 		else
 			{
 			$("#optionsFrame").attr("src", "about:blank");														// Reset old data
-			$("#optionsTitle").empty();
-
-			$("#optionsTitle").append($.parseHTML(spaceify.getString("options") + unique_name));				// New title
 
 			$("#popUpBG").css("display", "block");																// Show popup
 			$("#optionsPopUp").css("display", "block");
@@ -340,28 +350,14 @@ self.closeOptionsDialog = function()
 	$("#optionsPopUp").css("display", "none");
 	$("#popUpBG").css("display", "none");
 
-	$("#optionsTitle").empty();
 	$("#optionsFrame").attr("src", "about:blank");
 
 	return false;
 	}
 
-self.applyOptions = function()
-	{
-	$("#optionsFrame")[0].contentWindow.applyOptions();
-	}
-self.saveOptions = function()
-	{
-	$("#optionsFrame")[0].contentWindow.saveOptions();
-	}
-self.closeOptions = function()
-	{
-	$("#optionsFrame")[0].contentWindow.closeOptions();
-	}
-
 self.resizeOptionsDialog = function()
 	{
-	$("#optionsFrame").height($("#optionsPopUp").height() - $("#optionsTitleBar").height() - $("#optionsControlBar").height() - 2);	// Set size, subtract the bars + borders from the total height
+	$("#optionsFrame").height($("#optionsPopUp").height() - 2);	// Set size, subtract borders from the total height
 	}
 
 }

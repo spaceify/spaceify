@@ -17,6 +17,7 @@ dnsserver.connect({ port: Config.DNS_PORT,						// The port and address to liste
 					url2ip: url2ip,								// Redirects URLs to IPs
 					default_ip: Config.EDGE_IP,					// If DNS fails return the default URL and address
 					default_hostname: Config.EDGE_HOSTNAME,
-					external_dns: Config.EDGE_IP,				// For making DNS questions from external server, use local IP if local resolv.conf adress(es) is used
-					ttl: 600									// Time To Live period the clients should cache the returned answers
+					external_dns: "8.8.8.8",					// For making DNS questions from external server, use local IP if local resolv.conf adress(es) is used
+					ttl: 600,									// Time To Live period the clients should cache the returned answers,
+					subnet: Config.EDGE_SUBNET					// 
 					});

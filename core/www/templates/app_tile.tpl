@@ -1,10 +1,15 @@
 <div class="edgeTile">
 
+	<div class="edgeTileImage">
+		<img width="128" height="128" src="{#PX#}" title="{#options_title#|replace:'%':$name}" onload="$SR.loadImage(this, '{$image}');">
+	</div>
+
 	<div class="edgeTileInfo">
 		<div class="edgeTileInfoTitle spacer">{$name}</div>
 
 		<div class="edgeTileInfoItem">{#version#}{$version}</div>
-		<div class="edgeTileInfoItem">{$type|truncate:'_'|capitalize}</div>
+		<!--<div class="edgeTileInfoItem">{$type|truncate:'_'|capitalize}</div>-->
+		
 		<div class="edgeTileInfoItem">{$category|capitalize}</div>
 	</div>
 

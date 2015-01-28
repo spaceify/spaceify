@@ -7,11 +7,13 @@
 
 var dns = require("native-dns");
 var Config = require("./config")();
+var Netmask = require('netmask').Netmask
 
 function DNSServer()
 {
 var self = this;
 
+var debug = false;
 var options = {};
 var serverUDP4 = null;
 var serverUDP6 = null;
@@ -27,7 +29,8 @@ self.connect = function(opts)
 	options.ttl = opts.ttl || 0;
 	options.default_ip = opts.default_ip || null;
 	options.default_hostname = opts.default_hostname || null;
-	options.external_dns = options.external_dns || "8.8.8.8";
+	options.external_dns = opts.external_dns || "8.8.8.8";
+	options.subnet = opts.subnet || Config.EDGE_SUBNET;
 
 	serverUDP4 = dns.createUDPServer({dgram_type: "udp4"});
 	serverUDP6 = dns.createUDPServer({dgram_type: "udp6"});
@@ -59,34 +62,28 @@ var startServer = function(server, port, address, type)
 		var question = request.question[0];
 		var name = question.name;
 		var type = question.type;
-
-		if(name in options.url2ip)// && type == 1)																		// URLs to local IPs, IPv4 only
-			{
-			response.answer.push(dns.A({
-				name: name,
-				type: type,
-				class: 1,
-				ttl: options.url2ip[name].ttl,
-				address: options.url2ip[name].ip}));
-			response.send();
-			}
+		if(name in options.url2ip)																	// Redirect URLs to IPs
+			sendLocalURL(response, name, type, 1, options.url2ip[name].ttl, options.url2ip[name].ip);
 		else
 			makeRequest(question, response);
 		});
 
 	server.on("listening", function()
 		{
-		console.log("DNS " + type + " server is listening at " + address + ":" + port);
+		if(debug)
+			console.log("DNS " + type + " server is listening at " + address + ":" + port);
 		});
 
 	server.on("error", function(err, buff, req, res)
 		{
-		console.log(err.stack);
+		if(debug)
+			console.log(err.stack);
 		});
 
 	server.on("socketError", function(err, socket)
 		{
-		console.log(err.stack);
+		if(debug)
+			console.log(err.stack);
 		});
 
 	if(address)
@@ -147,7 +144,6 @@ var makeRequest = function(question, response)
 				ttl: options.ttl}));
 			}
 
-		var debug = false;
 		if(debug)
 			{
 			console.log();
@@ -193,6 +189,17 @@ var makeRequest = function(question, response)
 		});
 
 	req.send();
+	}
+
+var sendLocalURL = function(response, name, type, dclass, ttl, address)
+	{
+	response.answer.push(dns.A({
+		name: name,
+		type: type,
+		class: dclass,
+		ttl: ttl,
+		address: address}));
+	response.send();
 	}
 
 }

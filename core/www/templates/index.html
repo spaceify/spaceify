@@ -13,6 +13,9 @@
 
 				spaceify.showInstalledApplications();												// Show all the installed applications in categories
 				});
+
+			var dtags = [{ id: "imgLogo", context: document, src: "images/logo.png" }];
+			$SR.loadResources(dtags, function() {});
 			}
 
 		window.addEventListener("resize", function()
@@ -26,22 +29,15 @@
 
 {{if splash}}
 
+	<img id="imgLogo" alt="Spaceify">
+	<br>
+	
 	${kiwiLanguage.splash_welcome}
 	<br><br>
 
-	${kiwiLanguage.splash_termsofuse}
+	${kiwiLanguage.splash_info}
 	<br><br>
-
-	${kiwiLanguage.splash_privacypolicy}
-	<br><br>
-
-	<hr style="width: 100%">
-
-	<b>${kiwiLanguage.splash_accept_text}</b>
-	<br><br>
-	<b>${kiwiLanguage.splash_certficate_text}</b>
-	<br><br>
-
+	
 	<div class="actions" id="actions"></div>
 	<button type="button" id="accept" class="button default" onclick="spaceify.setSplashAccepted();" style="width: 200px; height: 35px;">${kiwiLanguage.splash_accept_action}</button>
 	<button type="button" id="certificate" class="button default" onclick="spaceify.loadCertificate();" style="width: 200px; height: 35px;">${kiwiLanguage.splash_certificate_action}</button>
@@ -58,44 +54,17 @@
 	<div class="tiles" id="native_applications"></div>
 	<div style="clear: both"></div>
 
+	<!--
 	<div class="tiles" style="display: block" id="admin_tools">
 		<h4>${kiwiLanguage.admin_tools}</h4>
 		<div id="adminLogIn"></div>
 	</div>
+	-->
 
 {{/if}}
 
 	<div class="edgeOptionsPopUp" id="optionsPopUp">															{{# Options div/iframe }}
-		<div class="edgeOptionsTitleBar" id="optionsTitleBar">
-			<div class="edgeOptionsTitle" id="optionsTitle"></div>
-			<div class="edgeOptionsClose"><a href="#" title="${kiwiLanguage.close_title}" onclick="return spaceify.closeOptions();"><img src="images/close.png" width="32" height="32"></a></div>
-		</div>
-
 		<iframe class="edgeOptionsFrame" id="optionsFrame" frameborder="0" marginheight="0" src="about:blank"></iframe>
-
-		<div class="edgeOptionsControlBar" id="optionsControlBar">
-
-			<div style="float: right;">
-				<a href="#" class="edgeButtonLink" title="${kiwiLanguage.apply_title}" onclick="return spaceify.applyOptions();">
-					<div class="edgeButton" style="width: 90px;">
-						${kiwiLanguage.apply}
-					</div>
-				</a>
-
-				<a href="#" class="edgeButtonLink" title="${kiwiLanguage.save_title}"onclick="return spaceify.saveOptions();">
-					<div class="edgeButton" style="width: 90px;">
-						${kiwiLanguage.save}
-					</div>
-				</a>
-
-				<a href="#" class="edgeButtonLink" title="${kiwiLanguage.close_title}" onclick="return spaceify.closeOptions();">
-					<div class="edgeButton" style="width: 90px;">
-						${kiwiLanguage.close}
-					</div>
-				</a>
-			</div>
-
-		</div>
 	</div>
 
 {{/block}}

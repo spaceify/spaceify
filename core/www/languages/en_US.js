@@ -21,16 +21,10 @@ var sections =
 		{
 		// index - Splash pages
 		"splash_welcome": "Welcome to Spaceify powered wireless network.",
-		"splash_termsofuse": "<Insert Terms of use here>",
-		"splash_privacypolicy": "<Insert Privacy policy here>",
-
-		"splash_accept_text": "Click 'Accept' button if you agree with the Terms of use and Privacy policy.",
-		"splash_certficate_text": "Click 'Install certificate' button if you want to load and install the Spaceify CA root certificate to your list of trusted certificates.",
+		"splash_info": "1. Insert Terms of use, privacy policy or anything here for your splash page. See index.html for details of how this page is generated and how to customize it for your purposes. 2. Add 'Accept' button for your site. Users can continue only if they agree with the rules of your edge node. 3. Add 'Install certificate' button. Allow user to load and install the Spaceify CA root certificate to their list of trusted certificates. Encrypted pages can be loaded only if the certificate is installed.",
 
 		"splash_accept_action": "Accept",
 		"splash_certificate_action": "Install certificate",
-
-		"splash_redirecting": "Please wait, redirecting to '%1'.",
 
 		// index - Normal page
 		"title": "Welcome to Spaceify",
@@ -42,20 +36,12 @@ var sections =
 		"logout": "Log Out",
 
 		"spacelets": "Spacelets",
-		"sandboxed_applications": "Sandboxed",
+		"sandboxed_applications": "Applications",
 		"native_applications": "Native",
 		"admin_tools": "Administration",
 
 		"version": "v",
 		"options_title": "Show options dialog for %",
-
-		"options": "Options&nbsp;-&nbsp;",
-		"apply": "Apply",
-		"apply_title": "Saves the options and applies them to use",
-		"save": "Save",
-		"save_title": "Saves the options but doesn't apply them to use",
-		"close": "Close",
-		"close_title": "Close the options dialog"
 		},
 
 	"404":

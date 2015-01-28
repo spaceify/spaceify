@@ -18,8 +18,8 @@ var Const = require("./constants");
 var Utility = require("./utility");
 var Language = require("./language");
 var AppManager = require("./appmanager");
-var appManagerRPCClient = require("./websocketrpcclient");
-var spmRPCServer = require("./websocketrpcserver");
+var AppManagerRPCClient = require("./websocketrpcclient");
+var SpmRPCServer = require("./websocketrpcserver");
 
 function SPM()
 {
@@ -50,8 +50,6 @@ var commands = INSTALL+"|"+REMOVE+"|"+START+"|"+STOP+"|"+RESTART+"|"+PUBLISH+"|"
 var oper_regex = new RegExp("^(" + commands + ")$");
 var options = AUTHENTICATE+"|"+CERTIFICATE+"|"+SPACELET+"|"+SANDBOXED+"|"+NATIVE+"|"+VERBOSE;
 var opts_regex = new RegExp("^(" + options + ")$");
-
-
 
 self.start = fibrous( function()
 	{
@@ -152,7 +150,7 @@ self.start = fibrous( function()
 var connectAppManagerClient = fibrous( function()
 	{
 	try {
-		appManagerRPCClient = new appManagerRPCClient();
+		appManagerRPCClient = new AppManagerRPCClient();
 		appManagerRPCClient.sync.connect({hostname: null, port: Config.APPMAN_PORT_WEBSOCKET, isSsl: false, persistent: true, owner: "spm"});
 		}
 	catch(err)
@@ -171,7 +169,7 @@ var closeAppManagerClient = function()
 var openSPMServer = fibrous( function()
 	{
 	try {
-		spmRPCServer = new spmRPCServer();
+		spmRPCServer = new SpmRPCServer();
 		spmRPCServer.exposeRPCMethod("messages", self, self.messages);
 		spmRPCServer.connect.sync({hostname: null, port: Config.SPM_PORT_WEBSOCKET, isSsl: false, owner: "spm"});
 		}

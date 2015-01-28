@@ -14,9 +14,9 @@ core/sandboxedapps/readme.txt var/lib/spaceify/sandboxedapps
 
 core/www/* var/lib/spaceify/www/
 
-core/CHANGELOG var/lib/spaceify
-core/LICENSE var/lib/spaceify
-core/README.md var/lib/spaceify
+CHANGELOG var/lib/spaceify
+LICENSE var/lib/spaceify
+README.md var/lib/spaceify
 core/package.json var/lib/spaceify
 
 core/docs/spm.help var/lib/spaceify/docs

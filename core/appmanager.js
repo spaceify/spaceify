@@ -419,7 +419,7 @@ self.publishPackage = fibrous( function(package, username, password)
 		// 1. try local directory <package>
 		if(Utility.sync.isLocalDirectory(package))
 			{
-			messages.sync(Utility.replace(Language.TRYING_TO_PUBLISH, {":what": Language.LOCAL_DIRECTORY}));
+			messages.sync(Utility.replace(Language.TRYING_TO_PUBLISH, {":what": Language.LOCAL_DIRECTORY, ":package": package, }));
 
 			mkdirp.sync(Config.WORK_PATH, 0777);
 			Utility.sync.zipDirectory(package, "", Config.WORK_PATH + Const.PUBLISHZIP);
@@ -428,7 +428,7 @@ self.publishPackage = fibrous( function(package, username, password)
 		// 2. try local <package>.zip
 		else if(Utility.sync.isLocalFile(package) && package.search(/\.zip$/i) != -1)
 			{
-			messages.sync(Utility.replace(Language.TRYING_TO_PUBLISH, {":what": Language.LOCAL_ARCHIVE}));
+			messages.sync(Utility.replace(Language.TRYING_TO_PUBLISH, {":what": Language.LOCAL_ARCHIVE, ":package": package}));
 			}
 		// Else fail
 		else

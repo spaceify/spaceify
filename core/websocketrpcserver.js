@@ -260,7 +260,7 @@ var onMessage = function(message, connection)
 					}
 				catch(err)
 					{
-					err = Utility.error(true, /*Language.RPC_EXECUTE_EXCEPTION.p("WebSocketRPCServer::onMessage()"),*/ err);
+					Utility.printErrors(err);
 
 					if(reqa[r].id != null)
 						rspa.push({"jsonrpc": "2.0", "error": err, "id": reqa[r].id});

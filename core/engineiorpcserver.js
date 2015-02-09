@@ -50,6 +50,7 @@ self.connect = function(opts, callback)
 		{
 		webServer = http.createServer( function(request, response)
 			{
+console.log("Hello non ssl");
 			response.writeHead(501);
 			response.end("Not implemented");
 			});
@@ -58,6 +59,7 @@ self.connect = function(opts, callback)
 		{
 		webServer = https.createServer({ key: options.sslKey, cert: options.sslCert, secureProtocol: "SSLv3_method" }, function(request, response)
 			{
+console.log("Hello ssl");
 			response.writeHead(501);
 			response.end("Not implemented");
 			});
@@ -65,11 +67,13 @@ self.connect = function(opts, callback)
 
 	webServer.listen(options.port, options.hostname, 511, function()
 		{
+console.log("i'm listening " + options.port);
 		callback(null, true);
 		});
 
 	webServer.on("error", function(err)
 		{
+console.log("i'm not listening " + options.port);
 		callback(err, null);
 		});
 
@@ -257,7 +261,7 @@ var onMessage = function(message, connection)
 					}
 				catch(err)
 					{
-					err = Utility.error(true, /*Language.RPC_EXECUTE_EXCEPTION.p("EngineIoRPCServer::onMessage()"),*/ err);
+					Utility.printErrors(err);
 
 					if(reqa[r].id != null)
 						rspa.push({"jsonrpc": "2.0", "error": err, "id": reqa[r].id});

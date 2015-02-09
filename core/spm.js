@@ -68,14 +68,14 @@ self.start = fibrous( function()
 	try {
 		// CHECK INPUT (node ..path/spm.js command ...)
 		if(process.argv.length < 3)
-			process.argv.push(QUICKHELP);//throw Utility.ferror(false, Language.E_WRONG_NUMBER_OF_ARGUMENTS.p("SPM::start()"), {":commands": commands, ":options": options});
+			process.argv.push(QUICKHELP);//throw Utility.ferror(Language.E_WRONG_NUMBER_OF_ARGUMENTS.p("SPM::start()"), {":commands": commands, ":options": options});
 
 		command = process.argv[2].trim();																// command is always the third argument
 		if(command.search(oper_regex) == -1 && command != QUICKHELP)
-			throw Utility.ferror(false, Language.E_UNKNOW_COMMAND.p("SPM::start()"), {":command": command, ":commands": commands});
+			throw Utility.ferror(Language.E_UNKNOW_COMMAND.p("SPM::start()"), {":command": command, ":commands": commands});
 
 		if((command != HELP && command != QUICKHELP && command != LIST) && process.argv.length < 4)		// help and list do not need options or package name
-			throw Utility.ferror(false, Language.E_WRONG_NUMBER_OF_ARGUMENTS.p("SPM::start()"), {":commands": commands, ":options": options});
+			throw Utility.ferror(Language.E_WRONG_NUMBER_OF_ARGUMENTS.p("SPM::start()"), {":commands": commands, ":options": options});
 
 		for(var i=3; i<process.argv.length; i++)														// options are always after $>spm command, ignore if not recognized as an option
 			{
@@ -115,7 +115,7 @@ self.start = fibrous( function()
 
 		openSPMServer.sync();																	// Open a WebSocket server for relaying messages from the running AppManager
 
-		connectAppManagerClient.sync();															// Try to open a JSON-RPC connection to the AppManager
+		connectToAppManager.sync();																// Try to open a JSON-RPC connection to the AppManager
 
 		if(command == INSTALL)
 			install.sync(package, username, password, certificate);
@@ -142,12 +142,12 @@ self.start = fibrous( function()
 		}
 	finally
 		{
-		closeAppManagerClient();
+		disconnectFromAppManager();
 		closeSPMServer();
 		}
 	});
 
-var connectAppManagerClient = fibrous( function()
+var connectToAppManager = fibrous( function()
 	{
 	try {
 		appManagerRPCClient = new AppManagerRPCClient();
@@ -159,7 +159,7 @@ var connectAppManagerClient = fibrous( function()
 		}
 	});
 
-var closeAppManagerClient = function()
+var disconnectFromAppManager = function()
 	{
 	if(appManagerRPCClient)
 		appManagerRPCClient.close();

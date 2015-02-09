@@ -21,8 +21,7 @@ var configuration =
 	FILE: "file",
 	RESOURCE: "resource",
 
-	ACTIVE_TILE: "ACTIVE_TILE",
-	OPTIONS: "OPTIONS",
+	WEB_SERVER: "WEB_SERVER",
 
 	CLIENT_HTTP_SERVER: "client_http_server",
 	CLIENT_HTTPS_SERVER: "client_https_server",

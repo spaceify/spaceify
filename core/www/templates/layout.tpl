@@ -24,7 +24,7 @@
 						 { createtag: "script", context: head, src: "js/jsmart_plugins.js", type: "text/javascript" },
 						 { createtag: "script", context: head, src: "js/spaceify.js", type: "text/javascript" },
 						 { id: "imgLoading", context: document, src: "images/ajax-loader.gif" }];
-			$SR.loadResources(dtags, function()
+			$SR.loadResources(dtags, null, function()
 				{
 				spaceify.setConfig('${language}', '${smartyLanguage}', '${smartyConfiguration}', '${section}', '${protocol}');
 
@@ -43,17 +43,19 @@
 	<div class="edgeContent" id="mainContent">
 		{{block body}}{{/block}}
 
-		<div class="edgeLoading" style="display:none;" id="loading">										{{# Loading... div  }}
+		<div class="edgeLoading" style="display:none;" id="loading">														{{# Loading... div  }}
 			<div class="edgeLoadingContent">
 				<img id="imgLoading">${kiwiLanguage.loading}&nbsp;&nbsp;
 			</div>
 		</div>
 
-		<div class="edgeAlert" id="alert">																	{{# Alert div }}
+		<div class="edgeAlert" id="alert">																					{{# Alert div }}
 		</div>
 
-		<div class="edgeBackGroundPopUp" id="popUpBG">														{{# Pop up background div }}
+		<div class="edgeBackGroundPopUp" id="popUpBG">																		{{# Pop up background div }}
 		</div>
+
+		<iframe class="edgeOptionsFrame" id="edgeOptionsFrame" frameborder="0" marginheight="0" src="about:blank"></iframe>	{{# Options iframe }}
 
 	</div>
 </body>

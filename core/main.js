@@ -32,8 +32,8 @@ var start = fibrous( function()
 		database.open(Config.SPACEIFY_DATABASE_FILEPATH);
 		var settings = database.sync.getSettings();
 
-		var key = fs.sync.readFile(Config.SSL_PATH_KEY);
-		var cert = fs.sync.readFile(Config.SSL_PATH_CERT);
+		var key = fs.sync.readFile(Config.SSL_PATH + Config.SSL_SPACEIFY_KEY);
+		var cert = fs.sync.readFile(Config.SSL_PATH + Config.SSL_SPACEIFY_CERT);
 		httpServer.connect.sync({hostname: null, port: Config.EDGE_PORT_HTTP, core: spaceifyCore, spaceifyClient: true, owner: "main"});
 		httpsServer.connect.sync({hostname: null, port: Config.EDGE_PORT_HTTPS, isSsl: true, sslKey: key, sslCert: cert, core: spaceifyCore, spaceifyClient: true, owner: "main"});
 

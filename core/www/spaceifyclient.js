@@ -11,6 +11,7 @@ var SESSION_ID_COOKIE = "session_id";
 
 var E_NO_CONNECTION = "Failed to connect to: ";
 var E_NO_CONNECTION_CODE = 1;
+var E_NO_SERVICE = 2;
 
 var callSequence = 1;
 
@@ -59,7 +60,7 @@ self.connect = function(opts, callback)
 	options.forceSecure = opts.forceSecure || false;
 	options.persistent = opts.persistent || false;						// Reduce overhead by keeping connection open between calls
 
-	uri = (!spaceifyNetwork.isSecure() && !options.forceSecure ? "ws" : "wss") + "://" + options.hostname + ":" + options.port + "/" + "json-rpc";
+	uri = (!$SN.isSecure() && !options.forceSecure ? "ws" : "wss") + "://" + options.hostname + ":" + options.port + "/" + "json-rpc";
 
 	logger.info("Connecting to " + uri);
 	socket = eio.Socket(uri, {transports: ['websocket', 'polling']});
@@ -88,7 +89,7 @@ self.connect = function(opts, callback)
 		self.close();
 
 		if(typeof callback == "function")
-			callback({"code": E_NO_CONNECTION_CODE, "message": E_NO_CONNECTION + options.hostname + ":" + options.port + ", subprotocol: " +  "json-rpc"}, null);
+			callback({"codes": [E_NO_CONNECTION_CODE], "messages": [E_NO_CONNECTION + options.hostname + ":" + options.port + ", subprotocol: " +  "json-rpc"]}, null);
 		});
 
 	socket.on('message', function(message)								// Fired when data is received from the server.
@@ -263,13 +264,13 @@ self.startSpacelet = function(unique_name, service_name, forceSecure, callback)
 			callback(err, null);
 		else
 			{
-			spaceifyService.storeServices(data);													// Store returned services for later use
+			$SS.storeServices(data);																// Store returned services for later use
 
-			var service = spaceifyService.getService(service_name);
+			var service = $SS.getService(service_name);
 			if(service)																				// Try to connect to the the requested service
 				var srpc = new SpaceifyRPC(service, forceSecure, function(err, data) { callback(err ? err : null, err ? null : srpc); });
 			else if(!service && service_name)														// Return error if service name was not in the spacelets services
-				callback({"message": "Requested service " + service_name + " is not defined in the services of the spacelet " + unique_name}, null);
+				callback({"codes": [E_NO_SERVICE], "messages": ["Requested service " + service_name + " is not defined in the services of the spacelet " + unique_name]}, null);
 			else																					// Return nothing if only starting the spacelet was requested
 				callback(null, null);
 			}
@@ -291,14 +292,9 @@ self.adminLogOut = function(session_id, callback)
 	connect("adminLogOut", [session_id], true, callback);
 	}
 
-self.isAdminAuthenticated = function(session_id, callback)
+self.isAdminLoggedIn = function(session_id, callback)
 	{
-	connect("isAdminAuthenticated", [session_id], true, callback);
-	}
-
-self.getApplicationData = function(unique_name, callback)
-	{
-	connect("getApplicationData", [unique_name], false, callback);
+	connect("isAdminLoggedIn", [session_id], true, callback);
 	}
 
 self.applyOptions = function(session_id, unique_name, directory, filename, data, callback)
@@ -313,7 +309,13 @@ self.saveOptions = function(session_id, unique_name, directory, filename, data, 
 
 self.loadOptions = function(session_id, unique_name, directory, filename, callback)
 	{
+	var session_id = $SU.getCookie(SESSION_ID_COOKIE);
 	connect("loadOptions", [session_id, unique_name, directory, filename], true, callback);
+	}
+
+self.getApplicationData = function(unique_name, callback)
+	{
+	connect("getApplicationData", [unique_name], false, callback);
 	}
 
 self.setSplashAccepted = function(callback)
@@ -325,7 +327,7 @@ var connect = function(method, params, forceSecure, callback)
 	{
 	var rpc = new RPC();
 
-	rpc.connect({"hostname": EDGE_HOSTNAME, "port": (!spaceifyNetwork.isSecure() && !forceSecure ? CORE_PORT : CORE_PORT_SECURE), "forceSecure": forceSecure, "persistent": false}, function(err, data)
+	rpc.connect({"hostname": EDGE_HOSTNAME, "port": (!$SN.isSecure() && !forceSecure ? CORE_PORT : CORE_PORT_SECURE), "forceSecure": forceSecure, "persistent": false}, function(err, data)
 		{
 		if(err)
 			callback(err, null);
@@ -344,7 +346,7 @@ function SpaceifyService()
 var self = this;
 var services = {};
 
-// Every time services are discovered store them for later use. 
+// Every time services are discovered store them for later use.
 self.storeServices = function(newservices)
 	{
 	var unique_name = newservices[0].unique_name;
@@ -400,6 +402,34 @@ self.findService = function(servicearr, service_name)
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+// SPACEIFY MANIFEST // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+function SpaceifyManifest()
+{
+var self = this;
+var manifests = {};
+
+// Every time manifest are loaded store them for later use.
+self.storeManifest = function(manifest)
+	{
+	manifests[manifest.unique_name] = manifest;
+	}
+
+// Pass a unique name and find manifest
+self.getManifest = function(unique_name)
+	{
+	for(mf in manifests)
+		{
+		if(manifests[mf].unique_name == unique_name)
+			return manifests[mf];
+		}
+
+	return null;
+	}
+
+}
+
+// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 // SPACEIFY NETWORK  // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 function SpaceifyNetwork()
 {
@@ -417,10 +447,10 @@ self.getCoreWebServerURL = function()
 	return location.protocol + "//" + EDGE_HOSTNAME + ":" + (!self.isSecure() ? CORE_PORT_HTTP : CORE_PORT_HTTPS);
 	}
 
-// Get an applications internal web server URL
+// Get applications internal web server URL
 self.getApplicationWebServerURL = function(unique_name)
 	{
-	var service = (!self.isSecure() ? spaceifyService.getHttpService(unique_name) : spaceifyService.getHttpsService(unique_name));
+	var service = (!self.isSecure() ? $SS.getHttpService(unique_name) : $SS.getHttpsService(unique_name));
 
 	if(!service || !service.port)
 		return "";
@@ -428,23 +458,14 @@ self.getApplicationWebServerURL = function(unique_name)
 	return location.protocol + "//" + EDGE_HOSTNAME + ":" + service.port;
 	}
 
-// Give http and/or https ports as parameters and make an URL for the application.
-self.makeApplicationURL = function(ports)
-	{
-	if(!ports || (ports && !self.isSecure() && !ports.http_port) || (ports && self.isSecure() && !ports.https_port))	// No suitable port provided
-		return null;
-
-	return app_url = self.getEdgeURL() + ":" + (!self.isSecure() ? ports.http_port : ports.https_port);
-	}
-
 // Get applications web servers port. Return http or https port automatically if port type is not defined.
 self.getApplicationWebServerPort = function(unique_name, bHttps)
 	{
 	var service = null;
 	if(typeof bHttps == "undefined")
-		service = (!self.isSecure() ? spaceifyService.getHttpService(unique_name) : spaceifyService.getHttpsService(unique_name));
+		service = (!self.isSecure() ? $SS.getHttpService(unique_name) : $SS.getHttpsService(unique_name));
 	else
-		service = (!bHttps ? spaceifyService.getHttpService(unique_name) : spaceifyService.getHttpsService(unique_name));
+		service = (!bHttps ? $SS.getHttpService(unique_name) : $SS.getHttpsService(unique_name));
 
 	return (!service || !service.port ? "" : service.port);
 	}
@@ -452,7 +473,7 @@ self.getApplicationWebServerPort = function(unique_name, bHttps)
 // Parse GET from the url. Add origin part of the url to the returned object if requested.
 self.parseGET = function(url, bOrigin)
 	{
-	var uget = {};
+	var obj_get = {};
 	var regx = new RegExp("=", "i");
 
 	var getsplit = url.split("?");
@@ -462,14 +483,24 @@ self.parseGET = function(url, bOrigin)
 		for(gpi in getparts)
 			{
 			regx.exec(getparts[gpi]);
-			uget[RegExp.leftContext] = RegExp.rightContext;
+			obj_get[RegExp.leftContext] = RegExp.rightContext;
 			}
 		}
 
 	if(bOrigin)
-		uget.origin = getsplit[0];
+		obj_get.origin = getsplit[0];
 
-	return uget;
+	return obj_get;
+	}
+
+// Make object of GET parameters to GET string.
+self.makeGET = function(obj_get)
+	{
+	var get = "";
+	for(g in obj_get)
+		get += (get != "" ? "&" : "") + g + "=" + obj_get[g];
+
+	return (get != "" ? "?" : "") + get;
 	}
 
 // Return true if current web page is encrypted
@@ -487,7 +518,7 @@ function SpaceifyUtility()
 {
 var self = this;
 
-	// base64, source from: http://ntt.cc/2008/01/19/base64-encoder-decoder-with-javascript.html
+// base64, source from: http://ntt.cc/2008/01/19/base64-encoder-decoder-with-javascript.html
 var keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
 self.encodeBase64 = function(input)
 	{
@@ -557,14 +588,14 @@ self.decodeBase64 = function(input)
 	return unescape(output);
 	}
 
-	// cookies
-self.setCookie = function(cname, cvalue, expms)
+// cookies
+self.setCookie = function(cname, cvalue, expiration_sec)
 	{
 	var expires = "";
 
-	if(expms)
+	if(expiration_sec)
 		{
-		var dn = Date.now() + expms;
+		var dn = Date.now() + (expiration_sec * 1000);
 		var dc = new Date(dn);
 		expires = "expires=" + dc.toGMTString();
 		}
@@ -605,12 +636,12 @@ var self = this;
 
 var rpc = new RPC();
 
-rpc.connect({"hostname": EDGE_HOSTNAME, "port": (!spaceifyNetwork.isSecure() && !forceSecure ? CORE_PORT : CORE_PORT_SECURE), "forceSecure": forceSecure, "persistent": true}, function(err, data)
+rpc.connect({"hostname": EDGE_HOSTNAME, "port": (!$SN.isSecure() && !forceSecure ? CORE_PORT : CORE_PORT_SECURE), "forceSecure": forceSecure, "persistent": true}, function(err, data)
 	{
 	if(err)
 		connectionCallback(err, null);
 	else
-		rpc.call("connectTo", [hostdata, (!spaceifyNetwork.isSecure() && !forceSecure ? false : true)], self, connectionCallback);
+		rpc.call("connectTo", [hostdata, (!$SN.isSecure() && !forceSecure ? false : true)], self, connectionCallback);
 	});
 
 self.close = function()
@@ -694,11 +725,13 @@ var onReadyState = function(xmlhttp, callback)
 		callback(xmlhttp.status != 200 ? xmlhttp.status : null, xmlhttp.status == 200 ? xmlhttp.response : null);
 	}
 
-self.loadImage = function(img, src, callback)
+self.loadImage = function(imgid, src, unique_name, callback)
 	{
-	self.GET(src, function(err, data)
+	var img = document.getElementById(imgid);
+
+	self.GET(self.makeURL(src, unique_name), function(err, data)
 		{
-		if(!err)
+		if(!err && img)
 			{
 			img.onload = null;
 			img.src = window.URL.createObjectURL(data);
@@ -711,7 +744,7 @@ self.loadImage = function(img, src, callback)
 	}
 
 var skip_parameters = ["createtag", "context", "src", "href"];
-self.loadResources = function(tags, callback)
+self.loadResources = function(tags, unique_name, callback)
 	{ // Create a tag if its not created and load resource or load resource to an existing tag
 	var tag = null;
 
@@ -733,19 +766,20 @@ self.loadResources = function(tags, callback)
 		tag = ctag.context.getElementById(ctag.id);
 
 	if(!tag)																				// Couldn't create or get the tag
-		self.loadResources(tags, callback);
+		self.loadResources(tags, unique_name, callback);
 	else
 		{
 		tag.onload = function()																// Process next tag when onload is fired
 			{
 			tag.onload = null;
-			self.loadResources(tags, callback);										
+			self.loadResources(tags, unique_name, callback);										
 			}
 
 		if(ctag.createtag)																	// Append only created tags
 			ctag.context.appendChild(tag);
 
-		self.GET(ctag.src ? ctag.src : ctag.href, function(err, data)						// Load the resource
+		src = self.makeURL(ctag.src ? ctag.src : ctag.href, unique_name);
+		self.GET(src, function(err, data)													// Load the resource
 			{
 			if(!err)
 				tag[ctag.src ? "src" : "href"] = window.URL.createObjectURL(data);
@@ -753,18 +787,48 @@ self.loadResources = function(tags, callback)
 		}
 	}
 
+// Get URL for an application.
+self.makeURL = function(src, unique_name)
+	{
+	var app_url = null;
+	var manifest = (unique_name ? $SM.getManifest(unique_name) : null);
+	var https = $SS.getHttpService(unique_name);
+	var httpss = $SS.getHttpService(unique_name);
+	var ports = { http: (https ? https.port : null), https: (httpss ? httpss.port : null)};
+
+	src = (src.search(/^\//) != -1 ? "" : "/") + src;
+
+	if(!manifest)																								// Use cores web server
+		app_url = $SN.getEdgeURL() + src;
+	else if(manifest && manifest.implements && manifest.implements.indexOf($S.getConfig("WEB_SERVER")) != -1)	// Use applications internal server
+		app_url = $SN.getEdgeURL() + ":" + (!$SN.isSecure() ? ports.http : ports.https ) + src;
+	else if(manifest)																							// Use cores web server to get application data
+	{
+		var obj_get = $SN.parseGET(src, false);
+		obj_get["app"] = manifest.unique_name;
+		obj_get["type"] = manifest.type;
+		var get_str = $SN.makeGET(obj_get);
+
+		app_url = $SN.getEdgeURL() + src + get_str;
+	}
+
+	return app_url;
+	}
+
 }
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-// INSTANCES AND ALIASES FOR THEM   // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+// INSTANCES AND ALIASES   // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 var spaceifyCore = new SpaceifyCore();
 var spaceifyService = new SpaceifyService();
 var spaceifyNetwork = new SpaceifyNetwork();
 var spaceifyUtility = new SpaceifyUtility();
 var spaceifyRequest = new SpaceifyRequest();
+var spaceifyManifest = new SpaceifyManifest();
 var $SC = spaceifyCore;
 var $SS = spaceifyService;
 var $SN = spaceifyNetwork;
 var $SU = spaceifyUtility;
 var $SR = spaceifyRequest;
+var $SM = spaceifyManifest;

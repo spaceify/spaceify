@@ -1,1 +1,1 @@
-<iframe class="edgeTile" id="{$unique_name|replace:'/':'_'}" frameborder="0" src="about:blank" onload="spaceify.loadActiveContent('{$unique_name|replace:'/':'_'}', '/tile/', {$http_port}, {$https_port});"></iframe>
+<iframe class="edgeTile" id="{$unique_name}" frameborder="0" src="about:blank" onload="spaceify.loadActiveContent('{$unique_name}');"></iframe>

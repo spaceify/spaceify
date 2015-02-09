@@ -94,7 +94,7 @@ self.connect = function(opts, callback)
 
 	webServer.on("error", function(err)
 		{
-		callback(Utility.ferror(false, Language.E_WEBSERVER_FAILED_START.p("WebServer()::connect"), {hostname: options.hostname, port: options.port, err: err.toString()}), null);
+		callback(Utility.ferror(Language.E_WEBSERVER_FAILED_START.p("WebServer()::connect"), {hostname: options.hostname, port: options.port, err: err.toString()}), null);
 		});
 	};
 
@@ -138,18 +138,39 @@ var getWebPage = function(request, response, body)
 					}
 				}
 
-			if(purl.query.app && purl.query.type)															// load files from spacelets/<unique_name>/volume/application/www directory
+			if(purl.query.app && purl.query.type)															// load files from <type>/<unique_name>/volume/application/www directory
 				{
-				var app_path = "";
-				if(purl.query.type == Const.SPACELET)
-					app_path = Config.SPACELETS_PATH;
-				else if(purl.query.type == Const.SANDBOXED_APPLICATION)
-					app_path = Config.SANDBOXEDAPPS_PATH;
-				else if(purl.query.type == Const.NATIVE_APPLICATION)
-					app_path = Config.NATIVEAPPS_PATH;
-				var www_path = app_path + Utility.makeUniqueDirectory(purl.query.app) + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY + Config.WWW_DIRECTORY;
+				var type_path = "";
+				var base_path = Utility.makeUniqueDirectory(purl.query.app) + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY + Config.WWW_DIRECTORY;
 
-				ok = load.sync(www_path, purl.pathname, request, response, body);
+				if(purl.query.type == Const.SPACELET)
+					type_path = Config.SPACELETS_PATH;
+				else if(purl.query.type == Const.SANDBOXED_APPLICATION)
+					type_path = Config.SANDBOXEDAPPS_PATH;
+				else if(purl.query.type == Const.NATIVE_APPLICATION)
+					type_path = Config.NATIVEAPPS_PATH;
+				else if(purl.query.type == Const.ANY)
+					{
+					var path_name = escape(purl.pathname);
+
+					try {
+						type_path = Config.SPACELETS_PATH;
+						if(Utility.sync.isLocal(type_path + base_path + path_name, "file"))
+							throw true;
+
+						type_path = Config.SANDBOXEDAPPS_PATH;
+						if(Utility.sync.isLocal(type_path + base_path + path_name, "file"))
+							throw true;
+
+						type_path = Config.NATIVEAPPS_PATH;
+						if(Utility.sync.isLocal(type_path + base_path + path_name, "file"))
+							throw true;
+						}
+					catch(err) 
+						{}
+					}
+
+				ok = load.sync(type_path + base_path, purl.pathname, request, response, body);
 				}
 
 			if(!ok)																							// templates
@@ -158,7 +179,7 @@ var getWebPage = function(request, response, body)
 			if(!ok)																							// templates + index.html
 				ok = render.sync(purl.pathname + addSlash + "index.html", purl.query, request, response, body);
 
-			if(addSlash == "/" && Utility.sync.isLocalDirectory(options.www_path + purl.pathname))			// redirect browser permanently to pathname + /
+			if(addSlash == "/" && Utility.sync.isLocal(options.www_path + purl.pathname, "directory"))		// redirect browser permanently to pathname + /
 				{
 				location = options.protocol + "://" + request.headers["host"] + "/" + purl.pathname + "/";
 				content = Utility.replace(Language.E_MOVED_PERMANENTLY.message, {":location": location, ":server_name": options.server_name, ":hostname": options.hostname, ":port": options.port});
@@ -213,9 +234,9 @@ var render = fibrous(function(pathname, query, request, response, body, response
 		var configuration_file =  "configuration.js";
 
 		// Get the actual layout, template, view and language files
-		if(	!Utility.sync.isLocalFile(options.local_template_path + template_file) ||
-			!Utility.sync.isLocalFile(options.local_template_path + view_file) ||
-			!Utility.sync.isLocalFile(options.local_language_path + language_file))
+		if(	!Utility.sync.isLocal(options.local_template_path + template_file, "file") ||
+			!Utility.sync.isLocal(options.local_template_path + view_file, "file") ||
+			!Utility.sync.isLocal(options.local_language_path + language_file, "file"))
 			throw false;
 
 		var layout = fs.sync.readFile(options.local_template_path + layout_file, {"encoding": "utf8"});
@@ -258,7 +279,7 @@ var load = fibrous(function(www_path, pathname, request, response, body, respons
 	try {
 		pathname = escape(pathname);													// The pathname must be checked so that loading is possible only from supplied www_path
 
-		if(!Utility.sync.isLocalFile(www_path + pathname))								// Test is the file in the www folder
+		if(!Utility.sync.isLocal(www_path + pathname, "file"))							// Test is the file in the www folder
 			throw false;
 
 		var file = fs.sync.readFile(www_path + pathname);

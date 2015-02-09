@@ -34,7 +34,7 @@ self.start = fibrous(function(unique_name)
 			var application = database.sync.getApplication([unique_name], false);
 		
 			if(!application)
-				throw Utility.ferror(false, Language.E_SANDBOXEDAPP_START_FAILED_UNKNOWN_UNIQUE_NAME.p("SandboxedApplicationManager::start()"), {":name": unique_name});
+				throw Utility.ferror(Language.E_SANDBOXEDAPP_START_FAILED_UNKNOWN_UNIQUE_NAME.p("SandboxedApplicationManager::start()"), {":name": unique_name});
 
 			startApp.sync(application);
 			}
@@ -47,7 +47,7 @@ self.start = fibrous(function(unique_name)
 		}
 	catch(err)
 		{
-		throw Utility.error(false, err);
+		throw Utility.error(err);
 		}
 	finally
 		{
@@ -67,14 +67,14 @@ var startApp = fibrous(function(application)
 		self.sync.run(sandboxedApplication);
 
 		if(!sandboxedApplication.isInitialized())
-			throw Utility.error(false, Language.E_SANDBOXEDAPP_FAILED_INIT_ITSELF.p("SandboxedApplicationManager::startApp()"));
+			throw Utility.error(Language.E_SANDBOXEDAPP_FAILED_INIT_ITSELF.p("SandboxedApplicationManager::startApp()"));
 		}
 	catch(err)
 		{
 		if(sandboxedApplication)
 			self.remove(sandboxedApplication);											// Remove incomplete application
 
-		throw err;
+		throw Utility.error(err);
 		}
 	});
 
@@ -85,7 +85,7 @@ self.build = fibrous(function(docker_image_id, unique_directory)
 
 	try {
 		if((manifest = Utility.sync.loadManifest(Config.SANDBOXEDAPPS_PATH + unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY + Const.MANIFEST, true)) == null)
-			throw Utility.error(false, Language.E_SANDBOXEDAPP_FAILED_TO_READ_MANIFEST.p("SandboxedApplicationManager::build()"));
+			throw Utility.error(Language.E_SANDBOXEDAPP_FAILED_TO_READ_MANIFEST.p("SandboxedApplicationManager::build()"));
 
 		// ToDo: Check manifest rights - are the services provided and required (manifest.requires_services[N].unique_name + manifest.requires_services[N].service_name accepted) in the accepted list for this host and/or sandboxed application
 
@@ -94,7 +94,7 @@ self.build = fibrous(function(docker_image_id, unique_directory)
 		}
 	catch(err)
 		{
-		throw Utility.error(false, err);
+		throw Utility.error(err);
 		}
 
 		return sandboxedApplication;
@@ -125,7 +125,7 @@ self.run = fibrous(function(sandboxedApplication)
 		}
 	catch(err)
 		{
-		throw Utility.error(false, err);
+		throw Utility.error(Language.E_SANDBOXEDAPP_FAILED_TO_RUN.p("SandboxedApplicationManager::run()"), err);
 		}
 	});
 

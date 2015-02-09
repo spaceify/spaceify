@@ -4,7 +4,7 @@
 	<script>
 		function pageReady()
 			{
-			$SC.isAdminAuthenticated($SU.getCookie(SESSION_ID_COOKIE), function(err, data)
+			$SC.isAdminLoggedIn($SU.getCookie(SESSION_ID_COOKIE), function(err, data)
 				{
 				if(err || !data)
 					$SU.deleteCookie(SESSION_ID_COOKIE);
@@ -15,12 +15,11 @@
 				});
 
 			var dtags = [{ id: "imgLogo", context: document, src: "images/logo.png" }];
-			$SR.loadResources(dtags, function() {});
+			$SR.loadResources(dtags, null, function() {});
 			}
 
 		window.addEventListener("resize", function()
 			{
-			spaceify.resizeOptionsDialog();
 			});
 	</script>
 {{/block}}
@@ -54,17 +53,11 @@
 	<div class="tiles" id="native_applications"></div>
 	<div style="clear: both"></div>
 
-	<!--
 	<div class="tiles" style="display: block" id="admin_tools">
 		<h4>${kiwiLanguage.admin_tools}</h4>
 		<div id="adminLogIn"></div>
 	</div>
-	-->
 
 {{/if}}
-
-	<div class="edgeOptionsPopUp" id="optionsPopUp">															{{# Options div/iframe }}
-		<iframe class="edgeOptionsFrame" id="optionsFrame" frameborder="0" marginheight="0" src="about:blank"></iframe>
-	</div>
 
 {{/block}}

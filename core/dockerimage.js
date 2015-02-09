@@ -36,7 +36,7 @@ self.stopContainers = fibrous( function(imageId, imageName)
 		}
 	catch(err)
 		{
-		Utility.ferror(true, Language.E_GENERAL_ERROR.p("DockerImage::stopContainers()"), {":err": err.toString()});
+		Utility.ferror(Language.E_GENERAL_ERROR.p("DockerImage::stopContainers()"), {":err": err.toString()});
 		}
 	});
 
@@ -65,7 +65,7 @@ self.removeContainers = fibrous( function(imageId, imageName, streams)
 		}
 	catch(err)
 		{
-		Utility.ferror(true, Language.E_GENERAL_ERROR.p("DockerImage::removeContainers()"), {":err": err.toString()});
+		Utility.ferror(Language.E_GENERAL_ERROR.p("DockerImage::removeContainers()"), {":err": err.toString()});
 		}
 	});
 
@@ -82,7 +82,7 @@ self.removeImage = fibrous( function(imageId, imageName)
 		}
 	catch(err)
 		{
-		Utility.ferror(true, Language.E_GENERAL_ERROR.p("DockerImage::removeImage()"), {":err": err.toString()});
+		Utility.ferror(Language.E_GENERAL_ERROR.p("DockerImage::removeImage()"), {":err": err.toString()});
 		}
 	});
 

@@ -26,6 +26,7 @@ self.open = function(dp_path)
 		}
 	catch(err)
 		{
+			Utility.error(Language.E_DATABASE_OPEN.p("Database::git()"), err);
 		throw err;
 		}
 	}
@@ -46,6 +47,7 @@ self.begin = fibrous( function(str)
 		}
 	catch(err)
 		{
+			Utility.error(Language.E_DATABASE_BEGIN.p("Database::git()"), err);
 		throw err;
 		}
 	});
@@ -59,6 +61,7 @@ self.commit = fibrous( function(str)
 		}
 	catch(err)
 		{
+			Utility.error(Language.E_DATABASE_COMMIT.p("Database::git()"), err);
 		throw err;
 		}
 	});
@@ -72,6 +75,7 @@ self.rollback = fibrous( function(str)
 		}
 	catch(err)
 		{
+			Utility.error(Language.E_DATABASE_ROLLBACK.p("Database::git()"), err);
 		throw err;
 		}
 	});
@@ -88,6 +92,7 @@ self.getApplication = fibrous( function(params, bAll)
 		}
 	catch(err)
 		{
+		Utility.error(Language.E_DATABASE_GETAPPLICATION.p("Database::git()"), err);
 		throw err;
 		}
 	});
@@ -116,6 +121,7 @@ self.getApplications = fibrous( function(type)
 		}
 	catch(err)
 		{
+			Utility.error(Language.E_DATABASE_GETAPPLICATIONS.p("Database::git()"), err);
 		throw err;
 		}
 	});
@@ -144,6 +150,7 @@ self.insertApplication = fibrous( function(manifest)
 	catch(err)
 		{
 		self.sync.rollback();
+		Utility.error(Language.E_DATABASE_INSERTAPPLICATION.p("Database::git()"), err);
 		throw err;
 		}
 	});
@@ -171,6 +178,7 @@ self.updateApplication = fibrous( function(manifest)
 	catch(err)
 		{
 		self.sync.rollback();
+		Utility.error(Language.E_DATABASE_UPDATEAPPLICATION.p("Database::git()"), err);
 		throw err;
 		}
 	});
@@ -185,6 +193,7 @@ self.removeApplication = fibrous( function(unique_name)
 		}
 	catch(err)
 		{
+			Utility.error(Language.E_DATABASE_REMOVEAPPLICATION.p("Database::git()"), err);
 		throw err;
 		}
 	});
@@ -275,6 +284,7 @@ self.updateSettings = fibrous( function(params, inject_files)
 		}
 	catch(err)
 		{
+			Utility.error(Language.E_DATABASE_UPDATESETTINGS.p("Database::git()"), err);
 		throw err;
 		}
 	});
@@ -286,6 +296,7 @@ self.getSettings = fibrous( function()
 		}
 	catch(err)
 		{
+			Utility.error(Language.E_DATABASE_GETSETTINGS.p("Database::git()"), err);
 		throw err;
 		}
 	});
@@ -307,6 +318,7 @@ self.getSetting = fibrous( function(setting, defaultVal, bThrows)
 	catch(err)
 		{
 		if(bThrows)
+		Utility.error(Language.E_DATABASE_GETSETTING.p("Database::git()"), err);
 			throw err;
 		}
 	finally
@@ -327,6 +339,7 @@ self.getUserData = fibrous( function()
 		}
 	catch(err)
 		{
+			Utility.error(Language.E_DATABASE_GETUSERDATA.p("Database::git()"), err);
 		throw err;
 		}
 	});
@@ -334,10 +347,11 @@ self.getUserData = fibrous( function()
 self.adminLoggedIn = fibrous( function(params)
 	{
 	try {
-		db.sync.run("UPDATE user SET  admin_login_count = admin_login_count + 1, admin_last_login=?", params);
+		db.sync.run("UPDATE user SET admin_login_count = admin_login_count + 1, admin_last_login=?", params);
 		}
 	catch(err)
 		{
+			Utility.error(Language.E_DATABASE_ADMINLOGGEDIN.p("Database::git()"), err);
 		throw err;
 		}
 	});

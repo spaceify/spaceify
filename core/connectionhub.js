@@ -86,13 +86,13 @@ var websocketConnect = fibrous( function()
 	// THESE ARE EXPOSED ONLY OVER A SECURE CONNECTION!!!
 	secureWebSocketRPCServer.exposeRPCMethod("adminLogIn", self, options.core.adminLogIn);
 	secureWebSocketRPCServer.exposeRPCMethod("adminLogOut", self, options.core.adminLogOut);
-	secureWebSocketRPCServer.exposeRPCMethod("isAdminAuthenticated", self, options.core.isAdminAuthenticated);
+	secureWebSocketRPCServer.exposeRPCMethod("isAdminLoggedIn", self, options.core.isAdminLoggedIn);
 	secureWebSocketRPCServer.exposeRPCMethod("applyOptions", self, options.core.applyOptions);
 	secureWebSocketRPCServer.exposeRPCMethod("saveOptions", self, options.core.saveOptions);
 	secureWebSocketRPCServer.exposeRPCMethod("loadOptions", self, options.core.loadOptions);
 	// THESE ARE EXPOSED ONLY OVER A SECURE CONNECTION!!!
-	var key = fs.sync.readFile(Config.SSL_PATH_KEY);
-	var cert = fs.sync.readFile(Config.SSL_PATH_CERT);
+	var key = fs.sync.readFile(Config.SSL_PATH + Config.SSL_SPACEIFY_KEY);
+	var cert = fs.sync.readFile(Config.SSL_PATH + Config.SSL_SPACEIFY_CERT);
 	secureWebSocketRPCServer.connect.sync({hostname: options.hostname, port: options.webSocketPorts.https, isSsl: true, sslKey: key, sslCert: cert, owner: "ConnectionHub"});
 	});
 
@@ -125,13 +125,14 @@ var socketConnect = fibrous( function()
 	// THESE ARE EXPOSED ONLY OVER A SECURE CONNECTION!!!
 	secureSocketRPCServer.exposeRPCMethod("adminLogIn", self, options.core.adminLogIn);
 	secureSocketRPCServer.exposeRPCMethod("adminLogOut", self, options.core.adminLogOut);
-	secureSocketRPCServer.exposeRPCMethod("isAdminAuthenticated", self, options.core.isAdminAuthenticated);
+	secureSocketRPCServer.exposeRPCMethod("isAdminLoggedIn", self, options.core.isAdminLoggedIn);
 	secureSocketRPCServer.exposeRPCMethod("applyOptions", self, options.core.applyOptions);
 	secureSocketRPCServer.exposeRPCMethod("saveOptions", self, options.core.saveOptions);
 	secureSocketRPCServer.exposeRPCMethod("loadOptions", self, options.core.loadOptions);
 	// THESE ARE EXPOSED ONLY OVER A SECURE CONNECTION!!!
-	var key = fs.sync.readFile(Config.SSL_PATH_KEY);
-	var cert = fs.sync.readFile(Config.SSL_PATH_CERT);
+	var key = fs.sync.readFile(Config.SSL_PATH + Config.SSL_SPACEIFY_KEY);
+	var cert = fs.sync.readFile(Config.SSL_PATH + Config.SSL_SPACEIFY_CERT);
+
 	secureSocketRPCServer.connect.sync({hostname: options.hostname, port: options.socketPorts.https, isSsl: true, sslKey: key, sslCert: cert, owner: "ConnectionHub"});
 	});
 
@@ -156,9 +157,9 @@ var connectTo = fibrous( function(hostdata, isSsl)
 		}
 	catch(err)
 		{
-		throw Utility.ferror(false, Language.E_CONNECTIONHUB_CONNECTO.p("ConnectionHub::connectTo()"), {":ip": hostdata.ip, ":port": hostdata.port, ":err": err.toString()});
+		throw Utility.ferror(Language.E_CONNECTIONHUB_CONNECTO.p("ConnectionHub::connectTo()"), {":ip": hostdata.ip, ":port": hostdata.port, ":err": err.toString()});
 		}
-// poista sertifikaatti ja avain poistettaessa appia
+
 	return true;
 	});
 

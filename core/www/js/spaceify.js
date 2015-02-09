@@ -74,12 +74,13 @@ self.load = function(url, callback)
 		});
 	}
 
-self.loadActiveContent = function(iframe_id, path, http_port, https_port)
-	{ // Load tile or options page from applications internal webserver. path = pathname and search (e.g. '/the/path?query=string')	
-	var app_url = $SN.makeApplicationURL({http_port: http_port, https_port: https_port});
-	$SR.GET(app_url + path, function(err, data)
+self.loadActiveContent = function(unique_name, path, id)
+	{ // Load initial content to tile or options page from applications 
+	var app_url = $SR.makeURL(path, unique_name);
+
+	$SR.GET(app_url, function(err, data)
 		{
-		iframe = document.getElementById(iframe_id);
+		iframe = document.getElementById(id ? id : unique_name);
 		iframe.onload = null;
 		iframe.contentWindow.document.open("text/html");
 		iframe.contentWindow.document.write(data);
@@ -180,7 +181,7 @@ self.adminLogIn = function()
 		if(err)
 			{
 			$SU.deleteCookie(SESSION_ID_COOKIE);
-			spaceify.showError(err.messages ? err.messages : err.message);
+			self.showError(err.messages ? err.messages : err.message);
 
 			$("#password").val("");
 			$("#password").focus();
@@ -200,7 +201,7 @@ self.adminLogOut = function()
 	$SC.adminLogOut($SU.getCookie(SESSION_ID_COOKIE), function(err, data)
 		{
 		if(err)
-			spaceify.showError(err.messages);
+			self.showError(err.messages);
 
 		$SU.deleteCookie(SESSION_ID_COOKIE);
 
@@ -211,9 +212,9 @@ self.adminLogOut = function()
 
 self.showAdminLogInOut = function(type)
 	{
-	spaceify.load($SN.getEdgeURL() + "/templates/" + (type == "in" ? "admin_login.tpl" : "admin_logout.tpl"), function(err, data)
+	self.load($SN.getEdgeURL() + "/templates/" + (type == "in" ? "admin_login.tpl" : "admin_logout.tpl"), function(err, data)
 		{
-		var tpl = spaceify.newjSmart(data);
+		var tpl = self.newjSmart(data);
 		var content = tpl.fetch({});
 		$("#adminLogIn").empty();
 		$("#adminLogIn").append($.parseHTML(content));
@@ -232,29 +233,38 @@ self.showInstalledApplications = function()
 		{
 		if(data.spacelets.length > 0)
 			{
-			$("#spacelets").css("display", "block");
-			$("#spacelets").append($.parseHTML("<h4>" + spaceify.getString("spacelets") + "</h4>"));
+			$("#spacelets").css("display", "block");												// Show spacelets section title
+			$("#spacelets").append($.parseHTML("<h4>" + self.getString("spacelets") + "</h4>"));
 
 			for(var j=0; j<data.spacelets.length; j++)
+				{
+				$SM.storeManifest(data.spacelets[j]);
 				renderTile(data.spacelets[j], "spacelets");
+				}
 			}
 
 		if(data.sandboxed.length > 0)
 			{
-			$("#sandboxed_applications").css("display", "block");
-			$("#sandboxed_applications").append($.parseHTML("<h4>" + spaceify.getString("sandboxed_applications") + "</h4>"));
+			$("#sandboxed_applications").css("display", "block");									// Show sandboxed section title
+			$("#sandboxed_applications").append($.parseHTML("<h4>" + self.getString("sandboxed_applications") + "</h4>"));
 
 			for(var j=0; j<data.sandboxed.length; j++)
+				{
+				$SM.storeManifest(data.sandboxed[j]);
 				renderTile(data.sandboxed[j], "sandboxed_applications");
+				}
 			}
 
 		/*if(data.native.length > 0)
 			{
-			$("#native_applications").css("display", "block");
-			$("#native_applications").append($.parseHTML("<h4>" + spaceify.getString("native_applications") + "</h4>"));
+			$("#native_applications").css("display", "block");										// Show native section title
+			$("#native_applications").append($.parseHTML("<h4>" + self.getString("native_applications") + "</h4>"));
 
 			for(var j=0; j<data.native.length; j++)
+				{
+				$SM.storeManifest(data.native[j]);
 				renderTile(data.native[j], "native_applications");
+				}
 			}*/
 
 		});
@@ -263,55 +273,35 @@ self.showInstalledApplications = function()
 var renderTile = function(manifest, id)
 	{
 	if(manifest.is_running)
-		{
-		$SS.storeServices(manifest.service_mappings);	
-		}
+		$SS.storeServices(manifest.service_mappings);
 
-	var bOptions = (manifest.implements && manifest.implements.indexOf(spaceify.getConfig("OPTIONS")) != -1 ? true : false);
-	var bActiveTile = (manifest.implements && manifest.implements.indexOf(spaceify.getConfig("ACTIVE_TILE")) != -1 ? true : false);
-	var bSessionId = ( $SU.getCookie(SESSION_ID_COOKIE) != "" ? true : false);
-
-	if(manifest.is_running && bActiveTile)															// APPLICATION RENDERS ITS OWN ACTIVE TILE
+	if(manifest.has_tile)																			// APPLICATION RENDERS ITS OWN TILE
 		{
-		spaceify.load($SN.getEdgeURL() + "/templates/active_tile.tpl", function(err, data)
+		self.load($SN.getEdgeURL() + "/templates/tile.tpl", function(err, data)
 			{
-			var unique_name = manifest.unique_name;
-			var tpl = spaceify.newjSmart(data);
-			var content = tpl.fetch({ unique_name: unique_name, http_port: $SS.getHttpService(unique_name).port, https_port: $SS.getHttpsService(unique_name).port });
+			var tpl = self.newjSmart(data);
+			var content = tpl.fetch({ manifest: manifest });
 			$("#" + id).append($.parseHTML(content));
 			});
 		}
 	else																							// SPACEIFY EDGE RENDERS A DEFAULT TILE
 		{
-		spaceify.load($SN.getEdgeURL() + "/templates/app_tile.tpl", function(err, data)
+		self.load($SN.getEdgeURL() + "/templates/app_tile.tpl", function(err, data)
 			{
 			var image = $SN.getEdgeURL() + "/images/dicon.png";											// Show default image or applcations custom image
 			if(manifest.images)
 				{
 				for(var i=0; i<manifest.images.length; i++)
 					{
-					if(manifest.images[i].name.search("/^(icon\.)/i" != -1))
-						{
-						image = $SN.getEdgeURL() + (manifest.images[i].directory ? manifest.images[i].directory : "") + "/images/" + manifest.images[i].name;
-						image += "?type=" + manifest.type + "&app=" + manifest.unique_name;
-						}
+					if(manifest.images[i].name.search("/^(icon\.)/i" != -1)) {
+						image = (manifest.images[i].directory ? manifest.images[i].directory : "") + "/images/" + manifest.images[i].name; break; }
 					}
 				}
 
-			var developer = (manifest.developer ? manifest.developer.name : null);
-
-			var tpl = spaceify.newjSmart(data);
-			var content = tpl.fetch({	name: manifest.name,
-										unique_name: manifest.unique_name,
-										type: manifest.type,
-										version: manifest.version,
-										category: manifest.category,
+			var tpl = self.newjSmart(data);
+			var content = tpl.fetch({	manifest: manifest,
 										edge_hostname: EDGE_HOSTNAME,
-										image: image,
-										developer: developer,
-										protocol: spaceify.getProtocol(),
-										imgOrdinal: ordinal++,
-										options: (/*manifest.is_running && */bOptions && bSessionId)
+										image: image
 									});
 			$("#" + id).append($.parseHTML(content));
 			});
@@ -320,46 +310,28 @@ var renderTile = function(manifest, id)
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 // OPTIONS  // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-self.showOptionsDialog = function(unique_name)
+self.showOptions = function(show, unique_name, directory, file)
 	{
-	if($("#optionsPopUp").is(':visible'))
-		return;
+	var ok = false;
 
-	$SC.startSpacelet(unique_name, null, false, function(err, data)
+	if(show && $("#edgeOptionsFrame").css("visibility") == "hidden" && $SU.getCookie(SESSION_ID_COOKIE))
 		{
-		if(err)
-			spaceify.showError(err.messages ? err.messages : err.message);
-		else
-			{
-			$("#optionsFrame").attr("src", "about:blank");														// Reset old data
+		$("#edgeOptionsFrame").attr("src", "about:blank");													// Reset old data, resize and show
+		$("#edgeOptionsFrame").css("visibility", "visible");
 
-			$("#popUpBG").css("display", "block");																// Show popup
-			$("#optionsPopUp").css("display", "block");
+		self.loadActiveContent(unique_name, directory + file, "edgeOptionsFrame");
+		}
+	else if(!show && $("#edgeOptionsFrame").is(':visible'))
+		{
+		$("#edgeOptionsFrame").css("visibility", "hidden");
+		$("#edgeOptionsFrame").attr("src", "about:blank");
+		ok = true;
+		}
 
-			self.resizeOptionsDialog();
-
-			self.loadActiveContent("optionsFrame", "/options/", $SS.getHttpService(unique_name).port, $SS.getHttpService(unique_name).port);
-			}
-		});
-
-	return false;
-	}
-
-self.closeOptionsDialog = function()
-	{
-	$("#optionsPopUp").css("display", "none");
-	$("#popUpBG").css("display", "none");
-
-	$("#optionsFrame").attr("src", "about:blank");
-
-	return false;
-	}
-
-self.resizeOptionsDialog = function()
-	{
-	$("#optionsFrame").height($("#optionsPopUp").height() - 2);	// Set size, subtract borders from the total height
+	return ok;
 	}
 
 }
 
 var spaceify = new Spaceify();
+var $S = spaceify;

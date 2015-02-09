@@ -34,6 +34,15 @@ var language =
 	"E_PROVIDED_FIELDS_UNDEFINED": new SpaceifyError({"code": 1015, "message": "Manifest file must have provided_services objects and the objects must have properly defined service_name and service_type fields"}),
 	"E_REQUIRED_FIELDS_UNDEFINED": new SpaceifyError({"code": 1016, "message": "Manifest file must have required_services objects and the objects must have properly defined service_name and service_type fields"}),
 	"E_REQUIRED_INJECT_UNDEFINED": new SpaceifyError({"code": 1017, "message": "Spacelet manifest file must have inject_files objects and the objects must have properly defined directory, name and type fields"}),
+	"E_LOADREMOTEFILETOLOCALFILE": new SpaceifyError({"code": 1018, "message": "Failed to load remote file"}),
+	"E_DELETEDIRECTORY": new SpaceifyError({"code": 1019, "message": "Failed to delete directory"}),
+	"E_COPYDIRECTORY": new SpaceifyError({"code": 1020, "message": "Failed copy directory"}),
+	"E_MOVEDIRECTORY": new SpaceifyError({"code": 1021, "message": "Failed to move dfirectory"}),
+	"E_DELETEFILE": new SpaceifyError({"code": 1022, "message": "Failed to delete file"}),
+	"E_COPYFILE": new SpaceifyError({"code": 1023, "message": "Failed to copy file"}),
+	"E_MOVEFILE": new SpaceifyError({"code": 1024, "message": "Failed to move file"}),
+	"E_ZIPDIRECTORY": new SpaceifyError({"code": 1025, "message": "Failed to compress files"}),
+	"E_LOADMANIFEST": new SpaceifyError({"code": 1026, "message": "Failed to load manifest"}),
 
 	// SpaceifyCore
 	"E_FIND_SERVICE_UNKNOWN": new SpaceifyError({"code": 2000, "message": "Find service failed because service :name was not found"}),
@@ -61,6 +70,10 @@ var language =
 	"E_UNKNOWN_MAC": new SpaceifyError({"code": 2017, "message": "Callers MAC address is unknown"}),
 
 	"E_SPLASH_ADD_FAILED": new SpaceifyError({"code": 2018, "message": "Failed to add the MAC address to the accepted addresses list"}),
+
+	"E_GET_APP_DATA_FAILED": new SpaceifyError({"code": 2019, "message": "Failed to get application data"}),
+
+	"E_FAILED_TO_START_SPACELET": new SpaceifyError({"code": 2020, "message": "Failed to start spacelet"}),
 
 	// Common
 	"E_FAILED_TO_LOAD_MANIFEST": new SpaceifyError({"code": 3001, "message": "Failed to load manifest file"}),
@@ -93,24 +106,29 @@ var language =
 
 	// AppManager
 	"E_FAILED_TO_INSTALL_APPLICATION": new SpaceifyError({"code": 7000, "message": "Failed to install application"}),
-	"E_FAILED_TO_RESOLVE_PACKAGE": new SpaceifyError({"code": 7001, "message": ":package doesn't resolve to any known package."}),
+	"E_FAILED_TO_RESOLVE_PACKAGE": new SpaceifyError({"code": 7001, "message": ":package doesn't resolve to any known package"}),
 	"E_FAILED_TO_UPDATE_SETTINGS": new SpaceifyError({"code": 7002, "message": "Failed to update settings"}),
-	"E_FAILED_TO_FIND_GIT_APPLICATION": new SpaceifyError({"code": 7003, "message": "The application directory was not found from the git repository :repo."}),
+	"E_FAILED_TO_FIND_GIT_APPLICATION": new SpaceifyError({"code": 7003, "message": "The application directory was not found from the git repository :repo"}),
 	"E_FAILED_TO_REMOVE_APPLICATION": new SpaceifyError({"code": 7004, "message": "Failed to remove application"}),
 	"E_APPLICATION_NOT_INSTALLED": new SpaceifyError({"code": 7005, "message": "Application :name is not installed"}),
-	"E_CORE_NOT_RUNNING": new SpaceifyError({"code": 7006, "message": "Can not :command application because core is not running."}),
-	"E_LOCKED": new SpaceifyError({"code": 7007, "message": "Another process has locked the application manager."}),
-	"E_SERVICE_ALREADY_REGISTERED": new SpaceifyError({"code": 7008, "message": "Applications with same service names can not be installed at the same time."}),
+	"E_CORE_NOT_RUNNING": new SpaceifyError({"code": 7006, "message": "Can not :command application because core is not running"}),
+	"E_LOCKED": new SpaceifyError({"code": 7007, "message": "Another process has locked the application manager"}),
+	"E_SERVICE_ALREADY_REGISTERED": new SpaceifyError({"code": 7008, "message": "Applications with same service names can not be installed at the same time"}),
+	"E_FAILED_TO_LIST_APPLICATIONS": new SpaceifyError({"code": 7009, "message": "Failed to list applications"}),
+	"E_FAILED_CERTIFICATE_CERTIFICATE": new SpaceifyError({"code": 7010, "message": "Failed to create certificate for the application"}),
+	"E_FAILED_GITHUB_DATA": new SpaceifyError({"code": 7011, "message": "Failed to get data from GitHub"}),
 
 	// SandboxedApplicationManager
 	"E_SANDBOXEDAPP_FAILED_TO_READ_MANIFEST": new SpaceifyError({"code": 8000, "message": "Unable to read/parse manifest file from sandboxed applications directory"}),
 	"E_SANDBOXEDAPP_FAILED_INIT_ITSELF": new SpaceifyError({"code": 8001, "message": "Sandboxed application failed to initialize itself"}),
 	"E_SANDBOXEDAPP_START_FAILED_UNKNOWN_UNIQUE_NAME": new SpaceifyError({"code": 8002, "message": "Failed to start sandboxed application because unique name :name is unknown"}),
+	"E_SANDBOXEDAPP_FAILED_TO_RUN": new SpaceifyError({"code": 8003, "message": "Failed to run sandboxed application"}),
 
 	// SpaceletManager
 	"E_SPACELET_FAILED_INIT_ITSELF": new SpaceifyError({"code": 9000, "message": "Spacelet failed to initialize itself"}),
 	"E_FAILED_TO_READ_SPACELET_MANIFEST": new SpaceifyError({"code": 9001, "message": "Unable to read/parse manifest file from spacelets directory"}),
 	"E_FAILED_TO_READ_SPACELET_INFO": new SpaceifyError({"code": 9002, "message": "Failed to load spacelets information from the database"}),
+	"E_SPACELET_FAILED_RUN": new SpaceifyError({"code": 9003, "message": "Failed to run spacelet"}),
 
 	// WebServer
 	"E_INTERNAL_SERVER_ERROR": new SpaceifyError({"code": 500, "message": "<!DOCTYPE html><html><head><title>Server Error</title></head><body><h1>500 Internal Server Error</h1><h3>:server_name at :hostname Port :port</h3></body></html>"}),	
@@ -129,6 +147,22 @@ var language =
 
 	// CONNECTIONS
 	"RPC_EXECUTE_EXCEPTION": new SpaceifyError({"code": 13000, "message": "Exception in executing a RPC method"}),
+	
+	// DataBase
+	"E_DATABASE_OPEN": new SpaceifyError({"code": 12000, "message": "Failed to open database connection"}),
+	"E_DATABASE_BEGIN": new SpaceifyError({"code": 12001, "message": "Failed to begin transaction"}),
+	"E_DATABASE_COMMIT": new SpaceifyError({"code": 12002, "message": "Failed to commit transaction"}),
+	"E_DATABASE_ROLLBACK": new SpaceifyError({"code": 12003, "message": "Failed to rollback transaction"}),
+	"E_DATABASE_GETAPPLICATION": new SpaceifyError({"code": 12004, "message": "Failed to get application"}),
+	"E_DATABASE_GETAPPLICATIONS": new SpaceifyError({"code": 12005, "message": "Failed to get applications"}),
+	"E_DATABASE_INSERTAPPLICATION": new SpaceifyError({"code": 12006, "message": "Failed to insert application"}),
+	"E_DATABASE_UPDATEAPPLICATION": new SpaceifyError({"code": 12007, "message": "Failed to update application"}),
+	"E_DATABASE_REMOVEAPPLICATION": new SpaceifyError({"code": 12008, "message": "Failed to remove application"}),
+	"E_DATABASE_UPDATESETTINGS": new SpaceifyError({"code": 12009, "message": "Failed ot update settings"}),
+	"E_DATABASE_GETSETTINGS": new SpaceifyError({"code": 12010, "message": "Failed to ge settings"}),
+	"E_DATABASE_GETSETTING": new SpaceifyError({"code": 12011, "message": "Failed to get setting"}),
+	"E_DATABASE_GETUSERDATA": new SpaceifyError({"code": 12012, "message": "Failed to get user data"}),
+	"E_DATABASE_ADMINLOGGEDIN": new SpaceifyError({"code": 12013, "message": "Failed to set admin log in"}),
 
 	/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** 
 	** TEXTS ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **

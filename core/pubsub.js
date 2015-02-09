@@ -71,6 +71,7 @@ self.value = function(prop, path)
 		}
 	catch(err)
 		{
+console.log(err);
 		}
 
 	return rvalue;

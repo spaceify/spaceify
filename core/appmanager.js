@@ -61,8 +61,8 @@ self.connect = fibrous( function(opts)
 	secureWebSocketRPCServer.exposeRPCMethod("restartApplication", self, self.restartApplication);
 	secureWebSocketRPCServer.exposeRPCMethod("listApplications", self, self.listApplications);
 	secureWebSocketRPCServer.exposeRPCMethod("updateSettings", self, self.updateSettings);
-	var key = fs.sync.readFile(Config.SSL_PATH_KEY);
-	var cert = fs.sync.readFile(Config.SSL_PATH_CERT);
+	var key = fs.sync.readFile(Config.SSL_PATH + Config.SSL_SPACEIFY_KEY);
+	var cert = fs.sync.readFile(Config.SSL_PATH + Config.SSL_SPACEIFY_CERT);
 	secureWebSocketRPCServer.connect.sync({hostname: options.hostname, port: options.ports.https, isSsl: true, sslKey: key, sslCert: cert, owner: "AppManager"});
 
 	try {
@@ -129,7 +129,7 @@ self.installApplication = fibrous( function(package, isSuggested, username, pass
 
 		// Parse manifest
 		if(!manifestFile)
-			throw Utility.error(false, Language.E_FAILED_TO_LOAD_MANIFEST.p("AppManager::installApplication()"));
+			throw Utility.error(Language.E_FAILED_TO_LOAD_MANIFEST.p("AppManager::installApplication()"));
 
 		messages.sync(Language.INSTALL_PARSING_MANIFEST);
 		var manifest = Utility.parseManifest(manifestFile);
@@ -141,7 +141,7 @@ self.installApplication = fibrous( function(package, isSuggested, username, pass
 			for(var i=0; i<errors.length; i++)
 				messages.sync(Utility.replace(Language.SERVICE_ALREADY_REGISTERED, {":name": errors[i]["service_name"], ":app": errors[i]["unique_name"]}));
 
-			throw Utility.error(false, Language.E_SERVICE_ALREADY_REGISTERED.p("AppManager::installApplication()"));
+			throw Utility.error(Language.E_SERVICE_ALREADY_REGISTERED.p("AppManager::installApplication()"));
 			}
 
 		// Stop all the instances of running applications having unique_name if core is running
@@ -193,7 +193,7 @@ self.installApplication = fibrous( function(package, isSuggested, username, pass
 	catch(err)
 		{
 		if(err)
-			throw Utility.error(false, err);
+			throw Utility.error(err);
 		}
 	finally
 		{
@@ -218,7 +218,7 @@ self.removeApplication = fibrous( function(unique_name, spm)
 
 		var app_data = database.sync.getApplication([unique_name]);
 		if(!app_data)
-			throw Utility.ferror(false, Language.E_APPLICATION_NOT_INSTALLED.p("AppManager::removeApplication()"), {":name": unique_name});
+			throw Utility.ferror(Language.E_APPLICATION_NOT_INSTALLED.p("AppManager::removeApplication()"), {":name": unique_name});
 
 		// Stop all the instances of running applications having unique_name if core is running
 		messages.sync(Language.STOPPING_APPLICATION);
@@ -251,11 +251,13 @@ self.removeApplication = fibrous( function(unique_name, spm)
 		// Finalize remove
 		messages.sync(Utility.replace(Language.APPLICATION_REMOVED, {":app": unique_name}));
 		database.sync.commit();
+
+		// ToDo: Remove certificate and key when removing application?
 		}
 	catch(err)
 		{
 		database.sync.rollback();
-		throw Utility.error(false, err);
+		throw Utility.error(err);
 		}
 	finally
 		{
@@ -272,12 +274,12 @@ self.stopApplication = fibrous( function(unique_name, spm)
 			return;
 
 		if(!options.coreIsUp)
-			throw Utility.ferror(false, Language.E_CORE_NOT_RUNNING.p("AppManager::stopApplication()"), {":command": "stop"});
+			throw Utility.ferror(Language.E_CORE_NOT_RUNNING.p("AppManager::stopApplication()"), {":command": "stop"});
 
 		database.open(Config.SPACEIFY_DATABASE_FILEPATH);
 		var app_data = database.sync.getApplication([unique_name]);
 		if(!app_data)
-			throw Utility.ferror(false, Language.E_APPLICATION_NOT_INSTALLED.p("AppManager::stopApplication()"), {":name": unique_name});
+			throw Utility.ferror(Language.E_APPLICATION_NOT_INSTALLED.p("AppManager::stopApplication()"), {":name": unique_name});
 
 		if(!coreRPCClient.sync.call("isApplicationRunning", [app_data.type, app_data.unique_name], self))
 			messages.sync(Utility.replace(Language.ALREADY_STOPPED, {":app": app_data.unique_name}));
@@ -289,7 +291,7 @@ self.stopApplication = fibrous( function(unique_name, spm)
 		}
 	catch(err)
 		{
-		throw Utility.error(false, err);
+		throw Utility.error(err);
 		}
 	finally
 		{
@@ -306,12 +308,12 @@ self.startApplication = fibrous( function(unique_name, spm)
 			return;
 
 		if(!options.coreIsUp)
-			throw Utility.ferror(false, Language.E_CORE_NOT_RUNNING.p("AppManager::startApplication()"), {":command": "start"});
+			throw Utility.ferror(Language.E_CORE_NOT_RUNNING.p("AppManager::startApplication()"), {":command": "start"});
 
 		database.open(Config.SPACEIFY_DATABASE_FILEPATH);
 		var app_data = database.sync.getApplication([unique_name]);
 		if(!app_data)
-			throw Utility.ferror(false, Language.E_APPLICATION_NOT_INSTALLED.p("AppManager::startApplication()"), {":name": unique_name});
+			throw Utility.ferror(Language.E_APPLICATION_NOT_INSTALLED.p("AppManager::startApplication()"), {":name": unique_name});
 
 		if(coreRPCClient.sync.call("isApplicationRunning", [app_data.type, app_data.unique_name], self))
 			messages.sync(Utility.replace(Language.ALREADY_RUNNING, {":app": app_data.unique_name}));
@@ -323,7 +325,7 @@ self.startApplication = fibrous( function(unique_name, spm)
 		}
 	catch(err)
 		{
-		throw Utility.error(false, err);
+		throw Utility.error(err);
 		}
 	finally
 		{
@@ -340,12 +342,12 @@ self.restartApplication = fibrous( function(unique_name, spm)
 			return;
 
 		if(!options.coreIsUp)
-			throw Utility.ferror(false, Language.E_CORE_NOT_RUNNING.p("AppManager::restartApplication()"), {":command": "restart"});
+			throw Utility.ferror(Language.E_CORE_NOT_RUNNING.p("AppManager::restartApplication()"), {":command": "restart"});
 
 		database.open(Config.SPACEIFY_DATABASE_FILEPATH);
 		var app_data = database.sync.getApplication([unique_name]);
 		if(!app_data)
-			throw Utility.ferror(false, Language.E_APPLICATION_NOT_INSTALLED.p("AppManager::restartApplication()"), {":name": unique_name});
+			throw Utility.ferror(Language.E_APPLICATION_NOT_INSTALLED.p("AppManager::restartApplication()"), {":name": unique_name});
 
 		messages.sync(Language.STOPPING_APPLICATION);
 		coreRPCClient.sync.call("stopApplication", [app_data.type, app_data.unique_name], self);
@@ -355,7 +357,7 @@ self.restartApplication = fibrous( function(unique_name, spm)
 		}
 	catch(err)
 		{
-		throw Utility.error(false, err);
+		throw Utility.error(err);
 		}
 	finally
 		{
@@ -374,7 +376,7 @@ self.listApplications = fibrous( function(type)
 		}
 	catch(err)
 		{
-		throw Utility.error(false, err);
+		throw Utility.error(Language.E_FAILED_TO_LIST_APPLICATIONS.p("AppManager::listApplications()"), err);
 		}
 	finally
 		{
@@ -392,7 +394,7 @@ self.updateSettings = fibrous( function(settings, inject_files)
 		}
 	catch(err)
 		{
-		throw Utility.error(false, Language.E_FAILED_TO_UPDATE_SETTINGS.p("AppManager::updateSettings()"), err);
+		throw Utility.error(Language.E_FAILED_TO_UPDATE_SETTINGS.p("AppManager::updateSettings()"), err);
 		}
 	finally
 		{
@@ -417,7 +419,7 @@ self.publishPackage = fibrous( function(package, username, password)
 		purl.pathname = purl.pathname.replace(/^\/|\/$/g, "");
 
 		// 1. try local directory <package>
-		if(Utility.sync.isLocalDirectory(package))
+		if(Utility.sync.isLocal(package, "directory"))
 			{
 			messages.sync(Utility.replace(Language.TRYING_TO_PUBLISH, {":what": Language.LOCAL_DIRECTORY, ":package": package, }));
 
@@ -426,13 +428,13 @@ self.publishPackage = fibrous( function(package, username, password)
 			package = Config.WORK_PATH + Const.PUBLISHZIP;
 			}
 		// 2. try local <package>.zip
-		else if(Utility.sync.isLocalFile(package) && package.search(/\.zip$/i) != -1)
+		else if(Utility.sync.isLocal(package, "file") && package.search(/\.zip$/i) != -1)
 			{
 			messages.sync(Utility.replace(Language.TRYING_TO_PUBLISH, {":what": Language.LOCAL_ARCHIVE, ":package": package}));
 			}
 		// Else fail
 		else
-			throw Utility.ferror(false, Language.E_FAILED_TO_RESOLVE_PACKAGE.p("AppManager::publishPackage()"), {":package": package});
+			throw Utility.ferror(Language.E_FAILED_TO_RESOLVE_PACKAGE.p("AppManager::publishPackage()"), {":package": package});
 
 		// Try to publish the package
 		var result = Utility.sync.postPublish(package, username, password, settings["release_name"]);
@@ -454,7 +456,7 @@ self.publishPackage = fibrous( function(package, username, password)
 		}
 	catch(err)
 		{
-		throw Utility.error(false, err);
+		throw Utility.error(err);
 		}
 	finally
 		{
@@ -479,7 +481,7 @@ self.sourceCode = fibrous( function(package, username, password)
 
 		// Parse manifest
 		if(!manifestFile)
-			throw Utility.error(false, Language.E_FAILED_TO_LOAD_MANIFEST.p("AppManager::sourceCode()"));
+			throw Utility.error(Language.E_FAILED_TO_LOAD_MANIFEST.p("AppManager::sourceCode()"));
 
 		messages.sync(Language.INSTALL_PARSING_MANIFEST);
 		var manifest = Utility.parseManifest(manifestFile);
@@ -493,7 +495,7 @@ self.sourceCode = fibrous( function(package, username, password)
 	catch(err)
 		{
 		if(err)
-			throw Utility.error(false, err);
+			throw Utility.error(err);
 		}
 	finally
 		{
@@ -512,7 +514,7 @@ var tryPackageSources = fibrous( function(package, isSuggested, username, passwo
 	var gitoptions = purl.pathname.split("/");
 
 	// 1. Try local directory <package>
-	if(!isSuggested && Utility.sync.isLocalDirectory(package))
+	if(!isSuggested && Utility.sync.isLocal(package, "directory"))
 		{
 		messages.sync(Utility.replace(Language.TRYING_TO_GET, {":from": Language.LOCAL_DIRECTORY, ":package": package}));
 
@@ -523,7 +525,7 @@ var tryPackageSources = fibrous( function(package, isSuggested, username, passwo
 		manifestFile = Utility.sync.loadManifest(package + Const.MANIFEST);
 		}
 	// 2. Try local <package>.zip
-	else if(!isSuggested && Utility.sync.isLocalFile(package) && package.search(/\.zip$/i) != -1)
+	else if(!isSuggested && Utility.sync.isLocal(package, "file") && package.search(/\.zip$/i) != -1)
 		{
 		messages.sync(Utility.replace(Language.TRYING_TO_GET, {":from": Language.LOCAL_ARCHIVE, ":package": package}));
 
@@ -550,7 +552,7 @@ var tryPackageSources = fibrous( function(package, isSuggested, username, passwo
 
 		// CHECK FOR ERRORS BEFORE TRYING TO FIND THE MANIFEST FROM THE PACKAGE
 		Utility.unZip(Config.WORK_PATH + Const.PACKAGEZIP, Config.WORK_PATH, true);
-		if(Utility.sync.isLocalFile(Config.WORK_PATH + Const.SPMERRORSJSON))
+		if(Utility.sync.isLocal(Config.WORK_PATH + Const.SPMERRORSJSON, "file"))
 			{
 			var errfile = fs.sync.readFile(Config.WORK_PATH + Const.SPMERRORSJSON, {encoding: "utf8"});
 			var result = Utility.parseJSON(errfile, true);
@@ -565,7 +567,7 @@ var tryPackageSources = fibrous( function(package, isSuggested, username, passwo
 		}
 	// Else fail
 	else
-		throw Utility.ferror(false, Language.E_FAILED_TO_RESOLVE_PACKAGE.p("AppManager"), {":package": package});
+		throw Utility.ferror(Language.E_FAILED_TO_RESOLVE_PACKAGE.p("AppManager"), {":package": package});
 
 	return manifestFile;
 	});
@@ -652,7 +654,7 @@ var install = fibrous( function(manifest, bCreateCertificate)
 		createClientCertificate.sync(manifest.unique_name, bCreateCertificate);
 
 		var unique_cert_name = Utility.makeCertName(manifest.unique_name);									// Copy SSL files
-		if(Utility.sync.isLocalFile(Config.SSL_PATH + unique_cert_name + ".key"))
+		if(Utility.sync.isLocal(Config.SSL_PATH + unique_cert_name + ".key", "file"))
 			{
 			Utility.sync.copyFile(Config.SSL_PATH + unique_cert_name + ".key", ssl_path + Const.APPLICATION_KEY, true);
 			Utility.sync.copyFile(Config.SSL_PATH + unique_cert_name + ".crt", ssl_path + Const.APPLICATION_CRT, true);
@@ -691,7 +693,7 @@ var install = fibrous( function(manifest, bCreateCertificate)
 
 		removeUniqueDirectory.sync(app_path + manifest.unique_directory);
 
-		throw Utility.error(false, Language.E_FAILED_TO_INSTALL_APPLICATION.p("AppManager::install()"), err);
+		throw Utility.error(Language.E_FAILED_TO_INSTALL_APPLICATION.p("AppManager::install()"), err);
 		}
 	});
 
@@ -714,7 +716,7 @@ var createClientCertificate = fibrous(function(unique_name, bCreateCertificate)
 	var newCrtReqPath = Config.SSL_PATH + unique_cert_name + ".csr";
 	var newCrtPath = Config.SSL_PATH + unique_cert_name + ".crt";
 
-	if(!bCreateCertificate && Utility.sync.isLocalFile(newCrtPath))							// Create only if certificate doesn't already exist and creation is not requested
+	if(!bCreateCertificate && Utility.sync.isLocal(newCrtPath, "file"))						// Create only if certificate doesn't already exist and creation is not requested
 		{
 		messages.sync(Language.INSTALL_CERTIFICATE_EXISTS);
 		return;
@@ -728,11 +730,11 @@ var createClientCertificate = fibrous(function(unique_name, bCreateCertificate)
 
 		Utility.execute.sync("openssl", ["genrsa", "-out", newKeyPath, Config.SSL_KEY_LEN], {}, messages);
 		Utility.execute.sync("openssl", ["req", "-new", "-key", newKeyPath, "-out", newCrtReqPath, "-config", Config.SSL_CLIENT_CONF], {cwd: Config.SSL_SQUID_PATH}, messages);
-		Utility.execute.sync("openssl", ["ca", "-batch", "-in", newCrtReqPath, "-out", newCrtPath, "-keyfile", Config.SSL_PATH_CA_KEY, "-cert", Config.SSL_PATH_CA_CERT, "-config", Config.SSL_CLIENT_CONF], {cwd: Config.SSL_SQUID_PATH}, messages);
+		Utility.execute.sync("openssl", ["ca", "-batch", "-in", newCrtReqPath, "-out", newCrtPath, "-keyfile", Config.SSL_CA_KEY, "-cert", Config.SSL_CA_CERT, "-config", Config.SSL_CLIENT_CONF], {cwd: Config.SSL_SQUID_CA_PATH}, messages);
 		}
 	catch(err)
 		{
-		throw err;
+		throw Utility.error(Language.E_FAILED_CERTIFICATE_CERTIFICATE.p("AppManager::createClientCertificate()"), err);
 		}
 	});
 
@@ -781,7 +783,7 @@ var git = fibrous( function(gitoptions, username, password)
 		}
 	catch(err)
 		{
-		throw err;
+		throw Utility.error(Language.E_FAILED_GITHUB_DATA.p("AppManager::git()"), err);
 		}
 
 	return manifestFile;

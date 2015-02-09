@@ -41,7 +41,6 @@ var sections =
 		"admin_tools": "Administration",
 
 		"version": "v",
-		"options_title": "Show options dialog for %",
 		},
 
 	"404":

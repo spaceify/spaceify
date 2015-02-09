@@ -85,22 +85,22 @@ self.startContainer = fibrous( function(portCount, imageNameOrId, volumes, binds
 		container = docker.sync.createContainer(opts);
 		}
 	catch(err) {
-		throw Utility.error(false, Language.E_CREATE_CONTAINER_FAILED.p("DockerContainer::createContainer()"), err); }
+		throw Utility.error(Language.E_CREATE_CONTAINER_FAILED.p("DockerContainer::createContainer()"), err); }
 
 	try {
 		dockerHelper.sync.init(container); }
 	catch(err) {
-		throw Utility.error(false, Language.E_INIT_CONTAINER_FAILED.p("DockerContainer::createContainer()"), err); }
+		throw Utility.error(Language.E_INIT_CONTAINER_FAILED.p("DockerContainer::createContainer()"), err); }
 
 	try	{
 		container.sync.start({"PublishAllPorts": true, "PortBindings": bindings, "Binds": (binds ? binds : [])}); }
 	catch(err) {
-		throw Utility.error(false, Language.E_START_CONTAINER_FAILED.p("DockerContainer::startContainer()"), err); }
+		throw Utility.error(Language.E_START_CONTAINER_FAILED.p("DockerContainer::startContainer()"), err); }
 
 	try	{
 		inspectedData = container.sync.inspect(); }
 	catch(err) {
-		throw Utility.error(false, Language.E_CONTAINER_INSPECT_FAILED.p("DockerContainer::startContainer()"), err); }
+		throw Utility.error(Language.E_CONTAINER_INSPECT_FAILED.p("DockerContainer::startContainer()"), err); }
 	containerId = inspectedData.ID;
 	containerIp = inspectedData.NetworkSettings.IPAddress;
 	logger.info("containerId: " + containerId, "containerIp: " + containerIp);
@@ -128,7 +128,7 @@ self.stopContainer = fibrous( function(appobj)
 		}
 	catch(err)
 		{
-		Utility.ferror(true, Language.E_STOPPING_CONTAINER_FAILED.p("DockerContainer::stopContainer()"), {":err": err.toString()});
+		Utility.ferror(Language.E_STOPPING_CONTAINER_FAILED.p("DockerContainer::stopContainer()"), {":err": err.toString()});
 		}
 	});
 

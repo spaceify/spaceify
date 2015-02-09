@@ -15,6 +15,7 @@ var constants =
 	"SPACELET": "spacelet",
 	"SANDBOXED_APPLICATION": "sandboxed_application",
 	"NATIVE_APPLICATION": "native_application",
+	"ANY": "any",
 	"SHORT_APPLICATION_TYPES": {spacelet: "spacelet", sandboxed: "sandboxed_application", native: "native_application"},
 	// +++
 	"OPEN_LOCAL": "open_local",
@@ -38,9 +39,11 @@ var constants =
 	"ENGINEIOJS": "engine.io.js",
 	"SPACEIFYCLIENTJS": "spaceifyclient.js",
 
+	"TILEFILE": "tile.html",
+
 	"CUSTOM": "custom_",
 
-	"ACTIVE_TILE": "ACTIVE_TILE",
+	"WEB_SERVER": "WEB_SERVER",
 
 	"CLIENT_READY": "client application ready",
 

@@ -13,7 +13,6 @@ function DNSServer()
 {
 var self = this;
 
-var debug = false;
 var options = {};
 var serverUDP4 = null;
 var serverUDP6 = null;
@@ -31,6 +30,7 @@ self.connect = function(opts)
 	options.default_hostname = opts.default_hostname || null;
 	options.external_dns = opts.external_dns || "8.8.8.8";
 	options.subnet = opts.subnet || Config.EDGE_SUBNET;
+	options.debug = opts.debug || false;
 
 	serverUDP4 = dns.createUDPServer({dgram_type: "udp4"});
 	serverUDP6 = dns.createUDPServer({dgram_type: "udp6"});
@@ -70,19 +70,19 @@ var startServer = function(server, port, address, type)
 
 	server.on("listening", function()
 		{
-		if(debug)
+		if(options.debug)
 			console.log("DNS " + type + " server is listening at " + address + ":" + port);
 		});
 
 	server.on("error", function(err, buff, req, res)
 		{
-		if(debug)
+		if(options.debug)
 			console.log(err.stack);
 		});
 
 	server.on("socketError", function(err, socket)
 		{
-		if(debug)
+		if(options.debug)
 			console.log(err.stack);
 		});
 
@@ -144,13 +144,14 @@ var makeRequest = function(question, response)
 				ttl: options.ttl}));
 			}
 
-		if(debug)
+		if(options.debug)
 			{
 			console.log();
 			console.log("QUESTION: " + question.name + " " + dns.consts.qtypeToName(question.type));
 			console.log("ANSWERS: " + response.answer.length);
 			if(response.answer.length > 0)
 				{
+console.log(response.answer);
 				for(i=0; i<response.answer.length; i++)
 					console.log(" => " + response.answer[i].address + " ttl: " + response.answer[i].ttl);
 				}
@@ -168,11 +169,12 @@ var makeRequest = function(question, response)
 				}
 
 			console.log("ADDITIONAL: " + response.additional.length);
-			/*if(response.additional.length > 0)
+			if(response.additional.length > 0)
 				{
-				for(i=0; i<response.additional.length; i++)
-					console.log(" => " + response.additional[i].address);
-				}*/
+console.log(response.additional);
+				//for(i=0; i<response.additional.length; i++)
+				//	console.log(" => " + response.additional[i].address);
+				}
 			}
 
 		response.send();

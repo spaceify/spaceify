@@ -32,11 +32,11 @@ self.loadRemoteFile = fibrous( function(fileUrl)
 		}
 	catch(err)
 		{
-		throw self.error(false, Language.E_FAILED_TO_INITIATE_HTTP_GET.p("Utility::loadRemoteFile()"), err);
+		throw self.error(Language.E_FAILED_TO_INITIATE_HTTP_GET.p("Utility::loadRemoteFile()"), err);
 		}
 
 	if(result.statusCode != 200)
-		throw self.ferror(false, Language.E_FAILED_TO_LOAD_REMOTE_FILE.p("Utility::loadRemoteFile()"), {":file": fileUrl, ":code": result.statusCode});
+		throw self.ferror(Language.E_FAILED_TO_LOAD_REMOTE_FILE.p("Utility::loadRemoteFile()"), {":file": fileUrl, ":code": result.statusCode});
 
 	return result;
 	});
@@ -54,32 +54,19 @@ self.loadRemoteFileToLocalFile = fibrous( function(fileUrl, targetDir, targetFil
 	catch(err)
 		{
 		if(bThrows)
-			throw err;
+			throw self.error(Language.E_LOADREMOTEFILETOLOCALFILE.p("Utility::loadRemoteFileToLocalFile()"), err);
 		}
 
 	return false;
 	});
 
-self.isLocalFile = fibrous( function(filepath)
-	{
-//console.log(__dirname);
-	try {
-		var fd = fs.sync.open(filepath, "r");
-		fs.sync.close(fd);
-
-		return true;
-		}
-	catch(err)
-		{
-		return false;
-		}
-	});
-
-self.isLocalDirectory = fibrous( function(filepath)
+self.isLocal = fibrous( function(filepath, type)
 	{
 	try {
 		var stats = fs.sync.stat(filepath);
-		if(typeof stats != "undefined" && stats.isDirectory())
+		if(stats && type == "file" && stats.isFile())
+			return true;
+		else if(stats && type == "directory" && stats.isDirectory())
 			return true;
 		}
 	catch(err)
@@ -109,7 +96,7 @@ self.deleteDirectory = fibrous( function(source, bThrows)						// Recursively de
 	catch(err)
 		{
 		if(bThrows)
-			throw err;
+			throw self.error(Language.E_DELETEDIRECTORY.p("Utility::deleteDirectory()"), err);
 		}
 	});
 
@@ -145,7 +132,7 @@ self.copyDirectory = fibrous( function(source, target, bThrows)
 	catch(err)
 		{
 		if(bThrows)
-			throw err;
+			throw self.error(Language.E_COPYDIRECTORY.p("Utility::copyDirectory()"), err);
 		}
 	});
 
@@ -158,7 +145,7 @@ self.moveDirectory = fibrous( function(source, target, bThrows)
 	catch(err)
 		{
 		if(bThrows)
-			throw err;
+			throw self.error(Language.E_MOVEDIRECTORY.p("Utility::moveDirectory()"), err);
 		}
 	});
 
@@ -172,7 +159,7 @@ self.deleteFile = fibrous( function(source, bThrows)
 	catch(err)
 		{
 		if(bThrows)
-			throw err;
+			throw self.error(Language.E_DELETEFILE.p("Utility::deleteFile()"), err);
 		}
 	});
 
@@ -191,7 +178,7 @@ self.copyFile = fibrous( function(sourceFile, targetFile, bThrows)
 	catch(err)
 		{
 		if(bThrows)
-			throw err;
+			throw self.error(Language.E_COPYFILE.p("Utility::copyFile()"), err);
 		}
 	});
 
@@ -204,7 +191,7 @@ self.moveFile = fibrous( function(sourceFile, targetFile, bThrows)
 	catch(err)
 		{
 		if(bThrows)
-			throw err;
+			throw self.error(Language.E_MOVEFILE.p("Utility::moveFile()"), err);
 		}
 });
 
@@ -228,7 +215,7 @@ self.zipDirectory = fibrous( function(source, target, zipfile)			// Recursively 
 		}
 	catch(err)
 		{
-		throw err;
+		throw self.error(Language.E_ZIPDIRECTORY.p("Utility::zipDirectory()"), err);
 		}
 	});
 
@@ -282,11 +269,11 @@ self.postForm = fibrous( function(url, form)
 		}
 	catch(err)
 		{
-		throw self.error(false, Language.E_FAILED_TO_INITIATE_HTTP_POST.p("Utility::postForm()"), err);
+		throw self.error(Language.E_FAILED_TO_INITIATE_HTTP_POST.p("Utility::postForm()"), err);
 		}
 
 	if(result.statusCode != 200)
-		throw self.ferror(false, Language.E_FAILED_TO_POST_FORM.p("Utility::postForm()"), {":url": url, ":code": result.statusCode});
+		throw self.ferror(Language.E_FAILED_TO_POST_FORM.p("Utility::postForm()"), {":url": url, ":code": result.statusCode});
 
 	return result;
 	});
@@ -345,55 +332,66 @@ self.isIPInEdgeNetwork = function(ip)
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 // ERRORS   // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-self.error = function(bOutput /* errors are in the last arguments!!! */)
+self.error = function(/* errors are in the last arguments!!! */)
 	{
 	var paths = [];
 	var codes = [];
 	var messages = [];
-	for(var i=1; i<arguments.length; i++)																// More than one error can be passed in the arguments
+	for(var i=0; i<arguments.length; i++)																// More than one error can be passed in the arguments
 		{
-		var ao = arguments[i];
-		if(ao.messages)																					// concat arrays of paths, codes and messages, of the same size, to error arrays
+		var aobj = arguments[i];
+		if(aobj.messages)																				// concat arrays of paths, codes and messages, of the same size, to en existing error array
 			{
-			paths = paths.concat(ao.path);
-			codes = codes.concat(ao.code);
-			messages = messages.concat(ao.messages);
+			paths = paths.concat(aobj.paths);
+			codes = codes.concat(aobj.codes);
+			messages = messages.concat(aobj.messages);
 			}
-		else																							// push single error object to error arrays
+		else																							// push single error object to error array
 			{
-			paths.push(ao.path ? ao.path : "");
-			codes.push(ao.code ? ao.code : "");
-			messages.push(ao.message ? ao.message : ao.toString());
+			paths.push(aobj.path ? aobj.path : "");
+			codes.push(aobj.code ? aobj.code : "");
+			messages.push(aobj.message ? aobj.message : aobj.toString());
 			}
 		}
 
-	var message = "";
+	var message = pmessage = "";
 	for(var i=0; i<messages.length; i++)																// Make a simple error string of the error arrays
 		{
-		message += (message != "" ? ", " : "");
-		message += (paths[i] != "" ? paths[i] + " : " : "");
-		message += (codes[i] != "" ? "(" + codes[i] + ") " : "");
-		message += messages[i];
+		var code = (codes[i] ? "(" + codes[i] + ") " : "");
+		var path = (paths[i] ? "(" + paths[i] + ") " : "");
+
+		message += (message != "" ? ", " : "") + code + messages[i];
+		pmessage += (pmessage != "" ? ", a" : "") + (code != "" ? ", " : "") + paths + messages[i];
 		}
 
-	var error = { code: codes, path: paths, message: message, messages: messages };
+	//self.printErrors({message: pmessage});																// Output errors
 
-	if(bOutput)																							// Output errors
-		self.printErrors(error);
-
-	return error;
+	return { codes: codes, paths: paths, messages: messages, message: message };
 	}
 
-self.ferror = function(bOutput, err, params)
+self.ferror = function(err, params)
 	{ // Formatted error messages
 	err.message = self.replace(err.message, params);
 
-	return self.error(bOutput, err);
+	return self.error(err);
 	}
 
 self.printErrors = function(err)
 	{
-	require("./logger").error(err.message);
+	var message = "";
+	if(err.messages)
+		{
+		for(var i=0; i<err.messages.length; i++)
+			{
+			var path = (err.paths[i] ? err.paths[i] + "->" : "");
+			var code = (err.codes[i] ? "(" + err.codes[i] + ") " : "");
+			message += (message != "" ? ", " : "") + path + code + err.messages[i];
+			}
+		}
+	else
+		message = (err.code ? "(" + err.code + ")" : "") + err.message;
+
+	require("./logger").error(message);
 	}
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -411,7 +409,7 @@ self.loadManifest = fibrous( function(file, bParse, bThrows)
 		{
 		manifest = null;
 		if(bThrows)
-			throw err;
+			throw self.error(Language.E_LOADMANIFEST.p("Utility::loadManifest()"), err);
 		}
 
 	return manifest;
@@ -423,57 +421,57 @@ self.parseManifest = function(manifest, type)
 
 	// *** REQUIRED FIELDS
 	if(typeof manifest.provides_services == "undefined" && typeof manifest.requires_services == "undefined")
-		throw self.error(false, Language.E_MANIFEST_FIELD_SERVICES.p("Utility::parseManifest"));
+		throw self.error(Language.E_MANIFEST_FIELD_SERVICES.p("Utility::parseManifest"));
 
 	if(typeof manifest.type == "undefined")
-		throw self.error(false, Language.E_MANIFEST_FIELD_TYPE.p("Utility::parseManifest"));
+		throw self.error(Language.E_MANIFEST_FIELD_TYPE.p("Utility::parseManifest"));
 
 	if(typeof manifest.name == "undefined")
-		throw self.error(false, Language.E_MANIFEST_FIELD_NAME.p("Utility::parseManifest"));
+		throw self.error(Language.E_MANIFEST_FIELD_NAME.p("Utility::parseManifest"));
 
 	if(typeof manifest.unique_name == "undefined")
-		throw self.error(false, Language.E_MANIFEST_FIELD_UNIQUE_NAME.p("Utility::parseManifest"));
+		throw self.error(Language.E_MANIFEST_FIELD_UNIQUE_NAME.p("Utility::parseManifest"));
 
 	if(typeof manifest.version == "undefined")
-		throw self.error(false, Language.E_MANIFEST_FIELD_VERSION.p("Utility::parseManifest"));
+		throw self.error(Language.E_MANIFEST_FIELD_VERSION.p("Utility::parseManifest"));
 
 	if(typeof manifest.category == "undefined")
-		throw self.error(false, Language.E_MANIFEST_FIELD_CATEGORY.p("Utility::parseManifest"));
+		throw self.error(Language.E_MANIFEST_FIELD_CATEGORY.p("Utility::parseManifest"));
 
 	if(typeof manifest.start_command == "undefined")
-		throw self.error(false, Language.E_MANIFEST_FIELD_START_COMMAND.p("Utility::parseManifest"));
+		throw self.error(Language.E_MANIFEST_FIELD_START_COMMAND.p("Utility::parseManifest"));
 
 	if(manifest.type == Const.SPACELET)
 		{
 		if(	typeof manifest.shared == "undefined")
-			throw self.error(false, Language.E_MANIFEST_FIELD_SHARED.p("Utility::parseManifest"));
+			throw self.error(Language.E_MANIFEST_FIELD_SHARED.p("Utility::parseManifest"));
 		if(typeof manifest.inject_identifier == "undefined")
-			throw self.error(false, Language.E_MANIFEST_FIELD_INJECT_IDENTIFIER.p("Utility::parseManifest"));
+			throw self.error(Language.E_MANIFEST_FIELD_INJECT_IDENTIFIER.p("Utility::parseManifest"));
 		if(typeof manifest.inject_hostnames == "undefined")
-			throw self.error(false, Language.E_MANIFEST_FIELD_INJECT_HOSTNAMES.p("Utility::parseManifest"));
+			throw self.error(Language.E_MANIFEST_FIELD_INJECT_HOSTNAMES.p("Utility::parseManifest"));
 		if(typeof manifest.inject_files == "undefined")
-			throw self.error(false, Language.E_MANIFEST_FIELD_INJECT_FILES.p("Utility::parseManifest"));
+			throw self.error(Language.E_MANIFEST_FIELD_INJECT_FILES.p("Utility::parseManifest"));
 		}
 	else if(manifest.type == Const.SANDBOXED_APPLICATION)
 		{
 		/*if(	typeof manifest.? == "undefined" )
-			throw self.error(false, Language.E_REQUIRED_, "");*/
+			throw self.error(Language.E_REQUIRED_, "");*/
 		}
 	else if(manifest.type == Const.NATIVE_APPLICATION)
 		{
 		/*if(	typeof manifest.? == "undefined" )
-			throw self.error(false, Language.E_REQUIRED_, "");*/
+			throw self.error(Language.E_REQUIRED_, "");*/
 		}
 
 	// *** FIELDS PROPERLY FORMATTED
 	if(typeof manifest.provides_services != "undefined" && !checkServiceArray(manifest.provides_services, false))
-		throw self.error(false, Language.E_PROVIDED_FIELDS_UNDEFINED.p("Utility::parseManifest"));
+		throw self.error(Language.E_PROVIDED_FIELDS_UNDEFINED.p("Utility::parseManifest"));
 
 	if(typeof manifest.requires_services != "undefined" && !checkServiceArray(manifest.requires_services, true))
-		throw self.error(false, Language.E_REQUIRED_FIELDS_UNDEFINED.p("Utility::parseManifest"));
+		throw self.error(Language.E_REQUIRED_FIELDS_UNDEFINED.p("Utility::parseManifest"));
 
 	if(typeof manifest.inject_files != "undefined" && !checkInjectFilesArray(manifest.inject_files))
-		throw self.error(false, Language.E_REQUIRED_INJECT_UNDEFINED.p("Utility::parseManifest"));
+		throw self.error(Language.E_REQUIRED_INJECT_UNDEFINED.p("Utility::parseManifest"));
 
 	// Add fields required internally by Spaceify Core
 	manifest.unique_directory = self.makeUniqueDirectory(manifest.unique_name);
@@ -571,7 +569,7 @@ self.parseJSON = function(str, throws)
 	catch(err)
 		{
 		if(throws)
-			throw self.error(false, Language.E_JSON_PARSE_FAILED.p("Utility::parseJSON"));
+			throw self.error(Language.E_JSON_PARSE_FAILED.p("Utility::parseJSON"), err);
 		}
 
 	return json;

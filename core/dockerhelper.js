@@ -24,13 +24,13 @@ self.init = function(container, callback)
 		container.attach({stream: true, stdout: true, stderr: true}, function(err, stream)
 			{
 			if(err)
-				throw Utility.ferror(false, Language.E_ATTACH_CONTAINER_OUTPUT.p("DockerHelper::init()"), {":err": err.toString()});
+				throw Utility.ferror(Language.E_ATTACH_CONTAINER_OUTPUT.p("DockerHelper::init()"), {":err": err.toString()});
 
 			standardOutput = stream;
 			container.attach({stream: true, stdin: true}, function(err, stream)
 				{
 				if(err)
-					throw Utility.ferror(false, Language.E_ATTACH_CONTAINER_INPUT.p("DockerHelper::init()"), {":err": err.toString()});
+					throw Utility.ferror(Language.E_ATTACH_CONTAINER_INPUT.p("DockerHelper::init()"), {":err": err.toString()});
 
 				standardInput = stream;
 				callback(err, null);
@@ -39,7 +39,7 @@ self.init = function(container, callback)
 		}
 	catch(err)
 		{
-		callback(Utility.error(false, Language.E_ATTACH_CONTAINER_FAILED.p("DockerHelper::init()"), err), null);
+		callback(Utility.error(err), null);
 		}
 	}
 
@@ -58,7 +58,7 @@ self.executeCommand = function(command, waitedString, callback)
 	var write = standardInput.write(command + "\n", "utf8", function(err, data)
 		{
 		if(err)
-			Utility.ferror(true, Language.E_GENERAL_ERROR.p("DockerHelper::executeCommand()"), {":err": err.toString()});
+			Utility.ferror(Language.E_GENERAL_ERROR.p("DockerHelper::executeCommand()"), {":err": err.toString()});
 		});
 	}
 
@@ -94,7 +94,7 @@ self.sendFile = function(containerIp, commandPort, sourcePath, destPath, fileNam
 
 		socket.on("error", function(err)
 			{
-			callback(Utility.error(false, Language.E_SEND_FILE_CONNECT_FAILED.p("DockerHelper::sendFile()"), err), null);
+			callback(Utility.error(Language.E_SEND_FILE_CONNECT_FAILED.p("DockerHelper::sendFile()"), err), null);
 			} );
 		
 		socket.connect(commandPort, containerIp, function()
@@ -105,7 +105,7 @@ self.sendFile = function(containerIp, commandPort, sourcePath, destPath, fileNam
 
 			stream.on("error", function(err)
 				{
-				callback(Utility.error(false, Language.E_SEND_FILE_COPY_FAILED.p("DockerHelper::sendFile()"), err), null);
+				callback(Utility.error(Language.E_SEND_FILE_COPY_FAILED.p("DockerHelper::sendFile()"), err), null);
 				});
 
 			stream.on("open", function()

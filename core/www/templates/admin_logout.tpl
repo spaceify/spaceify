@@ -1,7 +1,7 @@
 <div class="edgeTile">
 
 	<div class="edgeTileImage">
-		<img src="{#PX#}" onload="$SR.loadImage(this, 'images/lock_closed.png')">
+		<img src="{#PX#}" id="adminLogOutId" onload="$SR.loadImage('adminLogOutId', 'images/lock_closed.png', null)">
 	</div>
 
 	<div class="edgeTileInfo">

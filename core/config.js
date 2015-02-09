@@ -44,12 +44,13 @@ module.exports = function()
 	"SSL_KEY_LEN": "4096",
 	"SSL_DIRECTORY": "ssl/",
 	"SSL_PATH": dirname + "/ssl/",
-	"SSL_PATH_KEY": dirname + "/ssl/spaceify.key",
-	"SSL_PATH_CERT": dirname + "/ssl/spaceify.crt",
-	"SSL_SQUID_PATH": "/etc/squid3/certs/",
+	"SSL_SPACEIFY_KEY": "spaceify.key",
+	"SSL_SPACEIFY_CERT": "spaceify.crt",
 	"SSL_CLIENT_CONF": "openssl_client.conf",
-	"SSL_PATH_CA_KEY": "spaceifyCA/spaceifyCA.key",
-	"SSL_PATH_CA_CERT": "spaceifyCA/spaceifyCA.crt",
+	"SSL_SQUID_PATH": "/etc/squid3/certs/",
+	"SSL_SQUID_CA_PATH": "/etc/squid3/certs/spaceifyCA/",
+	"SSL_CA_KEY": "spaceifyCA.key",
+	"SSL_CA_CERT": "spaceifyCA.crt",
 
 	"SPACEIFY_DOCKER_IMAGE": "spaceifyubuntu",
 

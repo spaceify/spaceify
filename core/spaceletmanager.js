@@ -64,7 +64,7 @@ self.start = function(unique_name, callback)
 			run.sync(spacelet);
 
 			if(!spacelet.isInitialized())
-				throw Utility.error(false, Language.E_SPACELET_FAILED_INIT_ITSELF.p("SpaceletManager::start()"));
+				throw Utility.error(Language.E_SPACELET_FAILED_INIT_ITSELF.p("SpaceletManager::start()"));
 
 			callback(null, spacelet);
 			}
@@ -72,7 +72,7 @@ self.start = function(unique_name, callback)
 			{
 			remove(spacelet);															// do some cleanup
 
-			callback(Utility.error(false, err), null);
+			callback(Utility.error(err), null);
 			}
 
 		isStarting = false;
@@ -93,10 +93,10 @@ var build = fibrous(function(unique_name)
 		database.open(Config.SPACEIFY_DATABASE_FILEPATH);
 
 		if(!(application = database.sync.getApplication([unique_name])) )
-			throw Utility.error(false, Language.E_FAILED_TO_READ_SPACELET_INFO.p("SpaceletManager::build()"));
+			throw Utility.error(Language.E_FAILED_TO_READ_SPACELET_INFO.p("SpaceletManager::build()"));
 
 		if((manifest = Utility.sync.loadManifest(Config.SPACELETS_PATH + application.unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY + Const.MANIFEST, true)) == null)
-			throw Utility.error(false, Language.E_FAILED_TO_READ_SPACELET_MANIFEST.p("SpaceletManager::build()"));
+			throw Utility.error(Language.E_FAILED_TO_READ_SPACELET_MANIFEST.p("SpaceletManager::build()"));
 
 		var spacelet = new Spacelet(manifest);
 		spacelet.setDockerImageId(application.docker_image_id);
@@ -105,7 +105,7 @@ var build = fibrous(function(unique_name)
 		}
 	catch(err)
 		{
-		throw Utility.error(false, err);
+		throw Utility.error(err);
 		}
 	finally
 		{
@@ -130,7 +130,7 @@ var run = fibrous(function(spacelet)
 		spacelet.setDockerContainer(dockerContainer);
 		dockerContainer.sync.startContainer(spacelet.getProvidesServicesCount(), spacelet.getDockerImageId(), volumes, binds);
 
-		spacelet.makeServiceMappings(dockerContainer.getPublicPorts(), dockerContainer.getIpAddress())
+		spacelet.makeServiceMappings(dockerContainer.getPublicPorts(), dockerContainer.getIpAddress());
 
 		dockerContainer.sync.runApplication(spacelet);
 
@@ -140,7 +140,7 @@ var run = fibrous(function(spacelet)
 		}
 	catch(err)
 		{
-		throw Utility.error(false, err);
+		throw Utility.error(Language.E_SPACELET_FAILED_RUN.p("SpaceletManager::run()"), err);
 		}
 	});
 

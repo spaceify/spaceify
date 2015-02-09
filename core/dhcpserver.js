@@ -51,7 +51,7 @@ self.close = function()
 var saveLease = function(lease, cb)
 	{
 	store.save_lease(lease, cb);
-	saveToFile(lease, "add");
+	self.saveToFile(lease, "add");
 	}
 
 var removeLease = function(mac_addr, cb)
@@ -59,7 +59,7 @@ var removeLease = function(mac_addr, cb)
 	store.get_lease(mac_addr, function(lease)
 		{
 		store.remove_lease(mac_addr, cb);
-		saveToFile(lease, "rem");
+		self.saveToFile(lease, "rem");
 		});
 	}
 

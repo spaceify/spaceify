@@ -17,14 +17,15 @@ var dhcpserver = new DHCPServer();
 
 self.getData = function(IP, URL, GET, POST, language, section, configuration)
 	{
-	var splash = true;
+	/*var splash = true;
 	try {
 		var lease = dhcpserver.getDHCPLeaseByIP(IP);															// Show splash if mac is not in the accepted list
 		if(lease)
 			splash = !iptables.hasSplashMAC(lease.mac_or_duid);
 		}
 	catch(err)
-		{}
+		{}*/
+	var splash = false;
 
 	return { language: language.code, kiwiLanguage: language.kiwiLanguage, smartyLanguage: language.smartyLanguage, kiwiConfiguration: configuration.kiwiConfiguration, smartyConfiguration: configuration.smartyConfiguration, splash: splash };
 	}

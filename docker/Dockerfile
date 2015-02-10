@@ -17,7 +17,7 @@ RUN apt-get update
 RUN apt-get install -y nodejs
 
 RUN export NODE_PATH=/usr/lib/node_modules
-# RUN fakeroot npm install -g node-gyp@0.12.2
+# RUN fakeroot npm install -g node-gyp@0.6.2
 RUN fakeroot npm install -g node-gyp
 RUN npm install -g fibrous
 RUN npm install -g websocket

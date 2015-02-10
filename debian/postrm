@@ -24,9 +24,6 @@ sudo sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/rc.local
 # /etc/sysctl.conf  -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d" /etc/sysctl.conf
 
-# /etc/dnsmasq.conf -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
-sudo sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/dnsmasq.conf
-
 # /etc/default/hostapd -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d" /etc/default/hostapd
 
@@ -42,24 +39,23 @@ if [ "$1" = "remove" ]; then
 fi
 
 # REMOVE SPACEIFY'S CHAINS FROM IPTABLES
+sudo iptables -t mangle -D PREROUTING -j Spaceify-mangle > /dev/null 2>&1 || true
+sudo iptables -t mangle -F Spaceify-mangle > /dev/null 2>&1 || true
+sudo iptables -t mangle -X Spaceify-mangle > /dev/null 2>&1 || true
+sudo iptables -t nat -D PREROUTING -m mark --mark 99 -p tcp --dport 80 -j DNAT --to-destination 10.0.0.1 > /dev/null 2>&1 || true
+sudo iptables -t nat -D PREROUTING -m mark --mark 99 -p tcp --dport 443 -j DNAT --to-destination 10.0.0.1 > /dev/null 2>&1 || true
+sudo iptables -t filter -D FORWARD -m mark --mark 99 -j DROP > /dev/null 2>&1 || true
+
 sudo iptables -t nat -D PREROUTING -j Spaceify-HTTP-Nat-Redir > /dev/null 2>&1 || true
 sudo iptables -t nat -D POSTROUTING -j Spaceify-HTTP-Nat-Masq > /dev/null 2>&1 || true
-sudo iptables -t filter -D FORWARD -j Spaceify-HTTP-Filter > /dev/null 2>&1 || true
-
 sudo iptables -t nat -F Spaceify-HTTP-Nat-Masq > /dev/null 2>&1 || true
 sudo iptables -t nat -X Spaceify-HTTP-Nat-Masq > /dev/null 2>&1 || true
 sudo iptables -t nat -F Spaceify-HTTP-Nat-Redir > /dev/null 2>&1 || true
 sudo iptables -t nat -X Spaceify-HTTP-Nat-Redir > /dev/null 2>&1 || true
-sudo iptables -t filter -F Spaceify-HTTP-Filter > /dev/null 2>&1 || true
-sudo iptables -t filter -X Spaceify-HTTP-Filter > /dev/null 2>&1 || true
 
 sudo iptables -t nat -D PREROUTING -j Spaceify-HTTPS-Nat-Redir > /dev/null 2>&1 || true
 sudo iptables -t nat -D POSTROUTING -j Spaceify-HTTPS-Nat-Masq > /dev/null 2>&1 || true
-sudo iptables -t filter -D FORWARD -j Spaceify-HTTPS-Filter > /dev/null 2>&1 || true
-
 sudo iptables -t nat -F Spaceify-HTTPS-Nat-Masq > /dev/null 2>&1 || true
 sudo iptables -t nat -X Spaceify-HTTPS-Nat-Masq > /dev/null 2>&1 || true
 sudo iptables -t nat -F Spaceify-HTTPS-Nat-Redir > /dev/null 2>&1 || true
 sudo iptables -t nat -X Spaceify-HTTPS-Nat-Redir > /dev/null 2>&1 || true
-sudo iptables -t filter -F Spaceify-HTTPS-Filter > /dev/null 2>&1 || true
-sudo iptables -t filter -X Spaceify-HTTPS-Filter > /dev/null 2>&1 || true

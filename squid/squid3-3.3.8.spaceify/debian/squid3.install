@@ -26,6 +26,7 @@ usr/share/man/man8/squid3.8
 etc/apparmor.d/disable
 etc/apparmor.d/force-complain
 etc/apparmor.d/usr.sbin.squid3
-etc/squid3/certs/openssl.conf
-etc/squid3/certs/openssl_server.conf
-etc/squid3/certs/mk_new_ca_dir.pl
+etc/squid3/certs/ca.cnf
+etc/squid3/certs/server.cnf
+etc/squid3/certs/makeca.sh
+etc/squid3/certs/makeserver.sh

@@ -6,20 +6,20 @@ rm -r $dst > /dev/null 2>&1 || true
 
 echo "Making directories..."
 mkdir -p $dst
-mkdir "${dst}/core/"
+mkdir "${dst}/code/"
+mkdir "${dst}/data/"
 mkdir "${dst}/debian/"
+mkdir "${dst}/docker/"
 mkdir "${dst}/monit/"
 mkdir "${dst}/upstart/"
-mkdir "${dst}/docker/"
-mkdir "${dst}/ssl/"
 
 echo "Copying files..."
-cp -r core/* "${dst}/core/"
+cp -r code/* "${dst}/code/"
+cp -r data/* "${dst}/data/"
 cp -r debian/* "${dst}/debian/"
+cp docker/Dockerfile "${dst}/docker/"
 cp -r monit/* "${dst}/monit/"
 cp -r upstart/* "${dst}/upstart/"
-cp docker/Dockerfile "${dst}/docker/"
-cp ssl/openssl_client.conf "${dst}/ssl/"
 
 cp CHANGELOG "${dst}"
 cp LICENSE "${dst}"

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-469cadb6864a43ac78b35bdee9aebdc3  usr/lib/cgi-bin/cachemgr.cgi
-=======
-685e3388a5d409bec60f494f8e865f04  usr/lib/cgi-bin/cachemgr.cgi
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
+db0ddfc6e8edded30592748212b9f567  usr/lib/cgi-bin/cachemgr.cgi
 8bb00ac4144a813d53c282b628e0e5d9  usr/share/doc/squid-cgi/README
 3ea1305c282c610e028949ce14ca2068  usr/share/doc/squid-cgi/changelog.gz
 872a6da7fbce2560a56e0a8d43629ee5  usr/share/doc/squid-cgi/copyright

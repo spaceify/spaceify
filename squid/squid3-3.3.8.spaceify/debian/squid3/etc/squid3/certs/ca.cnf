@@ -1,0 +1,81 @@
+# Certificate authority configuration file.
+# Spaceify Inc. 28.2.2015
+
+###############################################################################
+[ ca ]
+default_ca              = local_ca
+
+# Default location of directories and files needed to generate certificates.
+[ local_ca ]
+dir                     = ./
+certs                 	= $dir/certs
+new_certs_dir           = $dir/certs
+database                = $dir/index.txt
+certificate             = $dir/spaceify.crt.pem
+private_key             = $dir/spaceify.key.pem
+serial                  = $dir/serial
+RANDFILE                = $dir/rand
+#default_days            = 3650
+default_enddate         = %1
+default_crl_days        = 365
+default_md              = sha512
+preserve                = no
+unique_subject          = no
+name_opt                = ca_default
+cert_opt                = ca_default
+policy                  = local_ca_policy
+x509_extensions         = local_ca_extensions
+copy_extensions         = copy
+
+# x509 extensions to use when generating server certificates.
+[ local_ca_extensions ]
+subjectKeyIdentifier    = hash
+basicConstraints        = critical, CA:FALSE
+keyUsage                = digitalSignature, nonRepudiation, keyEncipherment, keyAgreement
+extendedKeyUsage        = serverAuth, clientAuth
+authorityKeyIdentifier  = keyid:always, issuer:always
+subjectAltName          = @alt_names
+
+[ alt_names ]
+IP.1                    = 10.0.0.1
+IP.2                    = 127.0.0.1
+IP.3                    = 0.0.0.0
+DNS.1                   = localhost
+DNS.2                   = edge.spaceify.net
+
+# Default policy to use when generating server certificates. The following fields must be defined in the server certificate.
+[ local_ca_policy ]
+emailAddress            = optional
+stateOrProvinceName     = optional
+localityName            = optional
+countryName             = supplied
+commonName              = supplied
+organizationName        = supplied
+organizationalUnitName  = supplied
+
+###############################################################################
+# The default root certificate generation policy.
+[ req ]
+default_bits            = 4096
+default_keyfile         = ./spaceify.key.pem
+default_md              = sha512
+prompt                  = no
+string_mask             = nombstr
+x509_extensions         = reg_extensions
+distinguished_name      = ca_distinguished_name
+
+[ reg_extensions ]
+subjectKeyIdentifier    = hash
+basicConstraints        = critical, CA:TRUE, pathlen:0
+keyUsage                = keyCertSign
+extendedKeyUsage        = serverAuth, clientAuth
+authorityKeyIdentifier  = keyid:always, issuer:always
+
+[ ca_distinguished_name ]
+#localityName            =
+#emailAddress            =
+#stateOrProvinceName     =
+countryName             = FI
+commonName              = Spaceify CA
+organizationName        = Spaceify Inc.
+organizationalUnitName  = Certificate issuer

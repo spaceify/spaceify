@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-9b6164bd7a38fa44622fb32f3828fcd8  usr/bin/squid-purge
-=======
-e534771cebbb157dcef610873e6736bd  usr/bin/squid-purge
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
+8ae95f8c95a3930a8492b361d5c51adb  usr/bin/squid-purge
 8bb00ac4144a813d53c282b628e0e5d9  usr/share/doc/squid-purge/README
 3ea1305c282c610e028949ce14ca2068  usr/share/doc/squid-purge/changelog.gz
 872a6da7fbce2560a56e0a8d43629ee5  usr/share/doc/squid-purge/copyright

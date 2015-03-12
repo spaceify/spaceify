@@ -1,1 +1,0 @@
-<iframe class="edgeTile" id="{$unique_name}" frameborder="0" src="about:blank" onload="spaceify.loadActiveContent('{$unique_name}');"></iframe>

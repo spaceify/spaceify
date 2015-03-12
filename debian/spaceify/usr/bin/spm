@@ -1,9 +1,0 @@
-#!/bin/bash
-## Spaceify Package Manager, 5.6.2013 Spaceify Inc.
-
-args=""
-for arg in "$@"; do
-	args="$args $arg"
-done
-
-node /var/lib/spaceify/spm.js $args

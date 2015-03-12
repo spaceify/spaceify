@@ -32,13 +32,8 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-<<<<<<< HEAD
 build_triplet = x86_64-pc-linux-gnu
 host_triplet = x86_64-pc-linux-gnu
-=======
-build_triplet = i686-pc-linux-gnu
-host_triplet = i686-pc-linux-gnu
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 subdir = include
 DIST_COMMON = $(noinst_HEADERS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
@@ -57,21 +52,12 @@ HEADERS = $(noinst_HEADERS)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-<<<<<<< HEAD
-ACLOCAL = ${SHELL} /home/work/spaceify/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/cfgaux/missing --run aclocal-1.11
-AMTAR = ${SHELL} /home/work/spaceify/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/cfgaux/missing --run tar
+ACLOCAL = ${SHELL} /var/lib/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/cfgaux/missing --run aclocal-1.11
+AMTAR = ${SHELL} /var/lib/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/cfgaux/missing --run tar
 AR = ar
-AUTOCONF = ${SHELL} /home/work/spaceify/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/cfgaux/missing --run autoconf
-AUTOHEADER = ${SHELL} /home/work/spaceify/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/cfgaux/missing --run autoheader
-AUTOMAKE = ${SHELL} /home/work/spaceify/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/cfgaux/missing --run automake-1.11
-=======
-ACLOCAL = ${SHELL} /home/researcher/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/cfgaux/missing --run aclocal-1.11
-AMTAR = ${SHELL} /home/researcher/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/cfgaux/missing --run tar
-AR = ar
-AUTOCONF = ${SHELL} /home/researcher/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/cfgaux/missing --run autoconf
-AUTOHEADER = ${SHELL} /home/researcher/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/cfgaux/missing --run autoheader
-AUTOMAKE = ${SHELL} /home/researcher/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/cfgaux/missing --run automake-1.11
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
+AUTOCONF = ${SHELL} /var/lib/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/cfgaux/missing --run autoconf
+AUTOHEADER = ${SHELL} /var/lib/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/cfgaux/missing --run autoheader
+AUTOMAKE = ${SHELL} /var/lib/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/cfgaux/missing --run automake-1.11
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=none
@@ -100,11 +86,7 @@ INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
-<<<<<<< HEAD
 LD = /usr/bin/ld -m elf_x86_64
-=======
-LD = /usr/bin/ld
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 LDFLAGS = -Wl,-Bsymbolic-functions -fPIE -pie -Wl,-z,relro -Wl,-z,now
 LIBADD_DL = -ldl 
 LIBADD_DLD_LINK = 
@@ -122,11 +104,7 @@ LTLIBOBJS =
 LT_DLLOADERS =  dlopen.la
 LT_DLPREOPEN = -dlpreopen dlopen.la 
 MAINT = #
-<<<<<<< HEAD
-MAKEINFO = ${SHELL} /home/work/spaceify/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/cfgaux/missing --run makeinfo
-=======
-MAKEINFO = ${SHELL} /home/researcher/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/cfgaux/missing --run makeinfo
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
+MAKEINFO = ${SHELL} /var/lib/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/cfgaux/missing --run makeinfo
 MKDIR_P = /bin/mkdir -p
 NM = /usr/bin/nm -B
 NMEDIT = 
@@ -150,17 +128,10 @@ STRIP = strip
 TRIE_CFLAGS = -Werror -Wall -Wpointer-arith -Wwrite-strings -Wmissing-prototypes -Wmissing-declarations -Wcomments
 TRIE_CXXFLAGS = -Werror -Wall -Wpointer-arith -Wwrite-strings -Wcomments
 VERSION = 0.1
-<<<<<<< HEAD
-abs_builddir = /home/work/spaceify/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/include
-abs_srcdir = /home/work/spaceify/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/include
-abs_top_builddir = /home/work/spaceify/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie
-abs_top_srcdir = /home/work/spaceify/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie
-=======
-abs_builddir = /home/researcher/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/include
-abs_srcdir = /home/researcher/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/include
-abs_top_builddir = /home/researcher/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie
-abs_top_srcdir = /home/researcher/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
+abs_builddir = /var/lib/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/include
+abs_srcdir = /var/lib/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/include
+abs_top_builddir = /var/lib/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie
+abs_top_srcdir = /var/lib/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie
 ac_ct_CC = gcc
 ac_ct_CXX = g++
 ac_ct_DUMPBIN = 
@@ -170,15 +141,9 @@ am__quote =
 am__tar = ${AMTAR} chof - "$$tardir"
 am__untar = ${AMTAR} xf -
 bindir = ${exec_prefix}/bin
-<<<<<<< HEAD
 build = x86_64-pc-linux-gnu
 build_alias = x86_64-linux-gnu
 build_cpu = x86_64
-=======
-build = i686-pc-linux-gnu
-build_alias = i686-linux-gnu
-build_cpu = i686
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 build_os = linux-gnu
 build_vendor = pc
 builddir = .
@@ -187,25 +152,15 @@ datarootdir = ${prefix}/share
 docdir = ${datarootdir}/doc/${PACKAGE_TARNAME}
 dvidir = ${docdir}
 exec_prefix = ${prefix}
-<<<<<<< HEAD
 host = x86_64-pc-linux-gnu
 host_alias = 
 host_cpu = x86_64
-=======
-host = i686-pc-linux-gnu
-host_alias = 
-host_cpu = i686
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 host_os = linux-gnu
 host_vendor = pc
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${prefix}/share/info
-<<<<<<< HEAD
-install_sh = ${SHELL} /home/work/spaceify/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/cfgaux/install-sh
-=======
-install_sh = ${SHELL} /home/researcher/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/cfgaux/install-sh
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
+install_sh = ${SHELL} /var/lib/spaceify/squid/squid3-3.3.8.spaceify/lib/libTrie/cfgaux/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${prefix}/lib/squid3
 localedir = ${datarootdir}/locale

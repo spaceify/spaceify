@@ -1,64 +1,19 @@
-docker/Dockerfile var/lib/spaceify/docker
+code/* var/lib/spaceify/code
 
-upstart/spaceify.conf etc/init
-upstart/spaceifydns.conf etc/init
-upstart/spaceifydhcp.conf etc/init
-upstart/spaceifyipt.conf etc/init
+data/spacelets/readme.txt var/lib/spaceify/data/spacelets
+data/sandboxed/readme.txt var/lib/spaceify/data/sandboxed
+data/native/readme.txt var/lib/spaceify/data/native
+data/scripts/* var/lib/spaceify/data/scripts
+data/scripts/spm usr/bin
+data/docs/* var/lib/spaceify/data/docs
+
+docker/Dockerfile var/lib/spaceify/data/docker
 
 monit/spaceify.conf etc/monit/conf.d
 
-ssl/openssl_client.conf var/lib/spaceify/ssl
-
-core/spacelets/readme.txt var/lib/spaceify/spacelets
-core/sandboxedapps/readme.txt var/lib/spaceify/sandboxedapps
-
-core/www/* var/lib/spaceify/www/
+upstart/* etc/init
 
 CHANGELOG var/lib/spaceify
 LICENSE var/lib/spaceify
 README.md var/lib/spaceify
-core/package.json var/lib/spaceify
 
-core/docs/spm.help var/lib/spaceify/docs
-
-core/bashscripts/spm usr/bin
-core/bashscripts/stop_containers.sh var/lib/spaceify/bashscripts
-core/bashscripts/spaceifyipt.sh var/lib/spaceify/dev
-
-core/lib/* var/lib/spaceify/lib
-
-core/appmanager.js var/lib/spaceify
-core/config.js var/lib/spaceify
-core/connectionhub.js var/lib/spaceify
-core/constants.js var/lib/spaceify
-core/contenttypes.js var/lib/spaceify
-core/database.js var/lib/spaceify
-core/dhcpserver.js var/lib/spaceify
-core/dhcpservice.js var/lib/spaceify
-core/dnsserver.js var/lib/spaceify
-core/dnsservice.js var/lib/spaceify
-core/dockercontainer.js var/lib/spaceify
-core/dockerhelper.js var/lib/spaceify
-core/dockerimage.js var/lib/spaceify
-core/engineiorpcserver.js var/lib/spaceify
-core/httpstatus.js var/lib/spaceify
-core/iptables.js var/lib/spaceify
-core/iptables_restore.js var/lib/spaceify
-core/language.js var/lib/spaceify
-core/logger.js var/lib/spaceify
-core/mainevents.js var/lib/spaceify
-core/main.js var/lib/spaceify
-core/pubsub.js var/lib/spaceify
-core/reload.js var/lib/spaceify
-core/sandboxedapplication.js var/lib/spaceify
-core/sandboxedapplicationmanager.js var/lib/spaceify
-core/spaceifycore.js var/lib/spaceify
-core/spaceifyerror.js var/lib/spaceify
-core/spacelet.js var/lib/spaceify
-core/spaceletmanager.js var/lib/spaceify
-core/spm.js var/lib/spaceify
-core/utility.js var/lib/spaceify
-core/webserver.js var/lib/spaceify
-core/websocketclient.js var/lib/spaceify
-core/websocketrpcclient.js var/lib/spaceify
-core/websocketrpcserver.js var/lib/spaceify

@@ -93,9 +93,10 @@ install/squid3::
 	dh_apparmor --profile-name=usr.sbin.squid3 -psquid3
 	install -m 755 -g root debian/spaceify/squid.conf $(INSTALLDIR)/etc/squid3
 	install -m 755 -g root -d $(INSTALLDIR)/etc/squid3/certs
-	install -m 755 -g root debian/spaceify/openssl.conf $(INSTALLDIR)/etc/squid3/certs
-	install -m 755 -g root debian/spaceify/openssl_server.conf $(INSTALLDIR)/etc/squid3/certs
-	install -m 755 -g root debian/spaceify/mk_new_ca_dir.pl $(INSTALLDIR)/etc/squid3/certs
+	install -m 755 -g root debian/spaceify/ca.cnf $(INSTALLDIR)/etc/squid3/certs
+	install -m 755 -g root debian/spaceify/server.cnf $(INSTALLDIR)/etc/squid3/certs
+	install -m 755 -g root debian/spaceify/makeca.sh $(INSTALLDIR)/etc/squid3/certs
+	install -m 755 -g root debian/spaceify/makeserver.sh $(INSTALLDIR)/etc/squid3/certs
 
 clean::
 	# nothing to do

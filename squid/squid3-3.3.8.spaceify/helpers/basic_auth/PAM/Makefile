@@ -32,13 +32,8 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-<<<<<<< HEAD
 build_triplet = x86_64-pc-linux-gnu
 host_triplet = x86_64-pc-linux-gnu
-=======
-build_triplet = i686-pc-linux-gnu
-host_triplet = i686-pc-linux-gnu
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(top_srcdir)/src/Common.am
 check_PROGRAMS =
@@ -116,42 +111,25 @@ CTAGS = ctags
 am__tty_colors = \
 red=; grn=; lgn=; blu=; std=
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-<<<<<<< HEAD
-ACLOCAL = ${SHELL} /home/work/spaceify/spaceify/squid/squid3-3.3.8.spaceify/cfgaux/missing --run aclocal-1.11
+ACLOCAL = ${SHELL} /var/lib/spaceify/squid/squid3-3.3.8.spaceify/cfgaux/missing --run aclocal-1.11
 ADAPTATION_LIBS = adaptation/libadaptation.la
 ALLOCA = 
-AMTAR = ${SHELL} /home/work/spaceify/spaceify/squid/squid3-3.3.8.spaceify/cfgaux/missing --run tar
-=======
-ACLOCAL = ${SHELL} /home/researcher/spaceify/squid/squid3-3.3.8.spaceify/cfgaux/missing --run aclocal-1.11
-ADAPTATION_LIBS = adaptation/libadaptation.la
-ALLOCA = 
-AMTAR = ${SHELL} /home/researcher/spaceify/squid/squid3-3.3.8.spaceify/cfgaux/missing --run tar
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
+AMTAR = ${SHELL} /var/lib/spaceify/squid/squid3-3.3.8.spaceify/cfgaux/missing --run tar
 AR = /usr/bin/ar
 ARGZ_H = 
 AR_R = /usr/bin/ar r
 AUTH_LIBS_TO_BUILD =  basic/libbasic.la ntlm/libntlm.la negotiate/libnegotiate.la digest/libdigest.la
 AUTH_MODULES =  basic ntlm negotiate digest
-<<<<<<< HEAD
-AUTOCONF = ${SHELL} /home/work/spaceify/spaceify/squid/squid3-3.3.8.spaceify/cfgaux/missing --run autoconf
-AUTOHEADER = ${SHELL} /home/work/spaceify/spaceify/squid/squid3-3.3.8.spaceify/cfgaux/missing --run autoheader
-AUTOMAKE = ${SHELL} /home/work/spaceify/spaceify/squid/squid3-3.3.8.spaceify/cfgaux/missing --run automake-1.11
-=======
-AUTOCONF = ${SHELL} /home/researcher/spaceify/squid/squid3-3.3.8.spaceify/cfgaux/missing --run autoconf
-AUTOHEADER = ${SHELL} /home/researcher/spaceify/squid/squid3-3.3.8.spaceify/cfgaux/missing --run autoheader
-AUTOMAKE = ${SHELL} /home/researcher/spaceify/squid/squid3-3.3.8.spaceify/cfgaux/missing --run automake-1.11
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
+AUTOCONF = ${SHELL} /var/lib/spaceify/squid/squid3-3.3.8.spaceify/cfgaux/missing --run autoconf
+AUTOHEADER = ${SHELL} /var/lib/spaceify/squid/squid3-3.3.8.spaceify/cfgaux/missing --run autoheader
+AUTOMAKE = ${SHELL} /var/lib/spaceify/squid/squid3-3.3.8.spaceify/cfgaux/missing --run automake-1.11
 AWK = gawk
 BASIC_AUTH_HELPERS =  DB fake getpwnam LDAP MSNT MSNT-multi-domain NCSA NIS PAM POP3 RADIUS SASL SMB
 BZR = 
 CACHE_EFFECTIVE_USER = proxy
 CC = gcc
 CCDEPMODE = depmode=none
-<<<<<<< HEAD
 CFLAGS = -m64 -g -O2 -fPIE -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -Wall
-=======
-CFLAGS = -m32 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -g -O2 -fPIE -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -Wall
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 CGIEXT = .cgi
 CHMOD = /bin/chmod
 CPP = gcc -E
@@ -161,11 +139,7 @@ CRYPTLIB = -lcrypt
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=none
-<<<<<<< HEAD
 CXXFLAGS = -m64 -g -O2 -fPIE -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -std=c++0x
-=======
-CXXFLAGS = -m32 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -g -O2 -fPIE -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -std=c++0x
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 CYGPATH_W = echo
 DEFAULT_HOSTS = /etc/hosts
 DEFAULT_LOG_DIR = /var/log/squid3
@@ -190,14 +164,9 @@ EPOLL_LIBS =
 EUILIB = 
 EXEEXT = 
 EXPATLIB = -lexpat
-EXTERNAL_ACL_HELPERS =  file_userip LDAP_group session SQL_session unix_group wbinfo_group
-<<<<<<< HEAD
+EXTERNAL_ACL_HELPERS =  LDAP_group session SQL_session unix_group wbinfo_group
 EXT_LIBECAP_CFLAGS =  
 EXT_LIBECAP_LIBS = -lecap  
-=======
-EXT_LIBECAP_CFLAGS = -I/usr/local/include  
-EXT_LIBECAP_LIBS = -L/usr/local/lib -lecap  
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 FALSE = /bin/false
 FGREP = /bin/fgrep
 GREP = grep
@@ -212,15 +181,9 @@ INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 KRB5INCS =  
 KRB5LIBS = -Wl,-Bsymbolic-functions -Wl,-z,relro -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err -Wl,-Bsymbolic-functions -Wl,-z,relro -lkrb5 -lk5crypto -lcom_err
 LBERLIB = -llber
-<<<<<<< HEAD
 LD = /usr/bin/ld -m elf_x86_64
 LDAPLIB = -lldap
 LDFLAGS = -m64 -Wl,-Bsymbolic-functions -fPIE -pie -Wl,-z,relro -Wl,-z,now
-=======
-LD = /usr/bin/ld
-LDAPLIB = -lldap
-LDFLAGS = -m32 -Wl,-Bsymbolic-functions -fPIE -pie -Wl,-z,relro -Wl,-z,now
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 LIBADD_DL = -ldl
 LIBADD_DLD_LINK = 
 LIBADD_DLOPEN = -ldl
@@ -243,11 +206,7 @@ LT_CONFIG_H = include/autoconf.h
 LT_DLLOADERS =  libltdl/dlopen.la
 LT_DLPREOPEN = -dlpreopen libltdl/dlopen.la 
 MAINT = #
-<<<<<<< HEAD
-MAKEINFO = ${SHELL} /home/work/spaceify/spaceify/squid/squid3-3.3.8.spaceify/cfgaux/missing --run makeinfo
-=======
-MAKEINFO = ${SHELL} /home/researcher/spaceify/squid/squid3-3.3.8.spaceify/cfgaux/missing --run makeinfo
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
+MAKEINFO = ${SHELL} /var/lib/spaceify/squid/squid3-3.3.8.spaceify/cfgaux/missing --run makeinfo
 MINGW_LIBS = 
 MKDIR = /bin/mkdir
 MKDIR_P = /bin/mkdir -p
@@ -289,11 +248,7 @@ SNMPLIB = ../snmplib/libsnmplib.a
 SQUID_CFLAGS = -Wall -Wpointer-arith -Wwrite-strings -Wmissing-prototypes -Wmissing-declarations -Wcomments -Werror -pipe -D_REENTRANT
 SQUID_CPPUNIT_INC = 
 SQUID_CPPUNIT_LA = 
-<<<<<<< HEAD
 SQUID_CPPUNIT_LIBS = -L/usr/lib/x86_64-linux-gnu -lcppunit -ldl
-=======
-SQUID_CPPUNIT_LIBS = -L/usr/lib/i386-linux-gnu -lcppunit -ldl
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 SQUID_CXXFLAGS = -I/usr/include/libxml2 -Wall -Wpointer-arith -Wwrite-strings -Wcomments -Werror -pipe -D_REENTRANT
 SSLLIB = -lssl -lcrypto
 STORE_LIBS_TO_ADD =  fs/libufs.la fs/libaufs.la fs/libdiskd.la fs/librock.la
@@ -308,17 +263,10 @@ WIN32_PSAPI =
 XMLLIB = -lxml2
 XTRA_LIBS = -lm -lnsl -lresolv -lcap -lnetfilter_conntrack -lrt -ldl -ldl
 XTRA_OBJS = 
-<<<<<<< HEAD
-abs_builddir = /home/work/spaceify/spaceify/squid/squid3-3.3.8.spaceify/helpers/basic_auth/PAM
-abs_srcdir = /home/work/spaceify/spaceify/squid/squid3-3.3.8.spaceify/helpers/basic_auth/PAM
-abs_top_builddir = /home/work/spaceify/spaceify/squid/squid3-3.3.8.spaceify
-abs_top_srcdir = /home/work/spaceify/spaceify/squid/squid3-3.3.8.spaceify
-=======
-abs_builddir = /home/researcher/spaceify/squid/squid3-3.3.8.spaceify/helpers/basic_auth/PAM
-abs_srcdir = /home/researcher/spaceify/squid/squid3-3.3.8.spaceify/helpers/basic_auth/PAM
-abs_top_builddir = /home/researcher/spaceify/squid/squid3-3.3.8.spaceify
-abs_top_srcdir = /home/researcher/spaceify/squid/squid3-3.3.8.spaceify
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
+abs_builddir = /var/lib/spaceify/squid/squid3-3.3.8.spaceify/helpers/basic_auth/PAM
+abs_srcdir = /var/lib/spaceify/squid/squid3-3.3.8.spaceify/helpers/basic_auth/PAM
+abs_top_builddir = /var/lib/spaceify/squid/squid3-3.3.8.spaceify
+abs_top_srcdir = /var/lib/spaceify/squid/squid3-3.3.8.spaceify
 ac_ct_CC = gcc
 ac_ct_CXX = g++
 ac_ct_DUMPBIN = 
@@ -329,15 +277,9 @@ am__quote =
 am__tar = tar --format=ustar -chf - "$$tardir"
 am__untar = tar -xf -
 bindir = ${exec_prefix}/bin
-<<<<<<< HEAD
 build = x86_64-pc-linux-gnu
 build_alias = x86_64-linux-gnu
 build_cpu = x86_64
-=======
-build = i686-pc-linux-gnu
-build_alias = i686-linux-gnu
-build_cpu = i686
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 build_os = linux-gnu
 build_vendor = pc
 builddir = .
@@ -346,25 +288,15 @@ datarootdir = ${prefix}/share
 docdir = ${datarootdir}/doc/${PACKAGE_TARNAME}
 dvidir = ${docdir}
 exec_prefix = ${prefix}
-<<<<<<< HEAD
 host = x86_64-pc-linux-gnu
 host_alias = 
 host_cpu = x86_64
-=======
-host = i686-pc-linux-gnu
-host_alias = 
-host_cpu = i686
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 host_os = linux-gnu
 host_vendor = pc
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${prefix}/share/info
-<<<<<<< HEAD
-install_sh = ${SHELL} /home/work/spaceify/spaceify/squid/squid3-3.3.8.spaceify/cfgaux/install-sh
-=======
-install_sh = ${SHELL} /home/researcher/spaceify/squid/squid3-3.3.8.spaceify/cfgaux/install-sh
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
+install_sh = ${SHELL} /var/lib/spaceify/squid/squid3-3.3.8.spaceify/cfgaux/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${prefix}/lib/squid3
 localedir = ${datarootdir}/locale

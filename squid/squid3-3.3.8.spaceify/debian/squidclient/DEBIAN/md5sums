@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-666065af20ed0ab4b97002fe6d70d2e6  usr/bin/squidclient
-=======
-5aa5cc61e3bb55a55bd846912f88ab4f  usr/bin/squidclient
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
+4b7ee46a8364eae3cc9321e3e892867f  usr/bin/squidclient
 8bb00ac4144a813d53c282b628e0e5d9  usr/share/doc/squidclient/README
 3ea1305c282c610e028949ce14ca2068  usr/share/doc/squidclient/changelog.gz
 872a6da7fbce2560a56e0a8d43629ee5  usr/share/doc/squidclient/copyright

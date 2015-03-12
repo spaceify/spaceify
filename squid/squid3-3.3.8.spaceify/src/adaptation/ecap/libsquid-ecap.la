@@ -17,25 +17,15 @@ old_library='libsquid-ecap.a'
 inherited_linker_flags=''
 
 # Libraries that this one depends upon.
-<<<<<<< HEAD
 dependency_libs=' -lecap'
-=======
-dependency_libs=' -L/usr/local/lib /usr/local/lib/libecap.la'
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 
 # Names of additional weak libraries provided by this library
 weak_library_names=''
 
 # Version information for libsquid-ecap.
-<<<<<<< HEAD
 current=
 age=
 revision=
-=======
-current=2
-age=0
-revision=0
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
 
 # Is this an already installed library?
 installed=no

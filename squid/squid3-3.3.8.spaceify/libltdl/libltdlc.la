@@ -35,11 +35,7 @@ shouldnotlink=no
 
 # Files to dlopen/dlpreopen
 dlopen=''
-<<<<<<< HEAD
-dlpreopen=' /home/work/spaceify/spaceify/squid/squid3-3.3.8.spaceify/libltdl/./.libs/dlopen.a'
-=======
-dlpreopen=' /home/researcher/spaceify/squid/squid3-3.3.8.spaceify/libltdl/./.libs/dlopen.a'
->>>>>>> 2fa62aafebf51d26a356f76671af17f85fb9da6c
+dlpreopen=' /var/lib/spaceify/squid/squid3-3.3.8.spaceify/libltdl/./.libs/dlopen.a'
 
 # Directory that this library needs to be installed in:
 libdir=''

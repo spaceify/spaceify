@@ -1,44 +1,75 @@
 #!/bin/bash
 
-# DEBCONF  ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++
+###########
+# DEBCONF #
+###########
+
 if [ "$1" = "purge" -a -e /usr/share/debconf/confmodule ]; then
 	. /usr/share/debconf/confmodule
 	db_purge
 fi
 
-# CONSTANTS   ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++
+#############
+# CONSTANTS #
+#############
+
 start_spaceify="# Added by spaceify"
 end_spaceify="# Added by spaceify ends"
 comm_out_spaceify="# Commented out by spaceify: "
 
-# REMOVE SPACEIFY'S ENTRIES/COMMENTS FROM CONFIGURATION FILES ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++
-# /etc/network/interfaces -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+###############################################################
+# REMOVE SPACEIFY'S ENTRIES/COMMENTS FROM CONFIGURATION FILES #
+###############################################################
+
+#----- /etc/network/interfaces -----#
+
 sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d" /etc/network/interfaces
 
-#/etc/default/docker
+#----- /etc/default/docker -----#
+
 sudo sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/default/docker
 
-# /etc/rc.local  -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+#----- /etc/rc.local -----#
+
 sudo sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/rc.local
 
-# /etc/sysctl.conf  -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+#----- /etc/sysctl.conf -----#
+
 sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d" /etc/sysctl.conf
 
-# /etc/default/hostapd -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+#----- /etc/default/hostapd -----#
+
 sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d" /etc/default/hostapd
 
-# /etc/monit/monitrc   -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+#----- /etc/monit/monitrc -----#
+
 #sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/monit/monitrc
 
-# REMOVE SPACEIFY'S FILES ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++
+###########################
+# REMOVE SPACEIFY'S FILES #
+###########################
+
 sudo stop spaceify > /dev/null 2>&1 || true												# stop core first
+sudo stop spaceifydns > /dev/null 2>&1 || true
+sudo stop spaceifydhcp > /dev/null 2>&1 || true
+sudo stop spaceifyipt > /dev/null 2>&1 || true
 
 if [ "$1" = "remove" ]; then
-	sudo rm -r /var/lib/spaceify > /dev/null 2>&1 || true
 	sudo rm /etc/init/spaceify.conf > /dev/null 2>&1 || true
+	sudo rm /etc/init/spaceifydns.conf > /dev/null 2>&1 || true
+	sudo rm /etc/init/spaceifydhcp.conf > /dev/null 2>&1 || true
+	sudo rm /etc/init/spaceifyipt.conf > /dev/null 2>&1 || true
+
+	sudo rm -r /var/lib/spaceify/code > /dev/null 2>&1 || true
+	sudo rm -r /var/lib/spaceify/dev/iptpiper > /dev/null 2>&1 || true
+	sudo rm -r /var/lib/spaceify/dev/iptpipew > /dev/null 2>&1 || true
+	printf "\n\nSpaceify's data stored in directory /var/lib/spaceify/data is not removed. Remove it by hand if necessary.\n\n"
 fi
 
-# REMOVE SPACEIFY'S CHAINS FROM IPTABLES
+##########################################
+# REMOVE SPACEIFY'S CHAINS FROM IPTABLES #
+##########################################
+
 sudo iptables -t mangle -D PREROUTING -j Spaceify-mangle > /dev/null 2>&1 || true
 sudo iptables -t mangle -F Spaceify-mangle > /dev/null 2>&1 || true
 sudo iptables -t mangle -X Spaceify-mangle > /dev/null 2>&1 || true

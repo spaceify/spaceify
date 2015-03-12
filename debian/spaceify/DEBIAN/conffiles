@@ -1,5 +1,0 @@
-/etc/init/spaceifyipt.conf
-/etc/init/spaceifydns.conf
-/etc/init/spaceifydhcp.conf
-/etc/init/spaceify.conf
-/etc/monit/conf.d/spaceify.conf

@@ -3,12 +3,16 @@
 # Source debconf/confmodule
 . /usr/share/debconf/confmodule
 
-# CONSTANTS   ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++
+#############
+# CONSTANTS #
+#############
 start_spaceify="# Added by spaceify"
 end_spaceify="# Added by spaceify ends"
 comm_out_spaceify="# Commented out by spaceify: "
 
-# DEBCONF - GET SELECTIONS   ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++
+############################
+# DEBCONF - GET SELECTIONS #
+############################
 db_get spaceify/ethernet
 eth="$RET"
 
@@ -27,8 +31,12 @@ db_get spaceify/admin_password
 admin_password="$RET"
 db_unregister spaceify/admin_password || true
 
-# MODIFY CONFIGURATION SCRIPTS  ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++
-# /etc/network/interfaces - give ip to wlan0 (or what adapter names user selected) -- -- -- -- --
+################################
+# MODIFY CONFIGURATION SCRIPTS #
+################################
+
+#----- /etc/network/interfaces - give ip to wlan0 (or what adapter names user selected) -----#
+
 sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d" /etc/network/interfaces	# remove spaceify's previous comments/entries
 
 sed -i "/${wlan}/,/^$/s/^/${comm_out_spaceify}&/g" /etc/network/interfaces					# comment out existing wlan (range: first line with string $wlan until empty line)
@@ -42,7 +50,8 @@ wlan_conf=$( echo "${wlan_conf}netmask 255.255.255.0\n" )
 wlan_conf=$( echo "${wlan_conf}${end_spaceify}" )
 sudo printf "$wlan_conf" > /etc/network/interfaces
 
-# /etc/default/docker
+#----- /etc/default/docker -----#
+
 sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/default/docker > /dev/null 2>&1 || true	# remove spaceify's previous entries
 docker_conf=$(</etc/default/docker) > /dev/null 2>&1 || true
 docker_conf=$( echo "${docker_conf}\n\n${start_spaceify}\n" )
@@ -50,10 +59,9 @@ docker_conf=$( echo "${docker_conf}DOCKER_OPTS=\"--dns 10.0.0.1\"\n" )
 docker_conf=$( echo "${docker_conf}${end_spaceify}" )
 sudo printf "$docker_conf" > /etc/default/docker
 
-# /etc/rc.local  -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
-# Configure custom iptables chains for Spaceify, we do this in order to be able to remove our rules
+#----- /etc/rc.local -----#
 
-# Remove spaceify's previous entries
+# Remove spaceify's previous iptables entries
 sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/rc.local
 
 sudo iptables -t mangle -D PREROUTING -j Spaceify-mangle > /dev/null 2>&1 || true
@@ -114,7 +122,8 @@ https_chain="$rclocal1\n$rclocal2\n$rclocal3\n$rclocal4\n$rclocal5\n$rclocal6\n$
 # Append spaceify specific lines in rc.local before "exit 0"
 sudo sed -i "s/^exit.*/$start_spaceify\n$mangle_chain\n$http_chain\n$https_chain$end_spaceify\nexit 0/" /etc/rc.local
 
-# /etc/sysctl.conf - enable forwarding (for nat)  -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+#----- /etc/sysctl.conf - enable forwarding (for nat) -----#
+
 sysctl=$(</etc/sysctl.conf)
 sysctl=$( echo "$sysctl" | sed "s/${comm_out_spaceify}//g" )								# remove spaceify's previous comments
 sysctl=$( echo "$sysctl" | sed "/${start_spaceify}/,/${end_spaceify}/d" )					# remove spaceify's previous entries
@@ -122,7 +131,8 @@ sysctl=$( echo "$sysctl" | sed "s/.*net.ipv4.ip_forward.*=.*/${comm_out_spaceify
 sysctl=$( echo "${sysctl}\n\n${start_spaceify}\nnet.ipv4.ip_forward=1\n${end_spaceify}" )	# append new value
 sudo printf "$sysctl" > /etc/sysctl.conf
 
-# /etc/hostapd/hostapd_spaceify-ap.conf and /etc/default/hostapd - configure/enable AP - -- -- --
+#----- /etc/hostapd/hostapd_spaceify-ap.conf and /etc/default/hostapd - configure/enable AP -----#
+
 if [ "$intext" -eq 1 ]; then																# configure
 	hostap=$( echo "$start_spaceify\n" )
 	hostap=$( echo "${hostap}interface=${wlan}\n" )
@@ -147,14 +157,16 @@ else																						# comment configuration if hostpad is installed and it
 	fi
 fi
 
-# /etc/init/spaceify.conf -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+#----- /etc/init/spaceify.conf -----#
+
 sudo sed -i "s/CHANGEADAPTER/${eth}/" /etc/init/spaceify.conf
 
-# /etc/monit/monitrc   -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
-#sudo sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/monit/monitrc						# remove spaceify's previous entries
+#----- /etc/monit/monitrc -----#
+
+#sudo sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/monit/monitrc					# remove spaceify's previous entries
 
 #monit=$(</etc/monit/monitrc)
-#monit=$( echo "${monit}\n\n${start_spaceify}\n" )												# append new configuration
+#monit=$( echo "${monit}\n\n${start_spaceify}\n" )											# append new configuration
 #monit=$( echo "${monit}include /var/lib/spaceify/monit/spaceify.conf\n" )
 #monit=$( echo "${monit}${end_spaceify}\n" )
 #sudo printf "$monit" > /etc/monit/monitrc
@@ -163,12 +175,16 @@ core_port="2497"
 #sudo sed -i "s/%1/${core_port}/" /var/lib/spaceify/monit/spaceify.conf						# change the port to monitor to configuration
 sudo sed -i "s/%1/${core_port}/" /etc/monit/conf.d/spaceify.conf
 
-# EXECUTE COMMANDS  ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++ ++
-# Create Spaceifys databases    -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
-sudo mkdir /var/lib/spaceify/db/ > /dev/null 2>&1 || true									# create directory for the databases
+####################
+# EXECUTE COMMANDS #
+####################
+
+#----- Create Spaceify's databases -----#
+
+sudo mkdir /var/lib/spaceify/data/db/ > /dev/null 2>&1 || true								# create directory for the databases
 
 db_version=4
-spaceify_db="/var/lib/spaceify/db/spaceify.db"
+spaceify_db="/var/lib/spaceify/data/db/spaceify.db"
 if [ -e $spaceify_db ]; then																# database exists - make modifications if database (version) changes
 	odv=$( sudo sqlite3 $spaceify_db "SELECT db_version FROM settings" > /dev/null 2>&1 || true )
 	if [[ $odv == "" ]]; then odv=0; fi
@@ -203,36 +219,35 @@ fi
 	# SET RELEASE NAME AND VERSION - THIS MUST BE REMEMBERED TO SET FOR EACH NEW PACKAGE
 sudo sqlite3 $spaceify_db "UPDATE settings SET release_name='Alpha Centauri', release_version='0.1.0';"
 
-# Certificates and keys   -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+#----- Certificates and keys -----#
+
 # Copy certificates and keys to Spaceify's folders from Squid's folders
-sudo mkdir /var/lib/spaceify/www/ > /dev/null 2>&1 || true
-sudo mkdir /var/lib/spaceify/ssl/ > /dev/null 2>&1 || true
-sudo cp /etc/squid3/certs/spaceifyCA/spaceifyCA.crt /var/lib/spaceify/www/ > /dev/null 2>&1 || true
-sudo cp /etc/squid3/certs/spaceify.crt /var/lib/spaceify/ssl/ > /dev/null 2>&1 || true
-sudo cp /etc/squid3/certs/spaceify.key /var/lib/spaceify/ssl/ > /dev/null 2>&1 || true
+sudo mkdir /var/lib/spaceify/code/www/ > /dev/null 2>&1 || true
+sudo mkdir /var/lib/spaceify/data/tls/ > /dev/null 2>&1 || true
+sudo cp /etc/squid3/certs/spaceifyCA/spaceify.crt /var/lib/spaceify/code/www/ > /dev/null 2>&1 || true
+sudo cp /etc/squid3/certs/server.crt /var/lib/spaceify/data/tls/ > /dev/null 2>&1 || true
+sudo cp /etc/squid3/certs/server.key /var/lib/spaceify/data/tls/ > /dev/null 2>&1 || true
 
-# Add spaceifyCA.crt as a trusted certificate for openssl (remember to do this for the docker containers when installing applications)
-sudo rm /etc/ssl/certs/`openssl x509 -hash -noout -in /etc/squid3/certs/spaceifyCA/spaceifyCA.crt`.0 > /dev/null 2>&1 || true
-sudo ln -s /etc/squid3/certs/spaceifyCA/spaceifyCA.crt /etc/ssl/certs/`openssl x509 -hash -noout -in /etc/squid3/certs/spaceifyCA/spaceifyCA.crt`.0
+#----- File permissions etc. -----#
 
-# File permissions etc.   -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
-sudo mkdir -p /var/lib/spaceify/dhcp-data > /dev/null 2>&1 || true							# dhcp server directories/files
-sudo chmod -R 0664 /var/lib/spaceify/dhcp-data > /dev/null 2>&1 || true
-# sudo chown - R root:spaceify /var/lib/spaceify/dhcp-data > /dev/null 2>&1 || true
+sudo mkdir -p /var/lib/spaceify/data/dhcp-data > /dev/null 2>&1 || true						# dhcp server directories/files
+sudo chmod -R 0664 /var/lib/spaceify/data/dhcp-data > /dev/null 2>&1 || true
+# sudo chown - R root:spaceify /var/lib/spaceify/data/dhcp-data > /dev/null 2>&1 || true
 
-sudo mkdir -p /var/lib/spaceify/ipt-data > /dev/null 2>&1 || true							# iptables directories/files
-sudo chmod -R 0664 /var/lib/spaceify/ipt-data > /dev/null 2>&1 || true
-# sudo chown - R root:spaceify /var/lib/spaceify/ipt-data > /dev/null 2>&1 || true
+sudo mkdir -p /var/lib/spaceify/data/ipt-data > /dev/null 2>&1 || true						# iptables directories/files
+sudo chmod -R 0664 /var/lib/spaceify/data/ipt-data > /dev/null 2>&1 || true
+# sudo chown - R root:spaceify /var/lib/spaceify/data/ipt-data > /dev/null 2>&1 || true
 
-sudo mkdir -p /var/lib/spaceify/dev > /dev/null 2>&1 || true								# FIFO for iptables writer
-sudo chmod -R 0700 /var/lib/spaceify/dev > /dev/null 2>&1 || true
-sudo chown - R root:root /var/lib/spaceify/dev > /dev/null 2>&1 || true
+sudo mkdir -p /var/lib/spaceify/data/dev > /dev/null 2>&1 || true							# FIFO for iptables writer
+sudo chmod -R 0700 /var/lib/spaceify/data/dev > /dev/null 2>&1 || true
+sudo chown - R root:root /var/lib/spaceify/data/dev > /dev/null 2>&1 || true
 
 sudo chmod 0755 /usr/bin/spm  > /dev/null 2>&1 || true										# Spaceify Packet Manager script
 
-sudo chmod 0755 /var/lib/spaceify/bashscripts/stop_containers.sh > /dev/null 2>&1 || true	# a script to stop and remove running containers
+sudo chmod 0755 /var/lib/spaceify/data/scripts/stop_containers.sh > /dev/null 2>&1 || true	# a script to stop and remove running containers
 
-# Create and initialize Docker image  -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+#----- Create and initialize Docker image -----#
+
 ubun=$( sudo docker images )
 ubun=$( echo "$ubun" | sudo sed -n '/spaceifyubuntu/{p;q;}' )
 if [[ "$ubun" == "" ]]; then																# create image only if it is not in the images list
@@ -242,7 +257,8 @@ if [[ "$ubun" == "" ]]; then																# create image only if it is not in 
 	sudo docker build -no-cache -rm -t spaceifyubuntu .
 fi
 
-# Create custom iptables chains for Spaceify   -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+#----- Create custom iptables chains for Spaceify -----#
+
 # Create mangle chain
 iptables -t mangle -N Spaceify-mangle
 iptables -t mangle -A PREROUTING -j Spaceify-mangle
@@ -279,24 +295,25 @@ sudo echo 1 > /proc/sys/net/ipv4/ip_forward
 # sudo n stable
 
 sudo npm install -g node-gyp@0.6.2
-cd /var/lib/spaceify
+cd /var/lib/spaceify/code
 sudo npm install
 
-# Create user names and passwords for edge and admin -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+#----- Create user names and passwords for edge and admin -----#
+
 # Is edge already registered? Try to find previous edge_id.uuid file.
-fuuid=""
-if [ -e /var/lib/spaceify/db/edge_id.uuid ]; then
-	fuuid=$(</var/lib/spaceify/db/edge_id.uuid)
+euuid=""
+if [ -e /var/lib/spaceify/data/db/edge_id.uuid ]; then
+	euuid=$(</var/lib/spaceify/data/db/edge_id.uuid)
 elif [ -e /tmp/edge_id.uuid ]; then
-	fuuid=$(</tmp/edge_id.uuid)
+	euuid=$(</tmp/edge_id.uuid)
 fi
 
 # Parse file content if edge_id.uuid was found
 uuid=""
 edge_password=""
-if [[ "$fuuid" != "" ]]; then
+if [[ "$euuid" != "" ]]; then
 	OIFS="$IFS"
-	IFS="," read -ra auuid <<< "$fuuid"
+	IFS="," read -ra auuid <<< "$euuid"
 	IFS="$OIFS"
 
 	uuid="${auuid[0]}"
@@ -321,10 +338,10 @@ if [[ "$uuid" == "" ]]; then
 
 		result=$(sudo curl -d "eid=${uuid}&epw=${edge_password}" --location "http://spaceify.net/edge_register.php")
 		if [[ "$result" == "" ]]; then
-			echo "${uuid},${edge_password}" > /var/lib/spaceify/db/edge_id.uuid
+			echo "${uuid},${edge_password}" > /var/lib/spaceify/data/db/edge_id.uuid
 
 			printf "\nEdge registered successfully with edge id ${uuid}.\nFile edge_id.uuid can be found here:\n"
-			printf "/var/lib/spaceify/db\n"
+			printf "/var/lib/spaceify/data/db\n"
 			printf "Store this file in a secure location for future use. If the file is placed to /tmp prior to reinstalling spaceify\n"
 			printf "the new installation will reuse the id and previous registration.\n\n"
 
@@ -347,9 +364,10 @@ fi
 # Update the created/restored edge_id and password AND admin password to the database.
 admin_salt=$(openssl rand -hex 64)
 admin_password_hash=$(echo -n "${admin_password}${admin_salt}" | openssl dgst -sha512 -hex | awk '{print $2}')
-sudo sqlite3 /var/lib/spaceify/db/spaceify.db "INSERT OR REPLACE INTO user (edge_id, edge_password, admin_password_hash, admin_salt)  VALUES('${uuid}', '${edge_password}', '${admin_password_hash}', '${admin_salt}');"
+sudo sqlite3 /var/lib/spaceify/data/db/spaceify.db "INSERT OR REPLACE INTO user (edge_id, edge_password, admin_password_hash, admin_salt)  VALUES('${uuid}', '${edge_password}', '${admin_password_hash}', '${admin_salt}');"
 
-# Start services -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+#----- Start services -----#
+
 if [[ -z $(sudo service network-manager status |& grep running) ]]; then
 	printf "\nNetworking not restarted, please do it manually\n"
 else

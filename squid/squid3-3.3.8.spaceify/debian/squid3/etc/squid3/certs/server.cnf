@@ -1,0 +1,31 @@
+# Server certificate configuration file.
+# Spaceify Inc. 28.2.2015
+
+###############################################################################
+[ req ]
+default_bits            = 4096
+prompt                  = no
+string_mask             = nombstr #
+default_md              = sha512 #
+distinguished_name      = server_distinguished_name
+#req_extensions          = v3_req
+
+[ server_distinguished_name ]
+#localityName            =
+#emailAddress            =
+#stateOrProvinceName     =
+countryName             = FI
+commonName              = Server
+organizationName        = Spaceify Inc.
+organizationalUnitName  = Spaceify core
+
+[ v3_req ]
+subjectKeyIdentifier    = hash
+basicConstraints        = CA:FALSE
+extendedKeyUsage        = serverAuth,clientAuth
+authorityKeyIdentifier  = keyid:always, issuer:always
+keyUsage                = digitalSignature, keyEncipherment, keyAgreement
+subjectAltName          = @alt_names
+
+[ alt_names ]
+IP.0                    = 10.0.0.1

@@ -226,12 +226,12 @@ if [ -e $dbs ]; then																		# database exists
 else																						# create new database
 
 	sudo touch $dbs
-	sqlite $dbs < /var/lib/spaceify/data/db/create.sql
+	sqlite3 $dbs < /var/lib/spaceify/data/db/create.sql
 
 fi
 
 #  Set release name and version
-versions=$(< versions)
+versions=$(< /var/lib/spaceify/versions)
 release_version=$(echo $versions | awk -F : '{print $2}')
 release_name=$(echo $versions | awk -F : '{print $3}')
 db_version=$(echo $versions | awk -F : '{print $7}')

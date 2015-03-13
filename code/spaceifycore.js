@@ -273,9 +273,9 @@ self.saveOptions = fibrous( function(session_id, unique_name, directory, file, d
 		var volume = "";
 		if(app.type == Config.SPACELET)
 			volume = Config.SPACELETS_PATH + app.unique_directory + Config.VOLUME_DIRECTORY;
-		else if(app.type == Config.SANDBOXED_APPLICATION)
+		else if(app.type == Config.SANDBOXED)
 			volume = Config.SANDBOXED_PATH + app.unique_directory + Config.VOLUME_DIRECTORY;
-		/*else if(app.type == Config.NATIVE_APPLICATION)
+		/*else if(app.type == Config.NATIVE)
 			volume = Config.NATIVEAPPS_PATH + app.unique_directory + Config.VOLUME_DIRECTORY;*/
 
 		if(directory != "")
@@ -319,9 +319,9 @@ self.loadOptions = fibrous( function(session_id, unique_name, directory, file)
 		var volume = "";
 		if(app.type == Config.SPACELET)
 			volume = Config.SPACELETS_PATH + app.unique_directory + Config.VOLUME_DIRECTORY;
-		else if(app.type == Config.SANDBOXED_APPLICATION)
+		else if(app.type == Config.SANDBOXED)
 			volume = Config.SANDBOXED_PATH + app.unique_directory + Config.VOLUME_DIRECTORY;
-		/*else if(app.type == Config.NATIVE_APPLICATION)
+		/*else if(app.type == Config.NATIVE)
 			volume = Config.NATIVE_PATH + app.unique_directory + Config.VOLUME_DIRECTORY;*/
 
 		if(directory != "")
@@ -382,9 +382,9 @@ self.startApplication = fibrous(function(type, unique_name)
 
 	if(type == Config.SPACELET)
 		spaceletManager.sync.start(unique_name);
-	else if(type == Config.SANDBOXED_APPLICATION)
+	else if(type == Config.SANDBOXED)
 		sandboxedManager.sync.start(unique_name);
-	/*else if(type == NATIVE_APPLICATION) {}
+	/*else if(type == NATIVE) {}
 		nativeManager.sync.start(unique_name);*/
 	});
 
@@ -397,9 +397,9 @@ self.stopApplication = fibrous(function(type, unique_name)
 
 	if(type == Config.SPACELET)
 		spaceletManager.sync.stop(unique_name);
-	else if(type == Config.SANDBOXED_APPLICATION)
+	else if(type == Config.SANDBOXED)
 		sandboxedManager.sync.stop(unique_name);
-	/*else if(type == NATIVE_APPLICATION) {}
+	/*else if(type == Config.NATIVE) {}
 		nativeManager.sync.stop(unique_name, true);*/
 	});
 
@@ -412,9 +412,9 @@ self.removeApplication = fibrous(function(type, unique_name)
 
 	if(type == Config.SPACELET)
 		spaceletManager.sync.remove(unique_name);
-	else if(type == Config.SANDBOXED_APPLICATION)
+	else if(type == Config.SANDBOXED)
 		sandboxedManager.sync.remove(unique_name);
-	/*else if(type == NATIVE_APPLICATION) {}
+	/*else if(type == Config.NATIVE) {}
 		nativeManager.sync.remove(unique_name, true);*/
 	});
 
@@ -425,9 +425,9 @@ self.isApplicationRunning = fibrous(function(type, unique_name)
 	var isRunning = false;
 	if(type == Config.SPACELET)
 		isRunning = spaceletManager.isRunning(unique_name);
-	else if(type == Config.SANDBOXED_APPLICATION)
+	else if(type == Config.SANDBOXED)
 		isRunning = sandboxedManager.isRunning(unique_name);
-	/*else if(type == NATIVE_APPLICATION) {}
+	/*else if(type == Config.NATIVE) {}
 		isRunning = nativeManager.isRunning(unique_name);*/
 
 	return isRunning;
@@ -459,7 +459,7 @@ self.getApplicationData = fibrous(function(unique_name)
 				app_data.spacelets.push(manifest);
 				}
 
-			var sandboxed = database.sync.getApplication([Config.SANDBOXED_APPLICATION], true) || [];
+			var sandboxed = database.sync.getApplication([Config.SANDBOXED], true) || [];
 			for(var i=0; i<sandboxed.length; i++)
 				{
 				app_dir = Config.SANDBOXED_PATH + sandboxed[i].unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY;
@@ -471,7 +471,7 @@ self.getApplicationData = fibrous(function(unique_name)
 				app_data.sandboxed.push(manifest);
 				}
 
-			/*var native = database.sync.getApplication([Config.NATIVE_APPLICATION], true) || [];
+			/*var native = database.sync.getApplication([Config.NATIVE], true) || [];
 			for(var i=0; i<native.length; i++)
 				{
 				app_dir = Config.NATIVE_PATH + native[i].unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY;

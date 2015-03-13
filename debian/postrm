@@ -49,7 +49,7 @@ sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d
 # REMOVE SPACEIFY'S FILES #
 ###########################
 
-sudo stop spaceify > /dev/null 2>&1 || true												# stop core first
+sudo stop spaceify > /dev/null 2>&1 || true													# stop core first
 sudo stop spaceifydns > /dev/null 2>&1 || true
 sudo stop spaceifydhcp > /dev/null 2>&1 || true
 sudo stop spaceifyipt > /dev/null 2>&1 || true
@@ -90,3 +90,46 @@ sudo iptables -t nat -F Spaceify-HTTPS-Nat-Masq > /dev/null 2>&1 || true
 sudo iptables -t nat -X Spaceify-HTTPS-Nat-Masq > /dev/null 2>&1 || true
 sudo iptables -t nat -F Spaceify-HTTPS-Nat-Redir > /dev/null 2>&1 || true
 sudo iptables -t nat -X Spaceify-HTTPS-Nat-Redir > /dev/null 2>&1 || true
+
+###########################
+# REMOVE APPLICATION DATA #
+###########################
+
+sudo docker stop $(docker ps -a -q)															# Stop and remove all containers
+sudo docker rm $(docker ps -a -q)
+
+dbs="/var/lib/spaceify/data/db/spaceify.db"
+
+rows=$(sqlite3 $dbs -separator ";" "SELECT unique_name, unique_directory, docker_image_id, type FROM applications")
+splt=(${rows//$';'/ })
+
+iter=$((${#splt[@]} - 4))
+for i in $(seq 0 4 $iter); do
+
+	unique_name=${splt[$i]}
+	unique_directory=${splt[$(($i + 1))]}
+	docker_image_id=${splt[$(($i + 2))]}
+	type=${splt[$(($i + 3))]}
+
+	#$(sqlite3 $dbs "DELETE FROM applications WHERE unique_name='${unique_name}'")			# Delete database entries (for possible reinstall leave them undeleted)
+	#$(sqlite3 $dbs "DELETE FROM provided_services WHERE unique_name='${unique_name}'")
+	#$(sqlite3 $dbs "DELETE FROM inject_hostnames WHERE unique_name='${unique_name}'")
+	#$(sqlite3 $dbs "DELETE FROM inject_files WHERE unique_name='${unique_name}'")
+
+	sudo docker rmi $docker_image_id  > /dev/null 2>&1 || true								# Remove application images
+
+	directory=""																			# Remove applications files but leave persistent volume untouched
+	if [[ "$type" == "spacelet" ]]; then
+		directory="/var/lib/spaceify/data/spacelets/${unique_directory}volume/"
+	elif [[ "$type" == "sandboxed" ]]; then
+		directory="/var/lib/spaceify/data/sandboxed/${unique_directory}volume/"
+	elif [[ "$type" == "native" ]]; then
+		directory="/var/lib/spaceify/data/native/${unique_directory}volume/"	
+	fi
+
+	sudo rm -r "${directory}application" > /dev/null 2>&1 || true
+	sudo rm -r "${directory}tls" > /dev/null 2>&1 || true
+
+done
+
+sudo docker rmi spaceifyubuntu > /dev/null 2>&1 || true									# Remove Spaceify's images

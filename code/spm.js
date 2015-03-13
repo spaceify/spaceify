@@ -61,8 +61,11 @@ self.start = fibrous( function()
 	var github_username = "";
 	var github_password = "";
 
+	var versions = fs.sync.readFile(Config.SPACEIFY_PATH + Config.VERSIONS, {encoding: "utf8"});
+	versions = versions.split(":");
+
 	logger.force();
-	logger.force("Spaceify Package Manager v" + Config.SPM_VERSION);
+	logger.force("Spaceify Package Manager v" + versions[4]);
 
 	try {
 		// CHECK INPUT (node ..path/spm.js command ...)
@@ -201,7 +204,7 @@ self.messages = fibrous( function(message, literal)
 // COMMANDS // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 var help = fibrous( function(bVerbose)
 	{
-	var spm_help = fs.sync.readFile(Config.SPACEIFY_DATA_PATH + "docs/spm.help", {encoding: "utf8"})
+	var spm_help = fs.sync.readFile(Config.DOCS_PATH + Config.SPMHELP, {encoding: "utf8"})
 	var spm_parts = spm_help.split(/@verbose/);
 	logger.force(spm_parts[0] + (bVerbose ? spm_parts[1] : ""));
 	});
@@ -296,9 +299,9 @@ var list = fibrous( function(type, bVerbose)
 			{
 			if(apps[i].type == Config.SPACELET && !spaceletHeader)
 				{ logger.force(Language.INSTALLED_SPACELETS); spaceletHeader = true; }
-			else if(apps[i].type == Config.SANDBOXED_APPLICATION && !sandboxedHeader)
+			else if(apps[i].type == Config.SANDBOXED && !sandboxedHeader)
 				{ logger.force(Language.INSTALLED_SANDBOXED); sandboxedHeader = true; }
-			else if(apps[i].type == Config.NATIVE_APPLICATION && !nativeHeader)
+			else if(apps[i].type == Config.NATIVE && !nativeHeader)
 				{ logger.force(Language.INSTALLED_NATIVE); nativeHeader = true; }
 
 			var bLast = (i == apps.length - 1 || (i < apps.length - 1 && apps[i].type != apps[i + 1].type));
@@ -309,9 +312,9 @@ var list = fibrous( function(type, bVerbose)
 				{
 				if(apps[i].type == Config.SPACELET)
 					path = Config.SPACELETS_PATH;
-				else if(apps[i].type == Config.SANDBOXED_APPLICATION)
+				else if(apps[i].type == Config.SANDBOXED)
 					path = Config.SANDBOXED_PATH;
-				else if(apps[i].type == Config.NATIVE_APPLICATION)
+				else if(apps[i].type == Config.NATIVE)
 					path = Config.NATIVE_PATH;
 
 				var manifest = Utility.sync.loadManifest(path + apps[i].unique_directory + Config.APPLICATION_PATH + Config.MANIFEST, true);

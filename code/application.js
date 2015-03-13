@@ -100,9 +100,9 @@ self.getInstallationPath = function()
 	var path = "";
 	if(self.getType() == Config.SPACELET)
 		path = Config.SPACELETS_PATH;
-	else if(self.getType() == Config.SANDBOXED_APPLICATION)
+	else if(self.getType() == Config.SANDBOXED)
 		path = Config.SANDBOXED_PATH;
-	else if(self.getType() == Config.NATIVE_APPLICATION)
+	else if(self.getType() == Config.NATIVE)
 		path = Config.NATIVE_PATH;
 
 	return path + manifest.unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY;

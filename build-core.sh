@@ -1,5 +1,6 @@
-#cd spaceify-0.1.0
-read -p "Input version string (e.g. 0.1.0): " vs
+versions=$(< versions)
+vs=$(echo $versions | awk -F : '{print $2}')
+
 dst="/tmp/build/spaceify-${vs}"
 
 rm -r $dst > /dev/null 2>&1 || true
@@ -24,6 +25,7 @@ cp -r upstart/* "${dst}/upstart/"
 cp CHANGELOG "${dst}"
 cp LICENSE "${dst}"
 cp README.md "${dst}"
+cp versions "${dst}"
 
 echo "Compiling Spaceify version ${vs}"
 cd $dst

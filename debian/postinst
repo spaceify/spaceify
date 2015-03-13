@@ -182,42 +182,60 @@ sudo sed -i "s/%1/${core_port}/" /etc/monit/conf.d/spaceify.conf
 #----- Create Spaceify's databases -----#
 
 sudo mkdir /var/lib/spaceify/data/db/ > /dev/null 2>&1 || true								# create directory for the databases
+cd /var/lib/spaceify/data/db
 
-db_version=4
-spaceify_db="/var/lib/spaceify/data/db/spaceify.db"
-if [ -e $spaceify_db ]; then																# database exists - make modifications if database (version) changes
-	odv=$( sudo sqlite3 $spaceify_db "SELECT db_version FROM settings" > /dev/null 2>&1 || true )
-	if [[ $odv == "" ]]; then odv=0; fi
+dbs="/var/lib/spaceify/data/db/spaceify.db"
 
-	if [[ $odv -lt 4 ]]; then																	# db_version is not defined (v < 4) > add provided_services table and db_version field to settings
-		sudo sqlite3 $spaceify_db "CREATE TABLE provided_services(unique_name TEXT, service_name TEXT, service_type TEXT);"  > /dev/null 2>&1 || true
+if [ -e $dbs ]; then																		# database exists
 
-		sudo sqlite3 $spaceify_db "ALTER TABLE settings ADD COLUMN db_version INTEGER;" > /dev/null 2>&1 || true
-		sudo sqlite3 $spaceify_db "ALTER TABLE settings ADD COLUMN release_name TEXT;" > /dev/null 2>&1 || true
-		sudo sqlite3 $spaceify_db "ALTER TABLE settings ADD COLUMN release_version TEXT;" > /dev/null 2>&1 || true
-		sudo sqlite3 $spaceify_db "ALTER TABLE settings ADD COLUMN session_ttl INTEGER DEFAULT 86400000;" > /dev/null 2>&1 || true
-		sudo sqlite3 $spaceify_db "UPDATE settings SET db_version=${db_version};" > /dev/null 2>&1 || true
-
-		sudo sqlite3 $spaceify_db "ALTER TABLE applications ADD COLUMN version TEXT;" > /dev/null 2>&1 || true
-		sudo sqlite3 $spaceify_db "ALTER TABLE applications ADD COLUMN install_datetime TEXT;" > /dev/null 2>&1 || true
-	fi
+	#rows=$(sqlite3 $dbs -separator ";" "SELECT unique_name, unique_directory, docker_image_id, type, version FROM applications")
+	#splt=(${rows//$';'/ })
+	#
+	#iter=$((${#splt[@]} - 5))
+	#for i in $(seq 0 4 $iter); do
+	#
+	#	unique_name=${splt[$i]}
+	#	unique_directory=${splt[$(($i + 1))]}
+	#	docker_image_id=${splt[$(($i + 2))]}
+	#	type=${splt[$(($i + 3))]}
+	#	version=${splt[$(($i + 4))]}
+	#
+	#	$(sqlite3 $dbs "DELETE FROM applications WHERE unique_name='${unique_name}'")		# Delete database entries
+	#	$(sqlite3 $dbs "DELETE FROM provided_services WHERE unique_name='${unique_name}'")
+	#	$(sqlite3 $dbs "DELETE FROM inject_hostnames WHERE unique_name='${unique_name}'")
+	#	$(sqlite3 $dbs "DELETE FROM inject_files WHERE unique_name='${unique_name}'")
+	#
+	#	sudo docker rmi $docker_image_id  > /dev/null 2>&1 || true							# Remove application images
+	#
+	#	directory=""																		# Remove applications files but leave persistent volume untouched
+	#	if [[ "$type" == "spacelet" ]]; then
+	#		directory="/var/lib/spaceify/data/spacelets/${unique_directory}volume/"
+	#	elif [[ "$type" == "sandboxed" ]]; then
+	#		directory="/var/lib/spaceify/data/sandboxed/${unique_directory}volume/"
+	#	elif [[ "$type" == "native" ]]; then
+	#		directory="/var/lib/spaceify/data/native/${unique_directory}volume/"	
+	#	fi
+	#
+	#	sudo rm -r "${directory}application" > /dev/null 2>&1 || true
+	#	sudo rm -r "${directory}tls" > /dev/null 2>&1 || true
+	#
+	#	# reinstall applications here with spm?
+	#
+	#done
+	
 else																						# create new database
-	sudo touch $spaceify_db
 
-	sudo sqlite3 $spaceify_db "CREATE TABLE applications(unique_name TEXT NOT NULL PRIMARY KEY, unique_directory TEXT, docker_image_id TEXT, type TEXT, version TEXT, inject_identifier TEXT DEFAULT NULL, install_datetime TEXT, inject_enabled INTEGER DEFAULT 0);"
-	sudo sqlite3 $spaceify_db "CREATE TABLE provided_services(unique_name TEXT, service_name TEXT, service_type TEXT);"
-	sudo sqlite3 $spaceify_db "CREATE TABLE inject_hostnames(unique_name TEXT, inject_hostname TEXT);"
-	sudo sqlite3 $spaceify_db "CREATE TABLE inject_files(unique_name TEXT, url_or_path TEXT, file_directory TEXT DEFAULT NULL, file TEXT, inject_type TEXT, inject_order INTEGER, is_spaceify INTEGER DEFAULT 0);"
-	sudo sqlite3 $spaceify_db "CREATE TABLE settings(language TEXT DEFAULT 'en_US', splash_ttl INTEGER DEFAULT 3600000, session_ttl INTEGER DEFAULT 86400000, db_version INTEGER, release_name TEXT, release_version TEXT);"
-	sudo sqlite3 $spaceify_db "CREATE TABLE user(edge_id TEXT NOT NULL PRIMARY KEY, edge_password TEXT, admin_password_hash TEXT, admin_salt TEXT, admin_login_count INTEGER DEFAULT 0, admin_last_login INTEGER DEFAULT 0);"
+	sudo touch $dbs
+	sqlite $dbs < /var/lib/spaceify/data/db/create.sql
 
-	sudo sqlite3 $spaceify_db "INSERT INTO inject_files (url_or_path, file_directory, file, inject_type, inject_order, is_spaceify) VALUES('edge.spaceify.net/', '', 'engine.io.js', 'javascript', 1, 1);"
-	sudo sqlite3 $spaceify_db "INSERT INTO inject_files (url_or_path, file_directory, file, inject_type, inject_order, is_spaceify) VALUES('edge.spaceify.net/', '', 'spaceifyclient.js','javascript', 2, 1);"
-	sudo sqlite3 $spaceify_db "INSERT INTO settings (language, splash_ttl, db_version) VALUES('en_US', 3600000, ${db_version});"
 fi
 
-	# SET RELEASE NAME AND VERSION - THIS MUST BE REMEMBERED TO SET FOR EACH NEW PACKAGE
-sudo sqlite3 $spaceify_db "UPDATE settings SET release_name='Alpha Centauri', release_version='0.1.0';"
+#  Set release name and version
+versions=$(< versions)
+release_version=$(echo $versions | awk -F : '{print $2}')
+release_name=$(echo $versions | awk -F : '{print $3}')
+db_version=$(echo $versions | awk -F : '{print $7}')
+sudo sqlite3 $dbs "UPDATE settings SET release_name='${release_name}', release_version='${release_version}', db_version='${db_version}';"
 
 #----- Certificates and keys -----#
 
@@ -253,6 +271,9 @@ sudo chmod 0755 /var/lib/spaceify/data/scripts/stop_containers.sh > /dev/null 2>
 #if [[ "$ubun" == "" ]]; then																# create image always (# only if it is not in the images list)
 
 	printf "\nCreating the Docker image\n\n"
+
+	docker rmi spaceifyubuntu > /dev/null 2>&1 || true
+
 	cd /var/lib/spaceify/data/docker
 	sudo docker build -no-cache -rm -t spaceifyubuntu .
 #fi

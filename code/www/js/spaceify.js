@@ -245,7 +245,7 @@ self.showInstalledApplications = function()
 		if(data.sandboxed.length > 0)
 			{
 			$("#sandboxed_applications").css("display", "block");									// Show sandboxed section title
-			$("#sandboxed_applications").append($.parseHTML("<h4>" + self.getString("sandboxed_applications") + "</h4>"));
+			$("#sandboxed_applications").append($.parseHTML("<h4>" + self.getString("sandboxed") + "</h4>"));
 
 			for(var j=0; j<data.sandboxed.length; j++)
 				renderTile(data.sandboxed[j], "sandboxed_applications");
@@ -254,7 +254,7 @@ self.showInstalledApplications = function()
 		/*if(data.native.length > 0)
 			{
 			$("#native_applications").css("display", "block");										// Show native section title
-			$("#native_applications").append($.parseHTML("<h4>" + self.getString("native_applications") + "</h4>"));
+			$("#native_applications").append($.parseHTML("<h4>" + self.getString("native") + "</h4>"));
 
 			for(var j=0; j<data.native.length; j++)
 				renderTile(data.native[j], "native_applications");

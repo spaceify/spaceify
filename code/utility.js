@@ -438,7 +438,7 @@ self.makeServices = function(unique_name, services, ports, ip)
 		mservices.push({"unique_name": unique_name, "service_name": services[i].service_name, "service_type": services[i].service_type, "port": ports[i], "secure_port": ports[i + 1], "ip": ip, "registered": false});
 
 	mservices.push({"unique_name": unique_name, "service_name": Config.HTTP_SERVICE, "service_type": Config.HTTP_SERVICE, "port": ports[ports.length - 2], "ip": ip, "registered": true});
-	mservices.push({"unique_name": unique_name, "service_name": Config.HTTPS_SERVICE, "service_type": Config.HTTP_SERVICES, "port": ports[ports.length - 1], "ip": ip, "registered": true});
+	mservices.push({"unique_name": unique_name, "service_name": Config.HTTPS_SERVICE, "service_type": Config.HTTPS_SERVICE, "port": ports[ports.length - 1], "ip": ip, "registered": true});
 
 	return mservices;
 	}

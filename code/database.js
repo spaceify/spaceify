@@ -101,7 +101,7 @@ self.getApplications = fibrous( function(type)
 	try {
 		order = " ORDER BY (CASE type";
 		if(type.length == 0)
-			order += " WHEN '" + Config.SPACELET + "' THEN 0 WHEN '" + Config.SANDBOXED_APPLICATION + "' THEN 1 WHEN '" + Config.NATIVE_APPLICATION + "' THEN 2 END)";
+			order += " WHEN '" + Config.SPACELET + "' THEN 0 WHEN '" + Config.SANDBOXED + "' THEN 1 WHEN '" + Config.NATIVE + "' THEN 2 END)";
 		else
 			{
 			for(var i=0; i<type.length; i++)

@@ -145,9 +145,9 @@ var getWebPage = function(request, response, body)
 
 				if(purl.query.type == Config.SPACELET)
 					type_path = Config.SPACELETS_PATH;
-				else if(purl.query.type == Config.SANDBOXED_APPLICATION)
+				else if(purl.query.type == Config.SANDBOXED)
 					type_path = Config.SANDBOXED_PATH;
-				else if(purl.query.type == Config.NATIVE_APPLICATION)
+				else if(purl.query.type == Config.NATIVE)
 					type_path = Config.NATIVE_PATH;
 				else if(purl.query.type == Config.ANY)
 					{

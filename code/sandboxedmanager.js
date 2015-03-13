@@ -34,7 +34,7 @@ self.start = fibrous( function(unique_name)
 		if(unique_name)															// Start one named application
 			_applications = [database.sync.getApplication([unique_name], false)];
 		else																	// Start all applications
-			_applications = database.sync.getApplication([Config.SANDBOXED_APPLICATION], true);
+			_applications = database.sync.getApplication([Config.SANDBOXED], true);
 
 		for(var i=0; i<_applications.length; i++)
 			{

@@ -26,6 +26,8 @@ module.exports = function()
 	"SANDBOXED_PATH": spaceify_data_path + "sandboxed/",
 	"NATIVE_PATH": spaceify_data_path + "native/",
 
+	"DOCS_PATH": spaceify_data_path + "docs/",
+
 	"VOLUME_DIRECTORY": "volume/",
 	"VOLUME_PATH": "/volume/",
 	"API_PATH": "/api/",
@@ -91,9 +93,6 @@ module.exports = function()
 	/*
 	 * CONSTANTS
 	 */
-	"CORE_VERSION": "0.1.0",
-	"SPM_VERSION": "0.1.0",
-
 	"JAVASCRIPT": "javascript",
 	"CSS": "css",
 	"FILE": "file",
@@ -104,10 +103,10 @@ module.exports = function()
 	"BASE64": "base64",
 	// +++
 	"SPACELET": "spacelet",
-	"SANDBOXED_APPLICATION": "sandboxed_application",
-	"NATIVE_APPLICATION": "native_application",
+	"SANDBOXED": "sandboxed",
+	"NATIVE": "native",
 	"ANY": "any",
-	"SHORT_APPLICATION_TYPES": {spacelet: "spacelet", sandboxed: "sandboxed_application", native: "native_application"},
+	"SHORT_APPLICATION_TYPES": {spacelet: "spacelet", sandboxed: "sandboxed", native: "native"},
 	// +++
 	"OPEN": "open",
 	"OPEN_LOCAL": "open_local",
@@ -125,6 +124,8 @@ module.exports = function()
 	"PACKAGEZIP": "package.zip",
 	"PUBLISHZIP": "publish.zip",
 	"SPMERRORSJSON": "spm_errors.json",
+	"SPMHELP": "spm.help",
+	"VERSIONS": "versions",
 
 	"ENGINEIOJS": "engine.io.js",
 	"SPACEIFYCLIENTJS": "spaceifyclient.js",

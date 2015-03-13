@@ -36,8 +36,8 @@ var sections =
 		"logout": "Log Out",
 
 		"spacelets": "Spacelets",
-		"sandboxed_applications": "Applications",
-		"native_applications": "Native",
+		"sandboxed": "Applications",
+		"native": "Native",
 		"admin_tools": "Administration",
 
 		"version": "v",

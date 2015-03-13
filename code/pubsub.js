@@ -7,7 +7,6 @@
 var rebus = require("./lib/rebus");
 var Utility = require("./utility");
 var Config = require("./config")();
-var Const = require("./constants");
 
 function PubSub(path)
 {

@@ -8,7 +8,6 @@ var fs = require("fs");
 var fibrous = require("fibrous");
 var logger = require("./logger");
 var Config = require("./config")();
-var Const = require("./constants");
 var Database = require("./database");
 var Iptables = require("./iptables");
 var WebServer = require("./webserver");
@@ -34,9 +33,9 @@ var start = fibrous( function()
 		var settings = database.sync.getSettings();
 
 		// START WEB SERVERS
-		var key = Config.SPACEIFY_TLS_PATH + Const.SERVER_KEY;
-		var crt = Config.SPACEIFY_TLS_PATH + Const.SERVER_CRT;
-		var ca_crt = Config.SPACEIFY_WWW_PATH + Const.SPACEIFY_CRT;
+		var key = Config.SPACEIFY_TLS_PATH + Config.SERVER_KEY;
+		var crt = Config.SPACEIFY_TLS_PATH + Config.SERVER_CRT;
+		var ca_crt = Config.SPACEIFY_WWW_PATH + Config.SPACEIFY_CRT;
 		httpServer.connect.sync({hostname: null, port: Config.EDGE_PORT_HTTP, core: spaceifyCore, spaceifyClient: true, kiwi_used: true, owner: "main"});
 		httpsServer.connect.sync({hostname: null, port: Config.EDGE_PORT_HTTPS, is_secure: true, key: key, crt: crt, ca_crt: ca_crt, core: spaceifyCore, spaceifyClient: true, kiwi_used: true, owner: "main"});
 

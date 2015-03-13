@@ -7,7 +7,6 @@
 
 var Utility = require("./utility");
 var Config = require("./config")();
-var Const = require("./constants");
 
 function Application(manifest)
 {
@@ -99,11 +98,11 @@ self.getInstallCommands = function()
 self.getInstallationPath = function()
 	{
 	var path = "";
-	if(self.getType() == Const.SPACELET)
+	if(self.getType() == Config.SPACELET)
 		path = Config.SPACELETS_PATH;
-	else if(self.getType() == Const.SANDBOXED_APPLICATION)
+	else if(self.getType() == Config.SANDBOXED_APPLICATION)
 		path = Config.SANDBOXED_PATH;
-	else if(self.getType() == Const.NATIVE_APPLICATION)
+	else if(self.getType() == Config.NATIVE_APPLICATION)
 		path = Config.NATIVE_PATH;
 
 	return path + manifest.unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY;
@@ -159,7 +158,7 @@ self.getService = function(service_name, unique_name)
 		var un = services[s].unique_name;
 		var sn = services[s].service_name;
 
-		if((!unique_name && service_name == sn && service_name != Const.CLIENT_HTTP_SERVER && service_name != Const.CLIENT_HTTPS_SERVER) ||
+		if((!unique_name && service_name == sn && service_name != Config.HTTP_SERVICE && service_name != Config.HTTP_SERVICE) ||
 			(unique_name && unique_name == un && service_name == sn))
 			{
 			services[s].is_running = self.isRunning();

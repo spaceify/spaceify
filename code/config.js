@@ -86,7 +86,63 @@ module.exports = function()
 	"DNS_PORT": 53,
 
 	"MACREGX": new RegExp("^([0-9A-F]{2}[:-]){5}([0-9A-F]{2})$", "i"),
-	"IPREGX": new RegExp("\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b")
+	"IPREGX": new RegExp("\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"),
+	
+	/*
+	 * CONSTANTS
+	 */
+	"CORE_VERSION": "0.1.0",
+	"SPM_VERSION": "0.1.0",
+
+	"JAVASCRIPT": "javascript",
+	"CSS": "css",
+	"FILE": "file",
+	"INJECT_TYPES": ["javascript", "css", "file"],
+	// +++
+	"UTF8": "utf",
+	"ASCII": "ascii",
+	"BASE64": "base64",
+	// +++
+	"SPACELET": "spacelet",
+	"SANDBOXED_APPLICATION": "sandboxed_application",
+	"NATIVE_APPLICATION": "native_application",
+	"ANY": "any",
+	"SHORT_APPLICATION_TYPES": {spacelet: "spacelet", sandboxed: "sandboxed_application", native: "native_application"},
+	// +++
+	"OPEN": "open",
+	"OPEN_LOCAL": "open_local",
+	"STANDARD": "standard",
+	"SERVICE_TYPES": ["open", "open_local", "standard"],
+	"HTTP_SERVICE": "http",
+	"HTTPS_SERVICE": "https",
+
+	"EXT_ZIP": ".zip",
+	"PACKAGE_DELIMITER": "@",
+
+	// +++
+	"MANIFEST": "spaceify.manifest",
+	"READMEMD": "readme.md",
+	"PACKAGEZIP": "package.zip",
+	"PUBLISHZIP": "publish.zip",
+	"SPMERRORSJSON": "spm_errors.json",
+
+	"ENGINEIOJS": "engine.io.js",
+	"SPACEIFYCLIENTJS": "spaceifyclient.js",
+	"INDEX_FILE": "index.html",
+	"SERVER_NAME": "Spaceify Web Server",
+	
+	"TILEFILE": "tile.html",
+	"WEB_SERVER": "WEB_SERVER",
+
+	"CUSTOM": "custom_",
+
+	"CLIENT_READY": "client application ready",
+
+	"FIRST_SERVICE_PORT": 2777,
+	"FIRST_SERVICE_PORT_SECURE": 3777,
+	"SERVER_CRT": "server.crt",
+	"SERVER_KEY": "server.key",
+	"SPACEIFY_CRT": "spaceify.crt"
 	}
 
 	return config;

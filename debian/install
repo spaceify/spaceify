@@ -16,4 +16,3 @@ upstart/* etc/init
 CHANGELOG var/lib/spaceify
 LICENSE var/lib/spaceify
 README.md var/lib/spaceify
-

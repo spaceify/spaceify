@@ -8,7 +8,6 @@ var fs = require("fs");
 var path = require("path");
 var fibrous = require("fibrous");
 var Config = require("./config")();
-var Const = require("./constants");
 var Utility = require("./utility");
 var Language = require("./language");
 var Database = require("./database");
@@ -35,7 +34,7 @@ self.start = fibrous( function(unique_name)
 		if(unique_name)															// Start one named application
 			_applications = [database.sync.getApplication([unique_name], false)];
 		else																	// Start all applications
-			_applications = database.sync.getApplication([Const.SANDBOXED_APPLICATION], true);
+			_applications = database.sync.getApplication([Config.SANDBOXED_APPLICATION], true);
 
 		for(var i=0; i<_applications.length; i++)
 			{
@@ -68,7 +67,7 @@ self.build = fibrous( function(docker_image_id, unique_directory)
 	var application = null;
 
 	try {
-		if((manifest = Utility.sync.loadManifest(Config.SANDBOXED_PATH + unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY + Const.MANIFEST, true)) == null)
+		if((manifest = Utility.sync.loadManifest(Config.SANDBOXED_PATH + unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY + Config.MANIFEST, true)) == null)
 			throw Utility.error(Language.E_SANDBOXED_FAILED_TO_READ_MANIFEST.p("SandboxedManager::build()"));
 
 		application = new Application.obj(manifest);

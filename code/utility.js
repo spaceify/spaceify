@@ -15,7 +15,6 @@ var request = require("request");
 var zipper = require("zipper").Zipper;
 var spawn = require("child_process").spawn;
 var Language = require("./language");
-var Const = require("./constants");
 var Config = require("./config")();
 
 function utility()
@@ -308,7 +307,7 @@ self.postPublish = function(package, username, password, release_name, callback)
 				{ "Content-Disposition" : 'form-data; name="password"', body: password },
 				{ "Content-Disposition" : 'form-data; name="release"', body: release_name },
 				{
-				"Content-Disposition" : 'form-data; name="package"; filename="' + Const.PUBLISHZIP + '"',
+				"Content-Disposition" : 'form-data; name="package"; filename="' + Config.PUBLISHZIP + '"',
 				"Content-Type" : "application/zip",
 				body: fs.readFileSync(package)
 				}
@@ -438,8 +437,8 @@ self.makeServices = function(unique_name, services, ports, ip)
 	for(var i=0; i<services.length; i+=2)
 		mservices.push({"unique_name": unique_name, "service_name": services[i].service_name, "service_type": services[i].service_type, "port": ports[i], "secure_port": ports[i + 1], "ip": ip, "registered": false});
 
-	mservices.push({"unique_name": unique_name, "service_name": Const.CLIENT_HTTP_SERVER, "service_type": Const.SERVICE_TYPE_HTTP, "port": ports[ports.length - 2], "ip": ip, "registered": true});
-	mservices.push({"unique_name": unique_name, "service_name": Const.CLIENT_HTTPS_SERVER, "service_type": Const.SERVICE_TYPE_HTTPS, "port": ports[ports.length - 1], "ip": ip, "registered": true});
+	mservices.push({"unique_name": unique_name, "service_name": Config.HTTP_SERVICE, "service_type": Config.HTTP_SERVICE, "port": ports[ports.length - 2], "ip": ip, "registered": true});
+	mservices.push({"unique_name": unique_name, "service_name": Config.HTTPS_SERVICE, "service_type": Config.HTTP_SERVICES, "port": ports[ports.length - 1], "ip": ip, "registered": true});
 
 	return mservices;
 	}

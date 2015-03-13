@@ -14,7 +14,6 @@ var qs = require("querystring");
 var fibrous = require("fibrous");
 var logger = require("./logger");
 var reload = require("./reload");
-var Const = require("./constants");
 var Config = require("./config")();
 var Utility = require("./utility");
 var Language = require("./language");
@@ -32,12 +31,12 @@ self.connect = function(opts, callback)
 	options.hostname = opts.hostname || "";
 	options.port = opts.port || 80;
 	options.is_secure = opts.is_secure || false;
-	options.key = opts.key || Config.SPACEIFY_TLS_PATH + Const.SERVER_KEY;
-	options.crt = opts.crt || Config.SPACEIFY_TLS_PATH + Const.SERVER_CRT;
-	options.ca_crt = opts.ca_crt || Config.SPACEIFY_WWW_PATH + Const.SPACEIFY_CRT;
+	options.key = opts.key || Config.SPACEIFY_TLS_PATH + Config.SERVER_KEY;
+	options.crt = opts.crt || Config.SPACEIFY_TLS_PATH + Config.SERVER_CRT;
+	options.ca_crt = opts.ca_crt || Config.SPACEIFY_WWW_PATH + Config.SPACEIFY_CRT;
 	options.core = opts.core || null;
 
-	options.index_file = opts.index_file || Const.INDEX_FILE;
+	options.index_file = opts.index_file || Config.INDEX_FILE;
 	options.www_path = opts.www_path || Config.SPACEIFY_WWW_PATH;
 	options.kiwi_used = opts.kiwi_used || false;
 
@@ -46,13 +45,13 @@ self.connect = function(opts, callback)
 
 	options.owner = opts.owner || "-";
 	options.protocol = (!options.is_secure ? "http" : "https");
-	options.server_name = opts.server_name || Const.SERVER_NAME;
+	options.server_name = opts.server_name || Config.SERVER_NAME;
 
 	options.engineiojs = opts.spaceifyclientjs = "";
 	if(opts.spaceifyClient)
 		{
-		options.engineiojs = fs.readFileSync(options.www_path + Const.ENGINEIOJS, {"encoding": "utf8"});
-		options.spaceifyclientjs = fs.readFileSync(options.www_path + "/" + Const.SPACEIFYCLIENTJS, {"encoding": "utf8"});
+		options.engineiojs = fs.readFileSync(options.www_path + Config.ENGINEIOJS, {"encoding": "utf8"});
+		options.spaceifyclientjs = fs.readFileSync(options.www_path + "/" + Config.SPACEIFYCLIENTJS, {"encoding": "utf8"});
 		}
 
 	// -- --
@@ -125,7 +124,7 @@ var getWebPage = function(request, response, body)
 		try {
 			if(options.core && options.core.find && purl.query.service)										// redirection request to applications internal web server
 				{
-				var _find = options.core.find("service", {unique_name: purl.query.service, service_name: (!options.is_secure ? Const.CLIENT_HTTP_SERVER : Const.CLIENT_HTTPS_SERVER)});
+				var _find = options.core.find("service", {unique_name: purl.query.service, service_name: (!options.is_secure ? Config.HTTP_SERVICE : Config.HTTPS_SERVICE)});
 				if(_find != null)
 					{
 					var getobj = purl.query, gets = "";														// Preserve get
@@ -144,13 +143,13 @@ var getWebPage = function(request, response, body)
 				var type_path = "";
 				var base_path = Utility.makeUniqueDirectory(purl.query.app) + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY + Config.WWW_DIRECTORY;
 
-				if(purl.query.type == Const.SPACELET)
+				if(purl.query.type == Config.SPACELET)
 					type_path = Config.SPACELETS_PATH;
-				else if(purl.query.type == Const.SANDBOXED_APPLICATION)
+				else if(purl.query.type == Config.SANDBOXED_APPLICATION)
 					type_path = Config.SANDBOXED_PATH;
-				else if(purl.query.type == Const.NATIVE_APPLICATION)
+				else if(purl.query.type == Config.NATIVE_APPLICATION)
 					type_path = Config.NATIVE_PATH;
-				else if(purl.query.type == Const.ANY)
+				else if(purl.query.type == Config.ANY)
 					{
 					try {
 						type_path = Config.SPACELETS_PATH;

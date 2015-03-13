@@ -13,7 +13,6 @@ var Github = require("github");
 var AdmZip = require("adm-zip");
 var fibrous = require("fibrous");
 var logger = require("./logger");
-var Const = require("./constants");
 var Config = require("./config")();
 var Utility = require("./utility");
 var Language = require("./language");
@@ -60,9 +59,9 @@ self.connect = fibrous( function(opts)
 	secureWebSocketRPCServer.exposeMethod("restartApplication", self, self.restartApplication);
 	secureWebSocketRPCServer.exposeMethod("listApplications", self, self.listApplications);
 	secureWebSocketRPCServer.exposeMethod("updateSettings", self, self.updateSettings);
-	var key = Config.SPACEIFY_TLS_PATH + Const.SERVER_KEY;
-	var crt = Config.SPACEIFY_TLS_PATH + Const.SERVER_CRT;
-	var ca_crt = Config.SPACEIFY_WWW_PATH + Const.SPACEIFY_CRT;
+	var key = Config.SPACEIFY_TLS_PATH + Config.SERVER_KEY;
+	var crt = Config.SPACEIFY_TLS_PATH + Config.SERVER_CRT;
+	var ca_crt = Config.SPACEIFY_WWW_PATH + Config.SPACEIFY_CRT;
 	secureWebSocketRPCServer.connect.sync({hostname: options.hostname, port: options.ports.https, is_secure: true, key: key, crt: crt, ca_crt: ca_crt, owner: "AppManager"});
 
 	try {
@@ -154,7 +153,7 @@ self.installApplication = fibrous( function(package, isSuggested, username, pass
 		install.sync(manifest);
 
 		// Start the application again if it is not a spacelet
-		//if(options.coreIsUp && manifest.type != Const.SPACELET)
+		//if(options.coreIsUp && manifest.type != Config.SPACELET)
 		//	{
 		//	messages.sync(Language.STARTING_APPLICATION);
 		//	coreRPCClient.sync.call("startApplication", [manifest.type, manifest.unique_name], self);
@@ -236,17 +235,17 @@ self.removeApplication = fibrous( function(unique_name, spm)
 		if(inspected)																						// remove committed image - made either from spaceifyubuntu or custom image
 			dockerImage.sync.removeImage(app_data.docker_image_id, app_data.unique_name);
 
-		inspected = dockerImage.sync.inspect(Const.CUSTOM + app_data.unique_name);							// remove custom image
+		inspected = dockerImage.sync.inspect(Config.CUSTOM + app_data.unique_name);							// remove custom image
 		if(inspected)
-			dockerImage.sync.removeImage(inspected.id, Const.CUSTOM + app_data.unique_name);
+			dockerImage.sync.removeImage(inspected.id, Config.CUSTOM + app_data.unique_name);
 
 		// Remove application files directory
 		messages.sync(Language.DELETE_FILES);
-		if(app_data.type == Const.SPACELET)
+		if(app_data.type == Config.SPACELET)
 			removeUniqueDirectory.sync(Config.SPACELETS_PATH + app_data.unique_directory);
-		else if(app_data.type == Const.SANDBOXED_APPLICATION)
+		else if(app_data.type == Config.SANDBOXED_APPLICATION)
 			removeUniqueDirectory.sync(Config.SANDBOXED_PATH + app_data.unique_directory);
-		//else if(app_data.type == Const.NATIVE_APPLICATION)
+		//else if(app_data.type == Config.NATIVE_APPLICATION)
 		//	removeUniqueDirectory.sync(Config.NATIVE_PATH + app_data.unique_directory);
 
 		// Remove database entries
@@ -428,8 +427,8 @@ self.publishPackage = fibrous( function(package, username, password, github_user
 			messages.sync(Utility.replace(Language.TRYING_TO_PUBLISH, {":what": Language.LOCAL_DIRECTORY, ":package": package, }));
 
 			mkdirp.sync(Config.WORK_PATH, 0777);
-			Utility.sync.zipDirectory(package, "", Config.WORK_PATH + Const.PUBLISHZIP);
-			package = Config.WORK_PATH + Const.PUBLISHZIP;
+			Utility.sync.zipDirectory(package, "", Config.WORK_PATH + Config.PUBLISHZIP);
+			package = Config.WORK_PATH + Config.PUBLISHZIP;
 			}
 		// 2. Try local <package>.zip
 		else if(Utility.sync.isLocal(package, "file") && package.search(/\.zip$/i) != -1)
@@ -444,8 +443,8 @@ self.publishPackage = fibrous( function(package, username, password, github_user
 			git.sync(gitoptions, github_username, github_password);
 
 			mkdirp.sync(Config.WORK_PATH, 0777);
-			Utility.sync.zipDirectory(Config.WORK_PATH, "", Config.WORK_PATH + Const.PUBLISHZIP);
-			package = Config.WORK_PATH + Const.PUBLISHZIP;
+			Utility.sync.zipDirectory(Config.WORK_PATH, "", Config.WORK_PATH + Config.PUBLISHZIP);
+			package = Config.WORK_PATH + Config.PUBLISHZIP;
 			}
 		// Else fail
 		else
@@ -537,14 +536,14 @@ var tryPackageSources = fibrous( function(package, isSuggested, username, passwo
 		package += (package.search(/application\/$/i) == -1 ? Config.APPLICATION_DIRECTORY : "");
 		Utility.sync.copyDirectory(package, Config.WORK_PATH, true);
 
-		manifestFile = Utility.sync.loadManifest(package + Const.MANIFEST);
+		manifestFile = Utility.sync.loadManifest(package + Config.MANIFEST);
 		}
 	// 2. Try local <package>.zip
 	else if(!isSuggested && Utility.sync.isLocal(package, "file") && package.search(/\.zip$/i) != -1)
 		{
 		messages.sync(Utility.replace(Language.TRYING_TO_GET, {":from": Language.LOCAL_ARCHIVE, ":package": package}));
 
-		manifestFile = Utility.getFileFromZip(package, Const.MANIFEST, Config.WORK_PATH, true);
+		manifestFile = Utility.getFileFromZip(package, Config.MANIFEST, Config.WORK_PATH, true);
 		}
 	// 3. Try "pulling" a git repository <package>
 	else if(!isSuggested && purl.hostname && purl.hostname.match(/(github\.com)/i) != null && gitoptions.length == 2)
@@ -554,22 +553,22 @@ var tryPackageSources = fibrous( function(package, isSuggested, username, passwo
 		manifestFile = git.sync(gitoptions, username, password);
 		}
 	// 4. Try uploading a <package>.zip from remote url
-	/*else if(!isSuggested && Utility.sync.loadRemoteFileToLocalFile(package, Config.WORK_PATH, Const.PACKAGEZIP))
+	/*else if(!isSuggested && Utility.sync.loadRemoteFileToLocalFile(package, Config.WORK_PATH, Config.PACKAGEZIP))
 		{
 		messages.sync(Utility.replace(Language.TRYING_TO_GET, {":from": Language.REMOTE_ARCHIVE, ":package": package}));
 
-		manifestFile = Utility.getFileFromZip(Config.WORK_PATH + Const.PACKAGEZIP, Const.MANIFEST, Config.WORK_PATH, true);
+		manifestFile = Utility.getFileFromZip(Config.WORK_PATH + Config.PACKAGEZIP, Config.MANIFEST, Config.WORK_PATH, true);
 		}*/
 	// 5. Try <unique_name>[@<version>] from registry
-	else if(Utility.sync.loadRemoteFileToLocalFile(registry_url + "&username=" + username + "&password=" + password, Config.WORK_PATH, Const.PACKAGEZIP))
+	else if(Utility.sync.loadRemoteFileToLocalFile(registry_url + "&username=" + username + "&password=" + password, Config.WORK_PATH, Config.PACKAGEZIP))
 		{
 		messages.sync(Utility.replace(Language.TRYING_TO_GET, {":from": Language.SPACEIFY_REGISTRY, ":package": package}));
 
 		// CHECK FOR ERRORS BEFORE TRYING TO FIND THE MANIFEST FROM THE PACKAGE
-		Utility.unZip(Config.WORK_PATH + Const.PACKAGEZIP, Config.WORK_PATH, true);
-		if(Utility.sync.isLocal(Config.WORK_PATH + Const.SPMERRORSJSON, "file"))
+		Utility.unZip(Config.WORK_PATH + Config.PACKAGEZIP, Config.WORK_PATH, true);
+		if(Utility.sync.isLocal(Config.WORK_PATH + Config.SPMERRORSJSON, "file"))
 			{
-			var errfile = fs.sync.readFile(Config.WORK_PATH + Const.SPMERRORSJSON, {encoding: "utf8"});
+			var errfile = fs.sync.readFile(Config.WORK_PATH + Config.SPMERRORSJSON, {encoding: "utf8"});
 			var result = Utility.parseJSON(errfile, true);
 			messages.sync(Language.PACKAGE_INSTALL_ERROR);
 			for(e in result.err)
@@ -578,7 +577,7 @@ var tryPackageSources = fibrous( function(package, isSuggested, username, passwo
 			throw null;
 			}
 		else
-			manifestFile = fs.sync.readFile(Config.WORK_PATH + Config.APPLICATION_DIRECTORY + Const.MANIFEST);
+			manifestFile = fs.sync.readFile(Config.WORK_PATH + Config.APPLICATION_DIRECTORY + Config.MANIFEST);
 		}
 	// Else fail
 	else
@@ -596,24 +595,24 @@ var install = fibrous( function(manifest)
 	var dockerImage = new DockerImage();
 
 	try {
-		if(manifest.type == Const.SPACELET)
+		if(manifest.type == Config.SPACELET)
 			{
 			app = new Application.obj(manifest);
 			app_path = Config.SPACELETS_PATH;
 			}
-		else if(manifest.type == Const.SANDBOXED_APPLICATION)
+		else if(manifest.type == Config.SANDBOXED_APPLICATION)
 			{
 			app = new Application.obj(manifest);
 			app_path = Config.SANDBOXED_PATH;
 			}
-		//else if(manifest.type == Const.NATIVE_APPLICATION) {}
+		//else if(manifest.type == Config.NATIVE_APPLICATION) {}
 
 		database.sync.begin();																				// global transaction (database is already opened in installApplication!)
 		app_data = database.sync.getApplication([manifest.unique_name]);
 
 		// REMOVE EXISTING DOCKER IMAGE(S) AND APPLICATION FILES
 		var inspected = null;
-		var docker_image_name = (customDockerImage ? Const.CUSTOM + manifest.unique_name : Config.SPACEIFY_DOCKER_IMAGE);
+		var docker_image_name = (customDockerImage ? Config.CUSTOM + manifest.unique_name : Config.SPACEIFY_DOCKER_IMAGE);
 
 		if(app_data)
 			{
@@ -682,8 +681,8 @@ var install = fibrous( function(manifest)
 
 var removeTemporaryFiles = fibrous( function()
 	{
-	Utility.sync.deleteFile(Config.WORK_PATH + Const.PUBLISHZIP, false);
-	Utility.sync.deleteFile(Config.WORK_PATH + Const.PACKAGEZIP, false);
+	Utility.sync.deleteFile(Config.WORK_PATH + Config.PUBLISHZIP, false);
+	Utility.sync.deleteFile(Config.WORK_PATH + Config.PACKAGEZIP, false);
 	Utility.sync.deleteDirectory(Config.WORK_PATH, false);
 	});
 
@@ -748,7 +747,7 @@ var git = fibrous( function(gitoptions, username, password)
 				}
 			}
 
-		manifestFile = Utility.sync.loadManifest(tmp_path + Config.APPLICATION_DIRECTORY + Const.MANIFEST);
+		manifestFile = Utility.sync.loadManifest(tmp_path + Config.APPLICATION_DIRECTORY + Config.MANIFEST);
 		}
 	catch(err)
 		{

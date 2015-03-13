@@ -23,8 +23,8 @@ var configuration =
 
 	WEB_SERVER: "WEB_SERVER",
 
-	CLIENT_HTTP_SERVER: "client_http_server",
-	CLIENT_HTTPS_SERVER: "client_https_server",
+	HTTP_SERVICE: "http",
+	HTTPS_SERVICE: "https",
 
 	PX: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
 	};

@@ -12,7 +12,6 @@ var Docker = require("dockerode");
 var logger = require("./logger");
 var Language = require("./language");
 var Config = require("./config")();
-var Const = require("./constants");
 var Utility = require("./utility");
 var DockerHelper = require("./dockerhelper");
 
@@ -43,13 +42,13 @@ self.startContainer = fibrous( function(portCount, imageNameOrId, volumes, binds
 	try	{
 		for(p=0; p<portCount; p++)													// Mapped ports are not returned in the order they are defined -> make this order array to retain the order
 			{
-			exposed[new String(Const.FIRST_SERVICE_PORT + p)+"/tcp"] = {};
-			portOrder.push(new String(Const.FIRST_SERVICE_PORT + p)+"/tcp");
+			exposed[new String(Config.FIRST_SERVICE_PORT + p)+"/tcp"] = {};
+			portOrder.push(new String(Config.FIRST_SERVICE_PORT + p)+"/tcp");
 			}
 		for(p=0; p<portCount; p++)
 			{
-			exposed[new String(Const.FIRST_SERVICE_PORT_SECURE + p)+"/tcp"] = {};
-			portOrder.push(new String(Const.FIRST_SERVICE_PORT_SECURE + p)+"/tcp");
+			exposed[new String(Config.FIRST_SERVICE_PORT_SECURE + p)+"/tcp"] = {};
+			portOrder.push(new String(Config.FIRST_SERVICE_PORT_SECURE + p)+"/tcp");
 			}
 		exposed["80/tcp"] = {};														// Add two additional ports for the applications internal http and https servers
 		exposed["443/tcp"] = {};
@@ -57,9 +56,9 @@ self.startContainer = fibrous( function(portCount, imageNameOrId, volumes, binds
 		portOrder.push("443/tcp");
 
 		for(p = 0; p<portCount; p++)
-			bindings[new String(Const.FIRST_SERVICE_PORT + p)+"/tcp"] = [{}];
+			bindings[new String(Config.FIRST_SERVICE_PORT + p)+"/tcp"] = [{}];
 		for(p = 0; p<portCount; p++)
-			bindings[new String(Const.FIRST_SERVICE_PORT_SECURE + p)+"/tcp"] = [{}];
+			bindings[new String(Config.FIRST_SERVICE_PORT_SECURE + p)+"/tcp"] = [{}];
 		bindings["80/tcp"] = [{}];
 		bindings["443/tcp"] = [{}];
 
@@ -155,12 +154,12 @@ self.runApplication = fibrous( function(appobj)
 	dockerHelper.sync.executeCommand("export NODE_PATH=" + Config.API_NODE_MODULES_DIRECTORY +
 									 envPorts + 
 									 " && cd " + Config.APPLICATION_PATH +
-									 " && " + appobj.getStartCommand() + " &", Const.CLIENT_READY);
+									 " && " + appobj.getStartCommand() + " &", Config.CLIENT_READY);
 	});
 
 self.sendClientReadyToStdIn = function()
 	{
-	dockerHelper.executeCommand("echo " + Const.CLIENT_READY, "*");
+	dockerHelper.executeCommand("echo " + Config.CLIENT_READY, "*");
 	}
 
 self.getIpAddress = function()

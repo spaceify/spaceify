@@ -12,7 +12,6 @@ var fibrous = require("fibrous");
 var DHCPServer = require("./dhcpserver");
 var logger = require("./logger");
 var Config = require("./config")();
-var Const = require("./constants");
 var Utility = require("./utility");
 var Iptables = require("./iptables");
 var Language = require("./language");
@@ -142,13 +141,13 @@ self.getService = fibrous( function(service_name, unique_name)
 	// ToDo:
 	// SPACELET, SANDBOXED APPLICATION OR NATIVE APPLICATION CAN ASK SERVICES THAT ARE LISTED IN THEIR MANIFESTS REQUIRED SERVICES?
 	// or anybody can ask any service?
-	/*if(_find.obj.service_type == Const.OPEN_LOCAL) // UNLESS SERVICE TYPE IS OPEN_LOCAL
+	/*if(_find.obj.service_type == Config.OPEN_LOCAL) // UNLESS SERVICE TYPE IS OPEN_LOCAL
 		{
 		if((client = self.find("remote_address", connobj.remoteAddress)) == null)
 		throw Utility.error(Language.E_FIND_SERVICE_UNKNOWN_ADDRESS.p("SpaceifyCore::findService()"));
 		// ip not from local source
 		}
-	else if(_find.obj.service_type == Const.STANDARD)
+	else if(_find.obj.service_type == Config.STANDARD)
 		{
 		// ToDo: accept without any other checks
 		}*/
@@ -272,11 +271,11 @@ self.saveOptions = fibrous( function(session_id, unique_name, directory, file, d
 			throw Utility.ferror(Language.E_OPTIONS_UNKNOWN_APPLICATION.p("SpaceifyCore::saveOptions()"), {":name": unique_name});
 
 		var volume = "";
-		if(app.type == Const.SPACELET)
+		if(app.type == Config.SPACELET)
 			volume = Config.SPACELETS_PATH + app.unique_directory + Config.VOLUME_DIRECTORY;
-		else if(app.type == Const.SANDBOXED_APPLICATION)
+		else if(app.type == Config.SANDBOXED_APPLICATION)
 			volume = Config.SANDBOXED_PATH + app.unique_directory + Config.VOLUME_DIRECTORY;
-		/*else if(app.type == Const.NATIVE_APPLICATION)
+		/*else if(app.type == Config.NATIVE_APPLICATION)
 			volume = Config.NATIVEAPPS_PATH + app.unique_directory + Config.VOLUME_DIRECTORY;*/
 
 		if(directory != "")
@@ -318,11 +317,11 @@ self.loadOptions = fibrous( function(session_id, unique_name, directory, file)
 			throw Utility.ferror(Language.E_OPTIONS_UNKNOWN_APPLICATION.p("SpaceifyCore::loadOptions()"), {":name": unique_name});
 
 		var volume = "";
-		if(app.type == Const.SPACELET)
+		if(app.type == Config.SPACELET)
 			volume = Config.SPACELETS_PATH + app.unique_directory + Config.VOLUME_DIRECTORY;
-		else if(app.type == Const.SANDBOXED_APPLICATION)
+		else if(app.type == Config.SANDBOXED_APPLICATION)
 			volume = Config.SANDBOXED_PATH + app.unique_directory + Config.VOLUME_DIRECTORY;
-		/*else if(app.type == Const.NATIVE_APPLICATION)
+		/*else if(app.type == Config.NATIVE_APPLICATION)
 			volume = Config.NATIVE_PATH + app.unique_directory + Config.VOLUME_DIRECTORY;*/
 
 		if(directory != "")
@@ -381,9 +380,9 @@ self.startApplication = fibrous(function(type, unique_name)
 	if(connobj.remoteAddress != Config.EDGE_IP)											// Only local calls allowed for this method
 		return false;
 
-	if(type == Const.SPACELET)
+	if(type == Config.SPACELET)
 		spaceletManager.sync.start(unique_name);
-	else if(type == Const.SANDBOXED_APPLICATION)
+	else if(type == Config.SANDBOXED_APPLICATION)
 		sandboxedManager.sync.start(unique_name);
 	/*else if(type == NATIVE_APPLICATION) {}
 		nativeManager.sync.start(unique_name);*/
@@ -396,9 +395,9 @@ self.stopApplication = fibrous(function(type, unique_name)
 	if(connobj.remoteAddress != Config.EDGE_IP)											// Only local calls allowed for this method
 		return false;
 
-	if(type == Const.SPACELET)
+	if(type == Config.SPACELET)
 		spaceletManager.sync.stop(unique_name);
-	else if(type == Const.SANDBOXED_APPLICATION)
+	else if(type == Config.SANDBOXED_APPLICATION)
 		sandboxedManager.sync.stop(unique_name);
 	/*else if(type == NATIVE_APPLICATION) {}
 		nativeManager.sync.stop(unique_name, true);*/
@@ -411,9 +410,9 @@ self.removeApplication = fibrous(function(type, unique_name)
 	if(connobj.remoteAddress != Config.EDGE_IP)											// Only local calls allowed for this method
 		return false;
 
-	if(type == Const.SPACELET)
+	if(type == Config.SPACELET)
 		spaceletManager.sync.remove(unique_name);
-	else if(type == Const.SANDBOXED_APPLICATION)
+	else if(type == Config.SANDBOXED_APPLICATION)
 		sandboxedManager.sync.remove(unique_name);
 	/*else if(type == NATIVE_APPLICATION) {}
 		nativeManager.sync.remove(unique_name, true);*/
@@ -424,9 +423,9 @@ self.isApplicationRunning = fibrous(function(type, unique_name)
 	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
 
 	var isRunning = false;
-	if(type == Const.SPACELET)
+	if(type == Config.SPACELET)
 		isRunning = spaceletManager.isRunning(unique_name);
-	else if(type == Const.SANDBOXED_APPLICATION)
+	else if(type == Config.SANDBOXED_APPLICATION)
 		isRunning = sandboxedManager.isRunning(unique_name);
 	/*else if(type == NATIVE_APPLICATION) {}
 		isRunning = nativeManager.isRunning(unique_name);*/
@@ -448,39 +447,39 @@ self.getApplicationData = fibrous(function(unique_name)
 			{
 			var app_data = { spacelets: [], sandboxed: []/*, native: []*/ };
 
-			var spacelets = database.sync.getApplication([Const.SPACELET], true) || [];
+			var spacelets = database.sync.getApplication([Config.SPACELET], true) || [];
 			for(var i=0; i<spacelets.length; i++)
 				{
 				app_dir = Config.SPACELETS_PATH + spacelets[i].unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY;
 
-				manifest = Utility.sync.loadManifest(app_dir + Const.MANIFEST, true, true);
+				manifest = Utility.sync.loadManifest(app_dir + Config.MANIFEST, true, true);
 				manifest.services = spaceletManager.find("services", manifest.unique_name);
-				manifest.has_tile = Utility.sync.isLocal(app_dir + Config.WWW_DIRECTORY + Const.TILEFILE, "file");
-				//manifest.has_options = Utility.sync.isLocal(app_dir + Config.WWW_DIRECTORY + Const.OPTIONSFILE, "file");
+				manifest.has_tile = Utility.sync.isLocal(app_dir + Config.WWW_DIRECTORY + Config.TILEFILE, "file");
+				//manifest.has_options = Utility.sync.isLocal(app_dir + Config.WWW_DIRECTORY + Config.OPTIONSFILE, "file");
 				app_data.spacelets.push(manifest);
 				}
 
-			var sandboxed = database.sync.getApplication([Const.SANDBOXED_APPLICATION], true) || [];
+			var sandboxed = database.sync.getApplication([Config.SANDBOXED_APPLICATION], true) || [];
 			for(var i=0; i<sandboxed.length; i++)
 				{
 				app_dir = Config.SANDBOXED_PATH + sandboxed[i].unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY;
 
-				manifest = Utility.sync.loadManifest(app_dir + Const.MANIFEST, true, true);
+				manifest = Utility.sync.loadManifest(app_dir + Config.MANIFEST, true, true);
 				manifest.services = sandboxedManager.find("services", manifest.unique_name);
-				manifest.has_tile = Utility.sync.isLocal(app_dir + Config.WWW_DIRECTORY + Const.TILEFILE, "file");
-				//manifest.has_options = Utility.sync.isLocal(app_dir + Config.WWW_DIRECTORY + Const.OPTIONSFILE, "file");
+				manifest.has_tile = Utility.sync.isLocal(app_dir + Config.WWW_DIRECTORY + Config.TILEFILE, "file");
+				//manifest.has_options = Utility.sync.isLocal(app_dir + Config.WWW_DIRECTORY + Config.OPTIONSFILE, "file");
 				app_data.sandboxed.push(manifest);
 				}
 
-			/*var native = database.sync.getApplication([Const.NATIVE_APPLICATION], true) || [];
+			/*var native = database.sync.getApplication([Config.NATIVE_APPLICATION], true) || [];
 			for(var i=0; i<native.length; i++)
 				{
 				app_dir = Config.NATIVE_PATH + native[i].unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY;
 					
-				manifest = Utility.sync.loadManifest(app_dir + Const.MANIFEST, true, true);
+				manifest = Utility.sync.loadManifest(app_dir + Config.MANIFEST, true, true);
 				manifest.services = nativeManager.find("services", manifest.unique_name);
-				manifest.has_tile = Utility.sync.isLocal(app_dir + Config.WWW_DIRECTORY + Const.TILEFILE, "file");
-				//manifest.has_options = Utility.sync.isLocal(app_dir + Config.WWW_DIRECTORY + Const.OPTIONSFILE, "file");
+				manifest.has_tile = Utility.sync.isLocal(app_dir + Config.WWW_DIRECTORY + Config.TILEFILE, "file");
+				//manifest.has_options = Utility.sync.isLocal(app_dir + Config.WWW_DIRECTORY + Config.OPTIONSFILE, "file");
 				app_data.native.push(Utility.parseManifest(manifest));
 				}*/
 			}

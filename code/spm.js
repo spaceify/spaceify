@@ -14,7 +14,6 @@ var qs = require("querystring");
 var fibrous = require("fibrous");
 var logger = require("./logger");
 var Config = require("./config")();
-var Const = require("./constants");
 var Utility = require("./utility");
 var Language = require("./language");
 var AppManager = require("./appmanager");
@@ -63,7 +62,7 @@ self.start = fibrous( function()
 	var github_password = "";
 
 	logger.force();
-	logger.force("Spaceify Package Manager v" + Const.SPM_VERSION);
+	logger.force("Spaceify Package Manager v" + Config.SPM_VERSION);
 
 	try {
 		// CHECK INPUT (node ..path/spm.js command ...)
@@ -216,7 +215,7 @@ var install = fibrous( function(package, username, password)
 	for(var i=0; i<packages.length; i++)
 		{
 		if(appManagerRPCClient == null)
-			suggested_applications = appManager.sync.installApplication(packages[i] + (versions[i] ? Const.PACKAGE_DELIMITER + versions[i] : ""), (i == 0 ? false : true), username, password);
+			suggested_applications = appManager.sync.installApplication(packages[i] + (versions[i] ? Config.PACKAGE_DELIMITER + versions[i] : ""), (i == 0 ? false : true), username, password);
 		else
 			suggested_applications = appManagerRPCClient.sync.call("installApplication", [packages[i], (i == 0 ? false : true), username, password, true], self);
 
@@ -295,33 +294,33 @@ var list = fibrous( function(type, bVerbose)
 		{
 		for(var i=0; i<apps.length; i++)
 			{
-			if(apps[i].type == Const.SPACELET && !spaceletHeader)
+			if(apps[i].type == Config.SPACELET && !spaceletHeader)
 				{ logger.force(Language.INSTALLED_SPACELETS); spaceletHeader = true; }
-			else if(apps[i].type == Const.SANDBOXED_APPLICATION && !sandboxedHeader)
+			else if(apps[i].type == Config.SANDBOXED_APPLICATION && !sandboxedHeader)
 				{ logger.force(Language.INSTALLED_SANDBOXED); sandboxedHeader = true; }
-			else if(apps[i].type == Const.NATIVE_APPLICATION && !nativeHeader)
+			else if(apps[i].type == Config.NATIVE_APPLICATION && !nativeHeader)
 				{ logger.force(Language.INSTALLED_NATIVE); nativeHeader = true; }
 
 			var bLast = (i == apps.length - 1 || (i < apps.length - 1 && apps[i].type != apps[i + 1].type));
 
-			logger.force((bLast ? "└─" : "├─") + (bVerbose ? "┬ " : "─ ") + apps[i].unique_name + Const.PACKAGE_DELIMITER + apps[i].version);
+			logger.force((bLast ? "└─" : "├─") + (bVerbose ? "┬ " : "─ ") + apps[i].unique_name + Config.PACKAGE_DELIMITER + apps[i].version);
 
 			if(bVerbose)
 				{
-				if(apps[i].type == Const.SPACELET)
+				if(apps[i].type == Config.SPACELET)
 					path = Config.SPACELETS_PATH;
-				else if(apps[i].type == Const.SANDBOXED_APPLICATION)
+				else if(apps[i].type == Config.SANDBOXED_APPLICATION)
 					path = Config.SANDBOXED_PATH;
-				else if(apps[i].type == Const.NATIVE_APPLICATION)
+				else if(apps[i].type == Config.NATIVE_APPLICATION)
 					path = Config.NATIVE_PATH;
 
-				var manifest = Utility.sync.loadManifest(path + apps[i].unique_directory + Config.APPLICATION_PATH + Const.MANIFEST, true);
+				var manifest = Utility.sync.loadManifest(path + apps[i].unique_directory + Config.APPLICATION_PATH + Config.MANIFEST, true);
 
 				logger.force((bLast ? "  ├── " : "│ ├── ") + Language.M_NAME + manifest.name);
 
 				logger.force((bLast ? "  ├── " : "│ ├── ") + Language.M_CATEGORY + Utility.ucfirst(manifest.category));
 
-				if(manifest.type == Const.SPACELET)
+				if(manifest.type == Config.SPACELET)
 					{
 					logger.force((bLast ? "  ├── " : "│ ├── ") + Language.M_SHARED + (manifest.shared ? Language.M_YES : Language.M_NO));
 
@@ -382,7 +381,7 @@ var list = fibrous( function(type, bVerbose)
 	// UTILITY
 var splitPackageName = function(package)
 	{
-	return package.split(Const.PACKAGE_DELIMITER);
+	return package.split(Config.PACKAGE_DELIMITER);
 	}
 	
 }

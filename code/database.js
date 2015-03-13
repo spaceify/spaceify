@@ -7,7 +7,6 @@
 var fs = require("fs");
 var fibrous = require("fibrous");
 var Config = require("./config")();
-var Const = require("./constants");
 var Utility = require("./utility");
 var sqlite3 = require("sqlite3");
 
@@ -102,11 +101,11 @@ self.getApplications = fibrous( function(type)
 	try {
 		order = " ORDER BY (CASE type";
 		if(type.length == 0)
-			order += " WHEN '" + Const.SPACELET + "' THEN 0 WHEN '" + Const.SANDBOXED_APPLICATION + "' THEN 1 WHEN '" + Const.NATIVE_APPLICATION + "' THEN 2 END)";
+			order += " WHEN '" + Config.SPACELET + "' THEN 0 WHEN '" + Config.SANDBOXED_APPLICATION + "' THEN 1 WHEN '" + Config.NATIVE_APPLICATION + "' THEN 2 END)";
 		else
 			{
 			for(var i=0; i<type.length; i++)
-				order += " WHEN '" + Const.SHORT_APPLICATION_TYPES[type[i]] + "' THEN " + i;
+				order += " WHEN '" + Config.SHORT_APPLICATION_TYPES[type[i]] + "' THEN " + i;
 			order += " END)";
 			}
 
@@ -114,7 +113,7 @@ self.getApplications = fibrous( function(type)
 		for(var i=0; i<type.length; i++)
 			{
 			where += (where == "" ? " WHERE " : " OR ") + "type=?";
-			type[i] = Const.SHORT_APPLICATION_TYPES[type[i]];
+			type[i] = Config.SHORT_APPLICATION_TYPES[type[i]];
 			}
 
 		return db.sync.all("SELECT * FROM applications" + where + order, type);
@@ -131,15 +130,15 @@ self.insertApplication = fibrous( function(manifest)
 	try {
 		self.sync.begin();
 
-		var inject_identifier = (manifest.type == Const.SPACELET ? manifest.inject_identifier : "");
-		var inject_enabled = (manifest.type == Const.SPACELET ? "1" : "0");
+		var inject_identifier = (manifest.type == Config.SPACELET ? manifest.inject_identifier : "");
+		var inject_enabled = (manifest.type == Config.SPACELET ? "1" : "0");
 		var params = [manifest.unique_name, manifest.unique_directory, manifest.docker_image_id, manifest.type, manifest.version, Utility.getLocalDateTime(), inject_identifier, inject_enabled];
 
 		db.sync.run("INSERT INTO applications (unique_name, unique_directory, docker_image_id, type, version, install_datetime, inject_identifier, inject_enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", params);
 
 		addProvidedServices.sync(manifest);
 
-		if(manifest.type == Const.SPACELET)
+		if(manifest.type == Config.SPACELET)
 			{
 			addInjectHostnames.sync(manifest);
 			addInjectFiles.sync(manifest);
@@ -160,14 +159,14 @@ self.updateApplication = fibrous( function(manifest)
 	try {
 		self.sync.begin();
 
-		var inject_identifier = (manifest.type == Const.SPACELET ? manifest.inject_identifier : "");
+		var inject_identifier = (manifest.type == Config.SPACELET ? manifest.inject_identifier : "");
 		var params = [manifest.unique_directory, manifest.docker_image_id, manifest.version, Utility.getLocalDateTime(), inject_identifier, manifest.unique_name];
 
 		db.sync.run("UPDATE applications SET unique_directory=?, docker_image_id=?, version=?, install_datetime=?, inject_identifier=? WHERE unique_name=?", params);
 
 		addProvidedServices.sync(manifest);
 
-		if(manifest.type == Const.SPACELET)
+		if(manifest.type == Config.SPACELET)
 			{
 			addInjectHostnames.sync(manifest);
 			addInjectFiles.sync(manifest);
@@ -243,7 +242,7 @@ var addInjectFiles = fibrous( function(manifest)
 		var file = manifest.inject_files[i].name.trim();
 		var type = manifest.inject_files[i].type.trim();
 
-		var url_or_path = (type == Const.JAVASCRIPT || type == Const.CSS ? Config.WWW_URL : application_path);		// Inject as url or file
+		var url_or_path = (type == Config.JAVASCRIPT || type == Config.CSS ? Config.WWW_URL : application_path);		// Inject as url or file
 
 		stmt.sync.run([manifest.unique_name, url_or_path, directory, file, type, order++]);
 		}

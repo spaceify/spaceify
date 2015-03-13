@@ -248,14 +248,14 @@ sudo chmod 0755 /var/lib/spaceify/data/scripts/stop_containers.sh > /dev/null 2>
 
 #----- Create and initialize Docker image -----#
 
-ubun=$( sudo docker images )
-ubun=$( echo "$ubun" | sudo sed -n '/spaceifyubuntu/{p;q;}' )
-if [[ "$ubun" == "" ]]; then																# create image only if it is not in the images list
+#ubun=$( sudo docker images )
+#ubun=$( echo "$ubun" | sudo sed -n '/spaceifyubuntu/{p;q;}' )
+#if [[ "$ubun" == "" ]]; then																# create image always (# only if it is not in the images list)
 
 	printf "\nCreating the Docker image\n\n"
-	cd /var/lib/spaceify/docker
+	cd /var/lib/spaceify/data/docker
 	sudo docker build -no-cache -rm -t spaceifyubuntu .
-fi
+#fi
 
 #----- Create custom iptables chains for Spaceify -----#
 

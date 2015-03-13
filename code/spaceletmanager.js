@@ -8,7 +8,6 @@
 var fs = require("fs");
 var fibrous = require("fibrous");
 var Config = require("./config")();
-var Const = require("./constants");
 var Utility = require("./utility");
 var Language = require("./language");
 var Application = require("./application");
@@ -92,11 +91,11 @@ self.build = fibrous( function(unique_name)
 		if(unique_name)																	// Build one application
 			_applications = [database.sync.getApplication(unique_name)];
 		else																			// Build all applications
-			_applications = database.sync.getApplication([Const.SPACELET], true);
+			_applications = database.sync.getApplication([Config.SPACELET], true);
 
 		for(var i=0; i<_applications.length; i++)
 			{
-			if((manifest = Utility.sync.loadManifest(Config.SPACELETS_PATH + _applications[i].unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY + Const.MANIFEST, true)) == null)
+			if((manifest = Utility.sync.loadManifest(Config.SPACELETS_PATH + _applications[i].unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY + Config.MANIFEST, true)) == null)
 				throw Utility.error(Language.E_FAILED_TO_READ_SPACELET_MANIFEST.p("SpaceletManager::build()"));
 
 			application = self.find("unique_name", manifest.unique_name);					// Don't create/add existing application

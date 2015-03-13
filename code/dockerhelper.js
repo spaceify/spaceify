@@ -7,7 +7,6 @@
 var fs = require("fs");
 var net = require("net");
 var logger = require("./logger");
-var Const = require("./constants");
 var Utility = require("./utility");
 var Language = require("./language");
 

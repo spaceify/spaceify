@@ -16,7 +16,6 @@ var fibrous = require("fibrous");
 var engineio = require("engine.io");
 var logger = require("./logger");
 var Config = require("./config")();
-var Const = require("./constants");
 var Utility = require("./utility");
 var Language = require("./language");
 var WebSocketClient = require("./websocketclient");
@@ -96,9 +95,9 @@ var websocketConnect = fibrous( function()
 	secureWebSocketRPCServer.exposeMethod("saveOptions", self, options.core.saveOptions);
 	secureWebSocketRPCServer.exposeMethod("loadOptions", self, options.core.loadOptions);
 	// THESE ARE EXPOSED ONLY OVER A SECURE CONNECTION!!!
-	var key = Config.SPACEIFY_TLS_PATH + Const.SERVER_KEY;
-	var crt = Config.SPACEIFY_TLS_PATH + Const.SERVER_CRT;
-	var ca_crt = Config.SPACEIFY_WWW_PATH + Const.SPACEIFY_CRT;
+	var key = Config.SPACEIFY_TLS_PATH + Config.SERVER_KEY;
+	var crt = Config.SPACEIFY_TLS_PATH + Config.SERVER_CRT;
+	var ca_crt = Config.SPACEIFY_WWW_PATH + Config.SPACEIFY_CRT;
 	secureWebSocketRPCServer.connect.sync({hostname: options.hostname, port: options.webSocketPorts.https, is_secure: true, key: key, crt: crt, ca_crt: ca_crt, owner: "ConnectionHub"});
 	});
 
@@ -141,9 +140,9 @@ var socketConnect = fibrous( function()
 	secureSocketRPCServer.exposeMethod("saveOptions", self, options.core.saveOptions);
 	secureSocketRPCServer.exposeMethod("loadOptions", self, options.core.loadOptions);
 	// THESE ARE EXPOSED ONLY OVER A SECURE CONNECTION!!!
-	var key = Config.SPACEIFY_TLS_PATH + Const.SERVER_KEY;
-	var crt = Config.SPACEIFY_TLS_PATH + Const.SERVER_CRT;
-	var ca_crt = Config.SPACEIFY_WWW_PATH + Const.SPACEIFY_CRT;
+	var key = Config.SPACEIFY_TLS_PATH + Config.SERVER_KEY;
+	var crt = Config.SPACEIFY_TLS_PATH + Config.SERVER_CRT;
+	var ca_crt = Config.SPACEIFY_WWW_PATH + Config.SPACEIFY_CRT;
 	secureSocketRPCServer.connect.sync({hostname: options.hostname, port: options.socketPorts.https, is_secure: true, key: key, crt: crt, ca_crt: ca_crt, owner: "ConnectionHub"});
 	});
 

@@ -856,7 +856,7 @@ self.makeURL = function(src, unique_name, callback)
 	src = (src.search(/^\//) != -1 ? "" : "/") + src;
 	var app_url = $SN.getEdgeURL() + "/404.html";
 	var methods = [ "getServices", "getManifest" ];
-	var params = [ [[{service_name: "client_http_server", unique_name: unique_name}, {service_name: "client_https_server", unique_name: unique_name}]], [unique_name] ];
+	var params = [ [[{service_name: "http", unique_name: unique_name}, {service_name: "https", unique_name: unique_name}]], [unique_name] ];
 
 	if(unique_name == -1)																								// Use cores web server
 		callback(null, $SN.getEdgeURL() + src);

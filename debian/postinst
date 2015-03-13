@@ -222,7 +222,7 @@ if [ -e $dbs ]; then																		# database exists
 	#	# reinstall applications here with spm?
 	#
 	#done
-	
+	:
 else																						# create new database
 
 	sudo touch $dbs

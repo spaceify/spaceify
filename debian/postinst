@@ -275,7 +275,7 @@ sudo chmod 0755 /var/lib/spaceify/data/scripts/stop_containers.sh > /dev/null 2>
 	docker rmi spaceifyubuntu > /dev/null 2>&1 || true
 
 	cd /var/lib/spaceify/data/docker
-	sudo docker build -no-cache -rm -t spaceifyubuntu .
+	sudo docker build --no-cache --rm -t spaceifyubuntu .
 #fi
 
 #----- Create custom iptables chains for Spaceify -----#

@@ -10,8 +10,8 @@ var self = this;
 var configuration =
 	{
 	SPACELET: "spacelet",
-	SANDBOXED_APPLICATION: "sandboxed_application",
-	NATIVE_APPLICATION: "native_application",
+	SANDBOXED: "sandboxed",
+	NATIVE: "native",
 
 	STANDARD: "standard",
 	OPEN_LOCAL: "open_local",

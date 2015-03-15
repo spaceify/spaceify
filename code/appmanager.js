@@ -182,7 +182,7 @@ self.installApplication = fibrous( function(package, isSuggested, username, pass
 						}
 					else																		// ..but service already registered -> don't reinstall even if version would change
 						{
-						var pack = Utility.splitPackageName(required_service.suggested_application);
+						var pack = required_service.suggested_application.split("@";
 
 						if(existing_service.unique_name != pack[0])									// Suggested and installed applications are different -> using the existing application/service
 							messages.sync(Utility.replace(Language.REQUIRED_SERVICE_DIFFERENT_APPS, {":name": required_service.service_name, ":app": existing_service.unique_name, ":version": existing_service.version, ":sapp": required_service.suggested_application}));
@@ -243,9 +243,9 @@ self.removeApplication = fibrous( function(unique_name, spm)
 		messages.sync(Language.DELETE_FILES);
 		if(app_data.type == Config.SPACELET)
 			removeUniqueDirectory.sync(Config.SPACELETS_PATH + app_data.unique_directory);
-		else if(app_data.type == Config.SANDBOXED_APPLICATION)
+		else if(app_data.type == Config.SANDBOXED)
 			removeUniqueDirectory.sync(Config.SANDBOXED_PATH + app_data.unique_directory);
-		//else if(app_data.type == Config.NATIVE_APPLICATION)
+		//else if(app_data.type == Config.NATIVE)
 		//	removeUniqueDirectory.sync(Config.NATIVE_PATH + app_data.unique_directory);
 
 		// Remove database entries
@@ -618,12 +618,12 @@ var install = fibrous( function(manifest)
 			app = new Application.obj(manifest);
 			app_path = Config.SPACELETS_PATH;
 			}
-		else if(manifest.type == Config.SANDBOXED_APPLICATION)
+		else if(manifest.type == Config.SANDBOXED)
 			{
 			app = new Application.obj(manifest);
 			app_path = Config.SANDBOXED_PATH;
 			}
-		//else if(manifest.type == Config.NATIVE_APPLICATION) {}
+		//else if(manifest.type == Config.NATIVE) {}
 
 		database.sync.begin();																				// global transaction (database is already opened in installApplication!)
 		app_data = database.sync.getApplication([manifest.unique_name]);

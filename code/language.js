@@ -239,9 +239,9 @@ var language =
 	"PACKAGE_INSTALL_ERROR": "Failed to get the requested package.",
 	"GET_SOURCES_OK": "Application :app@:version source codes are now copied.",
 
-	"REQUIRED_SERVICE_NOT_AVAILABLE": "Required service :name is not registered to the Spaceify core. Because suggested application is not defined Spaceify core can not try to install an application which implements the service. See http://:name for applications that implement the service and install suitable application manually.",
+	"REQUIRED_SERVICE_NOT_AVAILABLE": "Required service :name is not registered to the edge. Because suggested application is not defined edge can not try to install an application which implements the service. See http://:name for applications that implement the service and install suitable application manually.",
 	"REQUIRED_SERVICE_ALREADY_REGISTERED": "Required service :name is registered by application :app@:version",
-	"REQUIRED_SERVICE_INSTALL_SA": "Required service :name is not registered to the Spaceify core. Spm tries to install the suggested application :app.",	
+	"REQUIRED_SERVICE_INSTALL_SA": "Required service :name is not registered to the edge. Spm tries to install the suggested application :app.",	
 	"REQUIRED_SERVICE_DIFFERENT_APPS": "Required service :name is provided by application :app@:version. The suggested application :sapp is not installed. If you prefer to use the suggested application remove the existing application and then install the suggested application manually.",
 	"REQUIRED_SERVICE_SAME_APPS": "Required service :name is provided by the same application :app@:version as the suggested application. The suggested application :sapp is not installed.",
 

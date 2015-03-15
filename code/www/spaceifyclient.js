@@ -49,7 +49,7 @@ var socket = { readyState: "closed" };
 var callbacks = new Object();
 var rpcMethods = new Object();
 var logger = new Logger();
-var closeEventCallback = null;
+var connectionListenerCallback = null;
 var uri = "";
 
 // The callback is a standard node-type callback with error as its first parameter
@@ -74,10 +74,10 @@ self.connect = function(opts, callback)
 		{
 		logger.info("Disconnected from " + uri);
 
-		if(typeof closeEventCallback == "function")
+		if(typeof connectionListenerCallback == "function")
 			{
-			closeEventCallback(true);
-			closeEventCallback = null;
+			connectionListenerCallback(true);
+			connectionListenerCallback = null;
 			}
 
 		callbacks = new Object();
@@ -100,15 +100,15 @@ self.connect = function(opts, callback)
 
 self.close = function()
 	{
-	closeEventCallback = null;
+	connectionListenerCallback = null;
 
 	if(socket.readyState == "open")
 		socket.close();
 	}
 
-self.setCloseEventListener = function(callback)
+self.connectionListener = function(callback)
 	{
-	closeEventCallback = (typeof callback == "function" ? callback : null);
+	connectionListenerCallback = (typeof callback == "function" ? callback : null);
 	}
 
 self.exposeMethod = function(name, object_, method_)
@@ -711,13 +711,13 @@ self.exposeMethod = function(name, object, method)
 	rpc.exposeMethod(name, object, method);
 	}
 
-self.setCloseEventListener = function(callback)
+self.connectionListener = function(callback)
 	{
-	rpc.setCloseEventListener(callback);
+	rpc.connectionListener(callback);
 	}
 
 self.openCall = function(service, forceSecure, method, parameters, callback)
-	{ // A quicker way to open a connection, call one method and close the connection
+	{ // A quicker/simpler way to open a connection, call one method and close the connection
 	new SpaceifyRPC().open(service, forceSecure, function(err, rpc)
 		{
 		if(err)

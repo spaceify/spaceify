@@ -8,6 +8,7 @@ var fs = require("fs");
 var fibrous = require("fibrous");
 var Config = require("./config")();
 var Utility = require("./utility");
+var Language = require("./language");
 var sqlite3 = require("sqlite3");
 
 function Database()
@@ -203,7 +204,7 @@ var addProvidedServices = fibrous( function(manifest)
 
 	var stmt = db.prepare("INSERT INTO provided_services (unique_name, service_name, service_type) VALUES(?, ?, ?)");
 
-	for(i in manifest.provides_services)
+	for(var i=0; i<manifest.provides_services.length; i++)
 		stmt.sync.run([manifest.unique_name, manifest.provides_services[i].service_name, manifest.provides_services[i].service_type]);
 
 	stmt.finalize();
@@ -215,7 +216,7 @@ var addInjectHostnames = fibrous( function(manifest)
 
 	var stmt = db.prepare("INSERT INTO inject_hostnames (unique_name, inject_hostname) VALUES(?, ?)");
 
-	for(i in manifest.inject_hostnames)
+	for(var i=0; i<manifest.inject_hostnames.length; i++)
 		{
 		var inject_hostname = manifest.inject_hostnames[i].replace("*", "%");			// IN MANIFEST: *.google.* -> CHANGED FOR SQLITE: %.google.%
 		stmt.sync.run([manifest.unique_name, inject_hostname]);
@@ -234,12 +235,12 @@ var addInjectFiles = fibrous( function(manifest)
 	application_path = Config.SPACELETS_PATH + manifest.unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY + Config.WWW_DIRECTORY;
 
 	var order = 1;
-	for(i in manifest.inject_files)
+	for(var i=0; i<manifest.inject_files.length; i++)
 		{
 		var directory = manifest.inject_files[i].directory.trim();
 		if(directory != "" && directory.search(/\/$/) == -1)
 			directory += "/";
-		var file = manifest.inject_files[i].name.trim();
+		var file = manifest.inject_files[i].file.trim();
 		var type = manifest.inject_files[i].type.trim();
 
 		var url_or_path = (type == Config.JAVASCRIPT || type == Config.CSS ? Config.WWW_URL : application_path);		// Inject as url or file
@@ -260,8 +261,7 @@ self.checkProvidedServices = fibrous( function(manifest)
 	var errors = [];
 	for(var i=0; i<manifest.provides_services.length; i++)
 		{
-		var s = manifest.provides_services[i];
-		var row = db.sync.get("SELECT * FROM provided_services WHERE service_name=? AND unique_name<>?", [s.service_name, manifest.unique_name]);
+		var row = db.sync.get("SELECT * FROM provided_services WHERE service_name=? AND unique_name<>?", [manifest.provides_services[i].service_name, manifest.unique_name]);
 		if(row)
 			errors.push({service_name: row.service_name, unique_name: row.unique_name});
 		}

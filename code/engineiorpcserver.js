@@ -219,7 +219,7 @@ var onMessage = function(message, connection)
 		var reqa;
 		var rspa = [];
 		var isBatch = false;
-		var connobj = connections[connectionSequence];
+		var connobj = connection;
 
 		if(!(reqa = Utility.parseJSON(message, false)))
 			{

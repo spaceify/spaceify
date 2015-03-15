@@ -278,13 +278,19 @@ var renderTile = function(manifest, id)
 		{
 		self.load($SN.getEdgeURL() + "/templates/default_tile.tpl", function(err, data)
 			{
-			var image = $SN.getEdgeURL() + "/images/dicon.png";											// Show default image or applcations custom image
+			var image = $SN.getEdgeURL() + "/images/default_icon.png";								// Show default image or applications custom image
+
 			if(manifest.images)
 				{
 				for(var i=0; i<manifest.images.length; i++)
 					{
-					if(manifest.images[i].name.search("/^(icon\.)/i" != -1)) {
-						image = (manifest.images[i].directory ? manifest.images[i].directory : "") + "/images/" + manifest.images[i].name; break; }
+					if(manifest.images[i].file.search("/^(icon\.)/i" != -1))
+						{
+						image = (manifest.images[i].directory ? manifest.images[i].directory : "") + "/images/" + manifest.images[i].file;
+						image = $SN.getEdgeURL() + image + "?app=" + manifest.unique_name + "&type=" + manifest.type;
+
+						break;
+						}
 					}
 				}
 

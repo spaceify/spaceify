@@ -527,23 +527,23 @@ var tryPackageSources = fibrous( function(package, isSuggested, username, passwo
 	purl.pathname = purl.pathname.replace(/^\/|\/$/g, "");
 	var gitoptions = purl.pathname.split("/");
 
-	// 1. Try local directory <package>
+	var cwd_package = process.cwd() + "/" + package;
+
+	// 1.1 Try local directory <package>
 	if(!isSuggested && Utility.sync.isLocal(package, "directory"))
-		{
-		messages.sync(Utility.replace(Language.TRYING_TO_GET, {":from": Language.LOCAL_DIRECTORY, ":package": package}));
-
-		package += (package.search(/\/$/) == -1 ? "/" : "");
-		package += (package.search(/application\/$/i) == -1 ? Config.APPLICATION_DIRECTORY : "");
-		Utility.sync.copyDirectory(package, Config.WORK_PATH, true);
-
-		manifestFile = Utility.sync.loadManifest(package + Config.MANIFEST);
-		}
-	// 2. Try local <package>.zip
+		manifestFile = getLocalDirectory.sync(package);
+	// 1.2 Try local directory <cwd/package>
+	if(!isSuggested && Utility.sync.isLocal(cwd_package, "directory"))
+		manifestFile = getLocalDirectory.sync(cwd_package);
+	// 2.1 Try local <package>.zip
 	else if(!isSuggested && Utility.sync.isLocal(package, "file") && package.search(/\.zip$/i) != -1)
+		{		
+		manifestFile = getLocalZipFile.sync(package);
+		}
+	// 2.2 Try local <cwd/package>.zip
+	else if(!isSuggested && Utility.sync.isLocal(cwd_package, "file") && package.search(/\.zip$/i) != -1)
 		{
-		messages.sync(Utility.replace(Language.TRYING_TO_GET, {":from": Language.LOCAL_ARCHIVE, ":package": package}));
-
-		manifestFile = Utility.getFileFromZip(package, Config.MANIFEST, Config.WORK_PATH, true);
+		manifestFile = getLocalZipFile.sync(cwd_package);
 		}
 	// 3. Try "pulling" a git repository <package>
 	else if(!isSuggested && purl.hostname && purl.hostname.match(/(github\.com)/i) != null && gitoptions.length == 2)
@@ -584,6 +584,24 @@ var tryPackageSources = fibrous( function(package, isSuggested, username, passwo
 		throw Utility.ferror(Language.E_FAILED_TO_RESOLVE_PACKAGE.p("AppManager"), {":package": package});
 
 	return manifestFile;
+	});
+
+var getLocalDirectory = fibrous( function(package)
+	{
+	messages.sync(Utility.replace(Language.TRYING_TO_GET, {":from": Language.LOCAL_DIRECTORY, ":package": package}));
+
+	package += (package.search(/\/$/) == -1 ? "/" : "");
+	package += (package.search(/application\/$/i) == -1 ? Config.APPLICATION_DIRECTORY : "");
+	Utility.sync.copyDirectory(package, Config.WORK_PATH, true);
+
+	return Utility.sync.loadManifest(package + Config.MANIFEST);
+	});
+
+var getLocalZipFile = fibrous( function(package)
+	{
+	messages.sync(Utility.replace(Language.TRYING_TO_GET, {":from": Language.LOCAL_ARCHIVE, ":package": package}));
+
+	return Utility.getFileFromZip(package, Config.MANIFEST, Config.WORK_PATH, true);
 	});
 
 var install = fibrous( function(manifest)
@@ -663,6 +681,7 @@ var install = fibrous( function(manifest)
 			database.sync.updateApplication(manifest);
 		else
 			database.sync.insertApplication(manifest);
+
 		database.sync.commit();
 
 		messages.sync(Utility.replace(Language.INSTALL_APPLICATION_OK, {":app": manifest.unique_name, ":version": manifest.version}));

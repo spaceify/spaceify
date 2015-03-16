@@ -182,7 +182,7 @@ self.installApplication = fibrous( function(package, isSuggested, username, pass
 						}
 					else																		// ..but service already registered -> don't reinstall even if version would change
 						{
-						var pack = required_service.suggested_application.split("@";
+						var pack = required_service.suggested_application.split("@");
 
 						if(existing_service.unique_name != pack[0])									// Suggested and installed applications are different -> using the existing application/service
 							messages.sync(Utility.replace(Language.REQUIRED_SERVICE_DIFFERENT_APPS, {":name": required_service.service_name, ":app": existing_service.unique_name, ":version": existing_service.version, ":sapp": required_service.suggested_application}));

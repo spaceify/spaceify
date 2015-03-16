@@ -49,7 +49,7 @@ var language =
 	"E_FIND_SERVICE_UNKNOWN_ADDRESS": new SpaceifyError({"code": 2001, "message": "Get service failed because callers remote address is unknown"}),
 	"E_FIND_SERVICE_UNREGISTERED": new SpaceifyError({"code": 2002, "message": "Get service failed because service :name is not registered"}),
 
-	"E_GET_MANIFEST_NOT_FOUND": new SpaceifyError({"code": 2003, "message": "Get manifest failed because unique_name :name was not found"}),
+	"E_GET_MANIFEST_NOT_FOUND": new SpaceifyError({"code": 2003, "message": "Get manifest failed because application :name was not found"}),
 
 	"E_REGISTER_SERVICE_UNKNOWN_ADDRESS": new SpaceifyError({"code": 2004, "message": "Register service failed because callers remote address :address is unknown"}),
 	"E_REGISTER_SERVICE_UNKNOWN_SERVICE_NAME": new SpaceifyError({"code": 2005, "message": "Failed to register service because service name :name is unknown (not introduced in manifest)"}),

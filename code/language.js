@@ -237,7 +237,7 @@ var language =
 	"ALREADY_RUNNING": "Application :app is already running.",
 	"SERVICE_ALREADY_REGISTERED": "Service name :name is already registered by application :app",
 	"PACKAGE_INSTALL_ERROR": "Failed to get the requested package.",
-	"GET_SOURCES_OK": "Application :app@:version source codes are now copied.",
+	"GET_SOURCES_OK": "Application :app@:version source codes are now downloaded.",
 
 	"REQUIRED_SERVICE_NOT_AVAILABLE": "Required service :name is not registered to the edge. Because suggested application is not defined edge can not try to install an application which implements the service. See http://:name for applications that implement the service and install suitable application manually.",
 	"REQUIRED_SERVICE_ALREADY_REGISTERED": "Required service :name is registered by application :app@:version",

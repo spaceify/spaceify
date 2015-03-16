@@ -306,6 +306,8 @@ var list = fibrous( function(type, bVerbose)
 
 			var bLast = (i == apps.length - 1 || (i < apps.length - 1 && apps[i].type != apps[i + 1].type));
 
+			logger.force("│");
+
 			logger.force((bLast ? "└─" : "├─") + (bVerbose ? "┬ " : "─ ") + apps[i].unique_name + Config.PACKAGE_DELIMITER + apps[i].version);
 
 			if(bVerbose)
@@ -372,6 +374,8 @@ var list = fibrous( function(type, bVerbose)
 					logger.force((bLast ? "  └─┬ " : "│ └─┬ ") + Language.M_REQUIRES_SERVICES);
 					for(var j=0; j<manifest.requires_services.length; j++)
 						logger.force((bLast ? "    " : "│   ") + (j < manifest.requires_services.length - 1 ? "├── " : "└── ") + manifest.requires_services[j].service_name + ", " + manifest.requires_services[j].service_type);
+
+					//logger.force("│");
 					}
 				}
 

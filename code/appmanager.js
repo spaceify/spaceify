@@ -537,7 +537,7 @@ var tryPackageSources = fibrous( function(package, isSuggested, username, passwo
 		manifestFile = getLocalDirectory.sync(cwd_package);
 	// 2.1 Try local <package>.zip
 	else if(!isSuggested && Utility.sync.isLocal(package, "file") && package.search(/\.zip$/i) != -1)
-		{		
+		{
 		manifestFile = getLocalZipFile.sync(package);
 		}
 	// 2.2 Try local <cwd/package>.zip
@@ -553,12 +553,12 @@ var tryPackageSources = fibrous( function(package, isSuggested, username, passwo
 		manifestFile = git.sync(gitoptions, username, password);
 		}
 	// 4. Try uploading a <package>.zip from remote url
-	/*else if(!isSuggested && Utility.sync.loadRemoteFileToLocalFile(package, Config.WORK_PATH, Config.PACKAGEZIP))
+	else if(!isSuggested && Utility.sync.loadRemoteFileToLocalFile(package, Config.WORK_PATH, Config.PACKAGEZIP))
 		{
 		messages.sync(Utility.replace(Language.TRYING_TO_GET, {":from": Language.REMOTE_ARCHIVE, ":package": package}));
 
 		manifestFile = Utility.getFileFromZip(Config.WORK_PATH + Config.PACKAGEZIP, Config.MANIFEST, Config.WORK_PATH, true);
-		}*/
+		}
 	// 5. Try <unique_name>[@<version>] from registry
 	else if(Utility.sync.loadRemoteFileToLocalFile(registry_url + "&username=" + username + "&password=" + password, Config.WORK_PATH, Config.PACKAGEZIP))
 		{
@@ -572,7 +572,7 @@ var tryPackageSources = fibrous( function(package, isSuggested, username, passwo
 			var result = Utility.parseJSON(errfile, true);
 			messages.sync(Language.PACKAGE_INSTALL_ERROR);
 			for(e in result.err)
-				messages.sync(" - " + e + ": " + result.err[e]);
+				messages.sync("- " + e + ": " + result.err[e]);
 
 			throw null;
 			}

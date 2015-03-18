@@ -98,7 +98,7 @@ self.unregisterService = fibrous( function(service_name)
 	// ToDo: Other security considerations before accepting the unregistration?
 
 	// APPLICATION CAN UNREGISTER ONLY ITS OWN SERVICES = SERVICE NAME FOUND IN THE SERVICES
-	var service = _find.obj.registerService(service_name, true);
+	var service = _find.obj.registerService(service_name, false);
 	if(!service)
 		throw Utility.error(Language.E_UNREGISTER_SERVICE_UNKNOWN_SERVICE_NAME.p("SpaceifyCore::unregisterService()"), {name: service_name});
 

@@ -175,12 +175,12 @@ self.call = function(methods, params, object, id, listener)
 	{
 		if(typeof listener == "function")											// call: expects a response object
 		{
-			callObject = {"jsonrpc": "2.0", "method": methods[i], "params": params[i], "id": callSequence};
-			callbacks[callSequence] = {"object": object, "listener": listener};
+			callObject = {jsonrpc: "2.0", "method": methods[i], "params": params[i], id: callSequence};
+			callbacks[callSequence] = {"object": object, "listener": listener, "ms": Date.now()};
 			callSequence++;
 		}
 		else																		// notification: doesn't expect a response object
-			callObject = {"jsonrpc": "2.0", "method": methods[i], "params": params[i], "id": null};
+			callObject = {jsonrpc: "2.0", "method": methods[i], "params": params[i], id: null};
 
 		callObjects.push(callObject);
 	}
@@ -223,11 +223,11 @@ var onMessage = function(message, connection)
 
 		if(!(reqa = Utility.parseJSON(message, false)))
 			{
-			self.sendMessage({"jsonrpc": "2.0", "error": {"code": -32700, "message": "Invalid JSON."}, "id": null}, connection);
+			self.sendMessage({jsonrpc: "2.0", error: {"code": -32700, "message": "Invalid JSON."}, id: null}, connection);
 			return;
 			}
 
-		if(!(reqa instanceof Array))
+		if(!(reqa instanceof Array))															// Process requests as arrays
 			reqa = [reqa];
 		else
 			isBatch = true;
@@ -241,7 +241,7 @@ var onMessage = function(message, connection)
 
 				if(!reqa[r].jsonrpc || reqa[r].jsonrpc != "2.0" || !reqa[r].method)				// Invalid JSON-RPC
 					{
-					rspa.push({"jsonrpc": "2.0", "error": {"code": -32600, "message": "Invalid JSON-RPC."}, "id": null});
+					rspa.push({jsonrpc: "2.0", error: {"code": -32600, "message": "Invalid JSON-RPC."}, id: null});
 					continue;
 					}
 
@@ -250,24 +250,24 @@ var onMessage = function(message, connection)
 					if(options.unknMethodListener)													// Owner wants to catch the unknown methods
 						options.unknMethodListener(reqa[r], connobj);
 					else if(reqa[r].id != null)														// Return error to caller
-						rspa.push({"jsonrpc": "2.0", "error": {"code": -32601, "message": "Method " + reqa[r].method + " not found."}, "id": reqa[r].id});
+						rspa.push({jsonrpc: "2.0", error: {"code": -32601, "message": "Method " + reqa[r].method + " not found."}, id: reqa[r].id});
 					continue;
 					}
 
-				try	{																			// Call the method rpcMethod[0] of object rpcMethod[0]
+				try	{																			// Call the method rpcMethod[r] of object rpcMethod[r]
 					var rpcMethod = rpcMethods[reqa[r].method];
 					reqa[r].params.push(connobj);
 					var result = rpcMethod.method.sync.apply(rpcMethod.object, reqa[r].params);
 
 					if(reqa[r].id != null)
-						rspa.push({"jsonrpc": "2.0", "result": result, "id": reqa[r].id});
+						rspa.push({jsonrpc: "2.0", "result": result, id: reqa[r].id});
 					}
 				catch(err)
 					{
 					Utility.printErrors(err);
 
 					if(reqa[r].id != null)
-						rspa.push({"jsonrpc": "2.0", "error": err, "id": reqa[r].id});
+						rspa.push({jsonrpc: "2.0", error: err, id: reqa[r].id});
 					}
 				}
 
@@ -283,24 +283,24 @@ var onMessage = function(message, connection)
 
 			for(r in reqa)
 				{
-				if(!reqa[r].id || !callbacks[reqa[r].id])
-					continue;
-
 				connobj.rpcId = reqa[r].id;
+				var cback = callbacks[reqa[r].id];
 
-				if(isBatch)																		// Batch request gets called only once with all the responses in a response array!!! Let the caller process the array.
+				if(!reqa[r].id || !cback)
+					continue;
+				else if(isBatch)																// Batch request gets called only once with all the responses in a response array!!! Let the caller process the array.
 					{
 					if(!calledOnce) {
-						callbacks[reqa[r].id].listener.apply(callbacks[reqa[r].id].object, [null, reqa, connobj]); calledOnce = true; }
+						cback.listener.apply(cback.object, [null, reqa, Date.now() - cback.ms, connobj]); calledOnce = true; }
 					}
 				else																			// Single request gets always called only once!!!
 					{
 					if(typeof reqa[r].result != "undefined")
-						callbacks[reqa[r].id].listener.apply(callbacks[reqa[r].id].object, [null, reqa[r].result, connobj]);
+						cback.listener.apply(cback.object, [null, reqa[r].result, reqa[r].id, Date.now() - cback.ms, connobj]);
 					else if(typeof reqa[r].error != "undefined")
-						callbacks[reqa[r].id].listener.apply(callbacks[reqa[r].id].object, [reqa[r].error, null, connobj]);
+						cback.listener.apply(cback.object, [reqa[r].error, null, reqa[r].id, Date.now() - cback.ms, connobj]);
 					else if(!calledOnce)
-						callbacks[reqa[r].id].listener.apply(callbacks[reqa[r].id].object, [null, null, connobj]);
+						cback.listener.apply(cback.object, [null, null, reqa[r].id, Date.now() - cback.ms, connobj]);
 					}
 
 				delete callbacks[reqa[r].id];

@@ -106,9 +106,9 @@ self.close = function()
 		socket.close();
 	}
 
-self.connectionListener = function(callback)
+self.connectionListener = function(listener)
 	{
-	connectionListenerCallback = (typeof callback == "function" ? callback : null);
+	connectionListenerCallback = (typeof listener == "function" ? listener : null);
 	}
 
 self.exposeMethod = function(name, object_, method_)
@@ -138,7 +138,7 @@ self.call = function(methods, params, object, listener)
 		if(typeof listener == "function")											// call: expects a response object
 		{
 			callObject = {jsonrpc: "2.0", method: methods[i], params: params[i], id: callSequence};
-			callbacks[callSequence] = {object: object, listener: listener};
+			callbacks[callSequence] = {object: object, listener: listener, ms: Date.now()};
 			callSequence++;
 		}
 		else																		// notification: doesn't expect a response object
@@ -175,7 +175,7 @@ var onMessage = function(message)
 		return;
 		}
 
-	if(!(reqa instanceof Array))
+	if(!(reqa instanceof Array))															// Process requests as arrays
 		reqa = [reqa];
 	else
 		isBatch = true;
@@ -204,11 +204,11 @@ var onMessage = function(message)
 				if(reqa[r].id != null)
 					rspa.push({jsonrpc: "2.0", result: result, id: reqa[r].id});
 				}
-		catch(err)
-			{
-			if(reqa[r].id != null)
-				rspa.push({jsonrpc: "2.0", error: err, id: reqa[r].id});
-			}
+			catch(err)
+				{
+				if(reqa[r].id != null)
+					rspa.push({jsonrpc: "2.0", error: err, id: reqa[r].id});
+				}
 		}
 
 		if(isBatch && rspa.length > 0)
@@ -223,22 +223,23 @@ var onMessage = function(message)
 
 		for(r in reqa)
 			{
-			if(!reqa[r].id || !callbacks[reqa[r].id])
-				continue;
+			var cback = callbacks[reqa[r].id];
 
-			if(isBatch)																	// Batch request gets called only once with all the responses in a response array!!! Let the caller process the array.
+			if(!reqa[r].id || !cback)
+				continue;
+			else if(isBatch)															// Batch request gets called only once with all the responses in a response array!!! Let the caller process the array.
 				{
 				if(!calledOnce) {
-					callbacks[reqa[r].id].listener.apply(callbacks[reqa[r].id].object, [null, reqa, -1]); calledOnce = true; }
+					cback.listener.apply(cback.object, [null, reqa, Date.now() - cback.ms, 0]); calledOnce = true; }
 				}
 			else																		// Single request gets always called only once!!!
 				{
 				if(typeof reqa[r].result != "undefined")
-					callbacks[reqa[r].id].listener.apply(callbacks[reqa[r].id].object, [null, reqa[r].result, reqa[r].id]);
+					cback.listener.apply(cback.object, [null, reqa[r].result, reqa[r].id, Date.now() - cback.ms]);
 				else if(typeof reqa[r].error != "undefined")
-					callbacks[reqa[r].id].listener.apply(callbacks[reqa[r].id].object, [reqa[r].error, null, reqa[r].id]);
+					cback.listener.apply(cback.object, [reqa[r].error, null, reqa[r].id, Date.now() - cback.ms]);
 				else if(!calledOnce)
-					callbacks[reqa[r].id].listener.apply(callbacks[reqa[r].id].object, [null, null, reqa[r].id]);
+					cback.listener.apply(cback.object, [null, null, reqa[r].id, Date.now() - cback.ms]);
 				}
 
 			delete callbacks[reqa[r].id];
@@ -273,7 +274,7 @@ function SpaceifyCore()
 var self = this;
 
 self.callMultiple = function(methods, params, callback, results)
-	{ // Handle multiple calls at once.
+	{ // Handle multiple calls in one go.
 	if(!results)
 		results = [];
 
@@ -285,9 +286,9 @@ self.callMultiple = function(methods, params, callback, results)
 	var method = methods.shift();																// Get next method and its parameters
 	var parama = params.shift();
 
-	parama.push(function(err, data)																// Add callback to parameters and apply the method
+	parama.push(function(err, data, id, ms)														// Add callback the to parameters and apply the method (eg. startSpacelet) 
 		{
-		results.push({err: err, data: data});														// Add to results and call the next method
+		results.push({err: err, data: data, id: id, ms: ms});										// Add to results and call the next method
 		self.callMultiple(methods, params, callback, results);
 		});
 	self[method].apply(self, parama);
@@ -295,10 +296,10 @@ self.callMultiple = function(methods, params, callback, results)
 
 self.startSpacelet = function(unique_name, service_name, callback)
 	{
-	connect("startSpacelet", [unique_name], false, function(err, data)
+	connect("startSpacelet", [unique_name], false, function(err, data, id, ms)
 		{
 		if(err)
-			callback(err, null);
+			callback(err, null, id, ms);
 		else
 			{
 			var services = data;
@@ -306,12 +307,12 @@ self.startSpacelet = function(unique_name, service_name, callback)
 			if(service)																				// Try to connect to the the requested service
 				new SpaceifyRPC().open(service, false, function(err, rpc)
 					{
-					callback(err ? err : null, err ? null : {rpc: rpc, services: services});
+					callback(err ? err : null, err ? null : {rpc: rpc, services: services}, id, ms);
 					});
 			else if(!service && service_name)														// Return error if service name was not in the spacelets services
-				callback({codes: [E_NO_SERVICE], messages: ["Requested service " + service_name + " is not defined in the services of the spacelet " + unique_name]}, null);
+				callback({codes: [E_NO_SERVICE], messages: ["Requested service " + service_name + " is not defined in the spacelets services " + unique_name]}, null, id, ms);
 			else																					// Return services if only starting the spacelet was requested
-				callback(null, {rpc: null, services: services});
+				callback(null, {rpc: null, services: services}, id, ms);
 			}
 		});
 	}
@@ -377,9 +378,12 @@ var connect = function(method, params, forceSecure, callback)
 	rpc.connect({hostname: EDGE_HOSTNAME, port: $SN.getCorePort(forceSecure), forceSecure: forceSecure, persistent: false}, function(err, data)
 		{
 		if(err)
-			callback(err, null);
+			callback(err, null, -1, 0);
 		else
-			rpc.call(method, params, self, function(err, data) { callback(err ? err : null, err ? null : data); });
+			rpc.call(method, params, self, function(err, data, id, ms)
+				{
+				callback(err ? err : null, err ? null : data, id, ms);
+				});
 		});
 	}
 
@@ -680,7 +684,7 @@ var self = this;
 
 var rpc = null;
 
-self.open = function(service/*must have {port, ip, service_name}*/, forceSecure, callback)
+self.open = function(service, forceSecure, callback)
 	{
 	rpc = new RPC();
 
@@ -689,9 +693,9 @@ self.open = function(service/*must have {port, ip, service_name}*/, forceSecure,
 		if(err)
 			callback(err, null);
 		else
-			rpc.call("connectTo", [service, (!$SN.isSecure() && !forceSecure ? false : true)], self, function(err, data)
+			rpc.call("connectTo", [service, (!$SN.isSecure() && !forceSecure ? false : true)], self, function(err, data, id, ms)
 				{
-				callback(err ? err : null, !err ? self : null);
+				callback(err ? err : null, !err ? self : null, id, ms);
 				});
 		});
 	}
@@ -711,9 +715,9 @@ self.exposeMethod = function(name, object, method)
 	rpc.exposeMethod(name, object, method);
 	}
 
-self.connectionListener = function(callback)
+self.connectionListener = function(listener)
 	{
-	rpc.connectionListener(callback);
+	rpc.connectionListener(listener);
 	}
 
 self.openCall = function(service, forceSecure, method, parameters, callback)
@@ -721,12 +725,12 @@ self.openCall = function(service, forceSecure, method, parameters, callback)
 	new SpaceifyRPC().open(service, forceSecure, function(err, rpc)
 		{
 		if(err)
-			callback(err, null);
+			callback(err, null, -1, 0);
 		else
-			rpc.call(method, parameters, self, function(err, data)
+			rpc.call(method, parameters, self, function(err, data, id, ms)
 				{
 				rpc.close();
-				callback(err ? err : null, err ? null : data);
+				callback(err ? err : null, err ? null : data, id, ms);
 				});
 		});
 	}
@@ -742,7 +746,6 @@ var self = this;
 
 self.GET = function(url, callback, rtype)
 	{
-console.log(url);
 	var xmlhttp = createXMLHTTP();
 	xmlhttp.onreadystatechange = function() { onReadyState(xmlhttp, callback); };
 	xmlhttp.open("GET", url, true);

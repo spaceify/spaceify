@@ -201,7 +201,7 @@ self.installApplication = fibrous( function(package, isSuggested, username, pass
 	finally
 		{
 		database.close();
-		removeTemporaryFiles.sync();
+		//removeTemporaryFiles.sync();
 		unlock();
 		}
 
@@ -533,7 +533,7 @@ var tryPackageSources = fibrous( function(package, isSuggested, username, passwo
 	if(!isSuggested && Utility.sync.isLocal(package, "directory"))
 		manifestFile = getLocalDirectory.sync(package);
 	// 1.2 Try local directory <cwd/package>
-	if(!isSuggested && Utility.sync.isLocal(cwd_package, "directory"))
+	else if(!isSuggested && Utility.sync.isLocal(cwd_package, "directory"))
 		manifestFile = getLocalDirectory.sync(cwd_package);
 	// 2.1 Try local <package>.zip
 	else if(!isSuggested && Utility.sync.isLocal(package, "file") && package.search(/\.zip$/i) != -1)
@@ -591,10 +591,10 @@ var getLocalDirectory = fibrous( function(package)
 	messages.sync(Utility.replace(Language.TRYING_TO_GET, {":from": Language.LOCAL_DIRECTORY, ":package": package}));
 
 	package += (package.search(/\/$/) == -1 ? "/" : "");
-	package += (package.search(/application\/$/i) == -1 ? Config.APPLICATION_DIRECTORY : "");
+	//package += (package.search(/application\/$/i) == -1 ? Config.APPLICATION_DIRECTORY : "");
 	Utility.sync.copyDirectory(package, Config.WORK_PATH, true);
 
-	return Utility.sync.loadManifest(package + Config.MANIFEST);
+	return Utility.sync.loadManifest(Config.WORK_PATH + Config.APPLICATION_DIRECTORY + Config.MANIFEST);
 	});
 
 var getLocalZipFile = fibrous( function(package)

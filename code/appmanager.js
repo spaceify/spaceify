@@ -201,7 +201,7 @@ self.installApplication = fibrous( function(package, isSuggested, username, pass
 	finally
 		{
 		database.close();
-		//removeTemporaryFiles.sync();
+		removeTemporaryFiles.sync();
 		unlock();
 		}
 

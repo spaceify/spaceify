@@ -48,7 +48,7 @@ wlan_conf=$( echo "${wlan_conf}iface ${wlan} inet static\n" )
 wlan_conf=$( echo "${wlan_conf}address 10.0.0.1\n" )
 wlan_conf=$( echo "${wlan_conf}netmask 255.255.255.0\n" )
 wlan_conf=$( echo "${wlan_conf}${end_spaceify}" )
-sudo printf "$wlan_conf" > /etc/network/interfaces
+printf "$wlan_conf" > /etc/network/interfaces
 
 #----- /etc/default/docker -----#
 
@@ -57,43 +57,23 @@ docker_conf=$(</etc/default/docker) > /dev/null 2>&1 || true
 docker_conf=$( echo "${docker_conf}\n\n${start_spaceify}\n" )
 docker_conf=$( echo "${docker_conf}DOCKER_OPTS=\"--dns 10.0.0.1\"\n" )
 docker_conf=$( echo "${docker_conf}${end_spaceify}" )
-sudo printf "$docker_conf" > /etc/default/docker
+printf "$docker_conf" > /etc/default/docker
 
 #----- /etc/rc.local -----#
 
 # Remove spaceify's previous iptables entries
 sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/rc.local
 
-sudo iptables -t mangle -D PREROUTING -j Spaceify-mangle > /dev/null 2>&1 || true
-sudo iptables -t mangle -F Spaceify-mangle > /dev/null 2>&1 || true
-sudo iptables -t mangle -X Spaceify-mangle > /dev/null 2>&1 || true
-sudo iptables -t nat -D PREROUTING -m mark --mark 99 -p tcp --dport 80 -j DNAT --to-destination 10.0.0.1 > /dev/null 2>&1 || true
-sudo iptables -t nat -D PREROUTING -m mark --mark 99 -p tcp --dport 443 -j DNAT --to-destination 10.0.0.1 > /dev/null 2>&1 || true
-sudo iptables -t filter -D FORWARD -m mark --mark 99 -j DROP > /dev/null 2>&1 || true
-
-sudo iptables -t nat -D PREROUTING -j Spaceify-HTTP-Nat-Redir > /dev/null 2>&1 || true
-sudo iptables -t nat -D POSTROUTING -j Spaceify-HTTP-Nat-Masq > /dev/null 2>&1 || true
-sudo iptables -t nat -F Spaceify-HTTP-Nat-Masq > /dev/null 2>&1 || true
-sudo iptables -t nat -X Spaceify-HTTP-Nat-Masq > /dev/null 2>&1 || true
-sudo iptables -t nat -F Spaceify-HTTP-Nat-Redir > /dev/null 2>&1 || true
-sudo iptables -t nat -X Spaceify-HTTP-Nat-Redir > /dev/null 2>&1 || true
-
-sudo iptables -t nat -D PREROUTING -j Spaceify-HTTPS-Nat-Redir > /dev/null 2>&1 || true
-sudo iptables -t nat -D POSTROUTING -j Spaceify-HTTPS-Nat-Masq > /dev/null 2>&1 || true
-sudo iptables -t nat -F Spaceify-HTTPS-Nat-Masq > /dev/null 2>&1 || true
-sudo iptables -t nat -X Spaceify-HTTPS-Nat-Masq > /dev/null 2>&1 || true
-sudo iptables -t nat -F Spaceify-HTTPS-Nat-Redir > /dev/null 2>&1 || true
-sudo iptables -t nat -X Spaceify-HTTPS-Nat-Redir > /dev/null 2>&1 || true
-
 # Create mangle chain
 rclocal1="\/sbin\/iptables -t mangle -N Spaceify-mangle"
 rclocal2="\/sbin\/iptables -t mangle -A PREROUTING -j Spaceify-mangle"
-rclocal3="\/sbin\/iptables -t mangle -A Spaceify-mangle -j MARK --set-mark 99"
-rclocal4="\/sbin\/iptables -t nat -A PREROUTING -m mark --mark 99 -p tcp --dport 80 -j DNAT --to-destination 10\.0\.0\.1"
-rclocal5="\/sbin\/iptables -t nat -A PREROUTING -m mark --mark 99 -p tcp --dport 443 -j DNAT --to-destination 10\.0\.0\.1"
-rclocal6="\/sbin\/iptables -t filter -A FORWARD -m mark --mark 99 -j DROP"
+rclocal3="\/sbin\/iptables -t mangle -A Spaceify-mangle -i docker0 -j RETURN"
+rclocal4="\/sbin\/iptables -t mangle -A Spaceify-mangle -j MARK --set-mark 99"
+rclocal5="\/sbin\/iptables -t nat -A PREROUTING -m mark --mark 99 -p tcp --dport 80 -j DNAT --to-destination 10\.0\.0\.1"
+rclocal6="\/sbin\/iptables -t nat -A PREROUTING -m mark --mark 99 -p tcp --dport 443 -j DNAT --to-destination 10\.0\.0\.1"
+rclocal7="\/sbin\/iptables -t filter -A FORWARD -m mark --mark 99 -j DROP"
 
-mangle_chain="$rclocal1\n$rclocal2\n$rclocal3\n$rclocal4\n$rclocal5\n$rclocal6\n"
+mangle_chain="$rclocal1\n$rclocal2\n$rclocal3\n$rclocal4\n$rclocal5\n$rclocal6\n$rclocal7\n"
 
 # Create HTTP filter chain, NAT chain and redirect chain
 rclocal1="\/sbin\/iptables -t nat -N Spaceify-HTTP-Nat-Redir"
@@ -120,7 +100,7 @@ rclocal7="\/sbin\/iptables -t nat -A Spaceify-HTTPS-Nat-Masq -o "${eth}" -j MASQ
 https_chain="$rclocal1\n$rclocal2\n$rclocal3\n$rclocal4\n$rclocal5\n$rclocal6\n$rclocal7\n"
 
 # Append spaceify specific lines in rc.local before "exit 0"
-sudo sed -i "s/^exit.*/$start_spaceify\n$mangle_chain\n$http_chain\n$https_chain$end_spaceify\nexit 0/" /etc/rc.local
+sed -i "s/^exit.*/$start_spaceify\n$mangle_chain\n$http_chain\n$https_chain$end_spaceify\nexit 0/" /etc/rc.local
 
 #----- /etc/sysctl.conf - enable forwarding (for nat) -----#
 
@@ -129,7 +109,7 @@ sysctl=$( echo "$sysctl" | sed "s/${comm_out_spaceify}//g" )								# remove spa
 sysctl=$( echo "$sysctl" | sed "/${start_spaceify}/,/${end_spaceify}/d" )					# remove spaceify's previous entries
 sysctl=$( echo "$sysctl" | sed "s/.*net.ipv4.ip_forward.*=.*/${comm_out_spaceify}&/" )		# comment out original entry
 sysctl=$( echo "${sysctl}\n\n${start_spaceify}\nnet.ipv4.ip_forward=1\n${end_spaceify}" )	# append new value
-sudo printf "$sysctl" > /etc/sysctl.conf
+printf "$sysctl" > /etc/sysctl.conf
 
 #----- /etc/hostapd/hostapd_spaceify-ap.conf and /etc/default/hostapd - configure/enable AP -----#
 
@@ -140,48 +120,105 @@ if [ "$intext" -eq 1 ]; then																# configure
 	hostap=$( echo "${hostap}ssid=spaceify\n" )
 	hostap=$( echo "${hostap}channel=6\n" )
 	hostap=$( echo "${hostap}${end_spaceify}" )
-	sudo printf "$hostap" > /etc/hostapd/hostapd_spaceify.conf
+	printf "$hostap" > /etc/hostapd/hostapd_spaceify.conf
 
 	dhostapd=$(</etc/default/hostapd)
 	dhostapd=$( echo "$dhostapd" | sed "s/${comm_out_spaceify}//g" )						# remove spaceify's previous comments
 	dhostapd=$( echo "$dhostapd" | sed "/${start_spaceify}/,/${end_spaceify}/d" )			# remove spaceify's previous entries
 	dhostapd=$( echo "$dhostapd" | sed "s/.*DAEMON_CONF.*=.*/${comm_out_spaceify}&/" )		# comment out original entry
 	dhostapd=$( echo "${dhostapd}\n\n${start_spaceify}\nDAEMON_CONF=/etc/hostapd/hostapd_spaceify.conf\n${end_spaceify}" )	# append new value
-	sudo printf "$dhostapd" > /etc/default/hostapd
+	printf "$dhostapd" > /etc/default/hostapd
 else																						# comment configuration if hostpad is installed and it has hostapd_spaceify.conf configuration
-	hpd=$( sudo dpkg-query -W -f='${Status}\n' hostapd )
-	hpd=$( echo "$hpd" | sudo sed -n '/installed/{p;q;}' )
+	hpd=$( dpkg-query -W -f='${Status}\n' hostapd )
+	hpd=$( echo "$hpd" | sed -n '/installed/{p;q;}' )
 	if [[ "$hpd" != "" ]]; then
-		sudo service hostapd stop															# stop hostapd
+		service hostapd stop																# stop hostapd
 		sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d" /etc/default/hostapd	# restore previous configuration
 	fi
 fi
 
 #----- /etc/init/spaceify.conf -----#
 
-sudo sed -i "s/CHANGEADAPTER/${eth}/" /etc/init/spaceify.conf
+sed -i "s/CHANGEADAPTER/${eth}/" /etc/init/spaceify.conf
 
 #----- /etc/monit/monitrc -----#
 
-#sudo sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/monit/monitrc					# remove spaceify's previous entries
+#sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/monit/monitrc							# remove spaceify's previous entries
 
 #monit=$(</etc/monit/monitrc)
 #monit=$( echo "${monit}\n\n${start_spaceify}\n" )											# append new configuration
 #monit=$( echo "${monit}include /var/lib/spaceify/monit/spaceify.conf\n" )
 #monit=$( echo "${monit}${end_spaceify}\n" )
-#sudo printf "$monit" > /etc/monit/monitrc
+#printf "$monit" > /etc/monit/monitrc
 
 core_port="2497"
-#sudo sed -i "s/%1/${core_port}/" /var/lib/spaceify/monit/spaceify.conf						# change the port to monitor to configuration
-sudo sed -i "s/%1/${core_port}/" /etc/monit/conf.d/spaceify.conf
+#sed -i "s/%1/${core_port}/" /var/lib/spaceify/monit/spaceify.conf							# change the port to monitor to configuration
+sed -i "s/%1/${core_port}/" /etc/monit/conf.d/spaceify.conf
 
 ####################
 # EXECUTE COMMANDS #
 ####################
 
+#----- Add custom iptables chains for Spaceify -----#
+
+# To avoid duplicates delete existing rules
+iptables -t mangle -D PREROUTING -j Spaceify-mangle > /dev/null 2>&1 || true
+iptables -t mangle -F Spaceify-mangle > /dev/null 2>&1 || true
+iptables -t mangle -X Spaceify-mangle > /dev/null 2>&1 || true
+iptables -t nat -D PREROUTING -m mark --mark 99 -p tcp --dport 80 -j DNAT --to-destination 10.0.0.1 > /dev/null 2>&1 || true
+iptables -t nat -D PREROUTING -m mark --mark 99 -p tcp --dport 443 -j DNAT --to-destination 10.0.0.1 > /dev/null 2>&1 || true
+iptables -t filter -D FORWARD -m mark --mark 99 -j DROP > /dev/null 2>&1 || true
+
+iptables -t nat -D PREROUTING -j Spaceify-HTTP-Nat-Redir > /dev/null 2>&1 || true
+iptables -t nat -D POSTROUTING -j Spaceify-HTTP-Nat-Masq > /dev/null 2>&1 || true
+iptables -t nat -F Spaceify-HTTP-Nat-Masq > /dev/null 2>&1 || true
+iptables -t nat -X Spaceify-HTTP-Nat-Masq > /dev/null 2>&1 || true
+iptables -t nat -F Spaceify-HTTP-Nat-Redir > /dev/null 2>&1 || true
+iptables -t nat -X Spaceify-HTTP-Nat-Redir > /dev/null 2>&1 || true
+
+iptables -t nat -D PREROUTING -j Spaceify-HTTPS-Nat-Redir > /dev/null 2>&1 || true
+iptables -t nat -D POSTROUTING -j Spaceify-HTTPS-Nat-Masq > /dev/null 2>&1 || true
+iptables -t nat -F Spaceify-HTTPS-Nat-Masq > /dev/null 2>&1 || true
+iptables -t nat -X Spaceify-HTTPS-Nat-Masq > /dev/null 2>&1 || true
+iptables -t nat -F Spaceify-HTTPS-Nat-Redir > /dev/null 2>&1 || true
+iptables -t nat -X Spaceify-HTTPS-Nat-Redir > /dev/null 2>&1 || true
+
+# Mangle chain
+iptables -t mangle -N Spaceify-mangle
+iptables -t mangle -A PREROUTING -j Spaceify-mangle
+iptables -t mangle -A Spaceify-mangle -i docker0 -j RETURN
+iptables -t mangle -A Spaceify-mangle -j MARK --set-mark 99
+iptables -t nat -A PREROUTING -m mark --mark 99 -p tcp --dport 80 -j DNAT --to-destination 10.0.0.1
+iptables -t nat -A PREROUTING -m mark --mark 99 -p tcp --dport 443 -j DNAT --to-destination 10.0.0.1
+iptables -t filter -A FORWARD -m mark --mark 99 -j DROP
+
+# HTTP filter chain, NAT chain and redirect chain
+iptables -t nat -N Spaceify-HTTP-Nat-Redir
+iptables -t nat -A PREROUTING -j Spaceify-HTTP-Nat-Redir
+iptables -t nat -A Spaceify-HTTP-Nat-Redir -d 10.0.0.1/32 -j ACCEPT
+iptables -t nat -A Spaceify-HTTP-Nat-Redir -s 10.0.0.0/24 -p tcp --dport 80 -j REDIRECT --to-port 8888
+
+iptables -t nat -N Spaceify-HTTP-Nat-Masq
+iptables -t nat -A POSTROUTING -j Spaceify-HTTP-Nat-Masq
+iptables -t nat -A Spaceify-HTTP-Nat-Masq -o "${eth}" -j MASQUERADE 
+
+# HTTPS filter chain, NAT chain and redirect chain
+iptables -t nat -N Spaceify-HTTPS-Nat-Redir
+iptables -t nat -A PREROUTING -j Spaceify-HTTPS-Nat-Redir
+iptables -t nat -A Spaceify-HTTPS-Nat-Redir -d 10.0.0.1/32 -j ACCEPT
+iptables -t nat -A Spaceify-HTTPS-Nat-Redir -s 10.0.0.0/24 -p tcp --dport 443 -j REDIRECT --to-port 8889
+
+iptables -t nat -N Spaceify-HTTPS-Nat-Masq
+iptables -t nat -A POSTROUTING -j Spaceify-HTTPS-Nat-Masq
+iptables -t nat -A Spaceify-HTTPS-Nat-Masq -o "${eth}" -j MASQUERADE 
+
+#----- Enable IP forwarding -----#
+
+echo 1 > /proc/sys/net/ipv4/ip_forward
+
 #----- Create Spaceify's databases -----#
 
-sudo mkdir /var/lib/spaceify/data/db/ > /dev/null 2>&1 || true								# create directory for the databases
+mkdir /var/lib/spaceify/data/db/ > /dev/null 2>&1 || true									# create directory for the databases
 cd /var/lib/spaceify/data/db
 
 dbs="/var/lib/spaceify/data/db/spaceify.db"
@@ -205,7 +242,7 @@ if [ -e $dbs ]; then																		# database exists
 	#	$(sqlite3 $dbs "DELETE FROM inject_hostnames WHERE unique_name='${unique_name}'")
 	#	$(sqlite3 $dbs "DELETE FROM inject_files WHERE unique_name='${unique_name}'")
 	#
-	#	sudo docker rmi $docker_image_id  > /dev/null 2>&1 || true							# Remove application images
+	#	docker rmi $docker_image_id  > /dev/null 2>&1 || true								# Remove application images
 	#
 	#	directory=""																		# Remove applications files but leave persistent volume untouched
 	#	if [[ "$type" == "spacelet" ]]; then
@@ -216,58 +253,58 @@ if [ -e $dbs ]; then																		# database exists
 	#		directory="/var/lib/spaceify/data/native/${unique_directory}volume/"	
 	#	fi
 	#
-	#	sudo rm -r "${directory}application" > /dev/null 2>&1 || true
-	#	sudo rm -r "${directory}tls" > /dev/null 2>&1 || true
+	#	rm -r "${directory}application" > /dev/null 2>&1 || true
+	#	rm -r "${directory}tls" > /dev/null 2>&1 || true
 	#
 	#	# reinstall applications here with spm?
 	#
 	#done
 	:
-else																						# create new database
+else																						# create a new database
 
-	sudo touch $dbs
+	touch $dbs
 	sqlite3 $dbs < /var/lib/spaceify/data/db/create.sql
 
 fi
 
-#  Set release name and version
+#  Set release name and version and data version
 versions=$(< /var/lib/spaceify/versions)
 release_version=$(echo $versions | awk -F : '{print $2}')
 release_name=$(echo $versions | awk -F : '{print $3}')
 db_version=$(echo $versions | awk -F : '{print $7}')
-sudo sqlite3 $dbs "UPDATE settings SET release_name='${release_name}', release_version='${release_version}', db_version='${db_version}';"
+sqlite3 $dbs "UPDATE settings SET release_name='${release_name}', release_version='${release_version}', db_version='${db_version}';"
 
 #----- Certificates and keys -----#
 
 # Copy certificates and keys to Spaceify's folders from Squid's folders
-sudo mkdir /var/lib/spaceify/code/www/ > /dev/null 2>&1 || true
-sudo mkdir /var/lib/spaceify/data/tls/ > /dev/null 2>&1 || true
-sudo cp /etc/squid3/certs/spaceifyCA/spaceify.crt /var/lib/spaceify/code/www/ > /dev/null 2>&1 || true
-sudo cp /etc/squid3/certs/server.crt /var/lib/spaceify/data/tls/ > /dev/null 2>&1 || true
-sudo cp /etc/squid3/certs/server.key /var/lib/spaceify/data/tls/ > /dev/null 2>&1 || true
+mkdir /var/lib/spaceify/code/www/ > /dev/null 2>&1 || true
+mkdir /var/lib/spaceify/data/tls/ > /dev/null 2>&1 || true
+cp /etc/squid3/certs/spaceifyCA/spaceify.crt /var/lib/spaceify/code/www/ > /dev/null 2>&1 || true
+cp /etc/squid3/certs/server.crt /var/lib/spaceify/data/tls/ > /dev/null 2>&1 || true
+cp /etc/squid3/certs/server.key /var/lib/spaceify/data/tls/ > /dev/null 2>&1 || true
 
 #----- File permissions etc. -----#
 
-sudo mkdir -p /var/lib/spaceify/data/dhcp-data > /dev/null 2>&1 || true						# dhcp server directories/files
-sudo chmod -R 0664 /var/lib/spaceify/data/dhcp-data > /dev/null 2>&1 || true
-# sudo chown - R root:spaceify /var/lib/spaceify/data/dhcp-data > /dev/null 2>&1 || true
+mkdir -p /var/lib/spaceify/data/dhcp-data > /dev/null 2>&1 || true							# dhcp server directories/files
+chmod -R 0664 /var/lib/spaceify/data/dhcp-data > /dev/null 2>&1 || true
+# chown - R root:spaceify /var/lib/spaceify/data/dhcp-data > /dev/null 2>&1 || true
 
-sudo mkdir -p /var/lib/spaceify/data/ipt-data > /dev/null 2>&1 || true						# iptables directories/files
-sudo chmod -R 0664 /var/lib/spaceify/data/ipt-data > /dev/null 2>&1 || true
-# sudo chown - R root:spaceify /var/lib/spaceify/data/ipt-data > /dev/null 2>&1 || true
+mkdir -p /var/lib/spaceify/data/ipt-data > /dev/null 2>&1 || true							# iptables directories/files
+chmod -R 0664 /var/lib/spaceify/data/ipt-data > /dev/null 2>&1 || true
+# chown - R root:spaceify /var/lib/spaceify/data/ipt-data > /dev/null 2>&1 || true
 
-sudo mkdir -p /var/lib/spaceify/data/dev > /dev/null 2>&1 || true							# FIFO for iptables writer
-sudo chmod -R 0700 /var/lib/spaceify/data/dev > /dev/null 2>&1 || true
-sudo chown - R root:root /var/lib/spaceify/data/dev > /dev/null 2>&1 || true
+mkdir -p /var/lib/spaceify/data/dev > /dev/null 2>&1 || true								# FIFO for iptables writer
+chmod -R 0700 /var/lib/spaceify/data/dev > /dev/null 2>&1 || true
+chown - R root:root /var/lib/spaceify/data/dev > /dev/null 2>&1 || true
 
-sudo chmod 0755 /usr/bin/spm  > /dev/null 2>&1 || true										# Spaceify Packet Manager script
+chmod 0755 /usr/bin/spm  > /dev/null 2>&1 || true											# Spaceify Packet Manager script
 
-sudo chmod 0755 /var/lib/spaceify/data/scripts/stop_containers.sh > /dev/null 2>&1 || true	# a script to stop and remove running containers
+chmod 0755 /var/lib/spaceify/data/scripts/stop_containers.sh > /dev/null 2>&1 || true		# a script to stop and remove running containers
 
 #----- Create and initialize Docker image -----#
 
-#ubun=$( sudo docker images )
-#ubun=$( echo "$ubun" | sudo sed -n '/spaceifyubuntu/{p;q;}' )
+#ubun=$( docker images )
+#ubun=$( echo "$ubun" | sed -n '/spaceifyubuntu/{p;q;}' )
 #if [[ "$ubun" == "" ]]; then																# create image always (# only if it is not in the images list)
 
 	printf "\nCreating the Docker image\n\n"
@@ -275,49 +312,17 @@ sudo chmod 0755 /var/lib/spaceify/data/scripts/stop_containers.sh > /dev/null 2>
 	docker rmi spaceifyubuntu > /dev/null 2>&1 || true
 
 	cd /var/lib/spaceify/data/docker
-	sudo docker build --no-cache --rm -t spaceifyubuntu .
+	docker build --no-cache --rm -t spaceifyubuntu .
 #fi
 
-#----- Create custom iptables chains for Spaceify -----#
-
-# Create mangle chain
-iptables -t mangle -N Spaceify-mangle
-iptables -t mangle -A PREROUTING -j Spaceify-mangle
-iptables -t mangle -A Spaceify-mangle -j MARK --set-mark 99
-iptables -t nat -A PREROUTING -m mark --mark 99 -p tcp --dport 80 -j DNAT --to-destination 10.0.0.1
-iptables -t nat -A PREROUTING -m mark --mark 99 -p tcp --dport 443 -j DNAT --to-destination 10.0.0.1
-iptables -t filter -A FORWARD -m mark --mark 99 -j DROP
-
-# Create HTTP filter chain, NAT chain and redirect chain
-iptables -t nat -N Spaceify-HTTP-Nat-Redir
-iptables -t nat -A PREROUTING -j Spaceify-HTTP-Nat-Redir
-iptables -t nat -A Spaceify-HTTP-Nat-Redir -d 10.0.0.1/32 -j ACCEPT
-iptables -t nat -A Spaceify-HTTP-Nat-Redir -s 10.0.0.0/24 -p tcp --dport 80 -j REDIRECT --to-port 8888
-
-iptables -t nat -N Spaceify-HTTP-Nat-Masq
-iptables -t nat -A POSTROUTING -j Spaceify-HTTP-Nat-Masq
-iptables -t nat -A Spaceify-HTTP-Nat-Masq -o "${eth}" -j MASQUERADE 
-
-# Create HTTPS filter chain, NAT chain and redirect chain
-iptables -t nat -N Spaceify-HTTPS-Nat-Redir
-iptables -t nat -A PREROUTING -j Spaceify-HTTPS-Nat-Redir
-iptables -t nat -A Spaceify-HTTPS-Nat-Redir -d 10.0.0.1/32 -j ACCEPT
-iptables -t nat -A Spaceify-HTTPS-Nat-Redir -s 10.0.0.0/24 -p tcp --dport 443 -j REDIRECT --to-port 8889
-
-iptables -t nat -N Spaceify-HTTPS-Nat-Masq
-iptables -t nat -A POSTROUTING -j Spaceify-HTTPS-Nat-Masq
-iptables -t nat -A Spaceify-HTTPS-Nat-Masq -o "${eth}" -j MASQUERADE 
-
-sudo echo 1 > /proc/sys/net/ipv4/ip_forward
-
 # Update node.js to the latest stable release and install the required node.js modules (versions are defined in package.json)
-# sudo npm cache clear -f
-# sudo npm install -g n
-# sudo n stable
+# npm cache clear -f
+# npm install -g n
+# n stable
 
-sudo npm install -g node-gyp@0.6.2
+npm install -g node-gyp@0.6.2
 cd /var/lib/spaceify/code
-sudo npm install
+npm install
 
 #----- Create user names and passwords for edge and admin -----#
 
@@ -357,7 +362,7 @@ if [[ "$uuid" == "" ]]; then
 
 		edge_password=$(openssl rand -hex 16)
 
-		result=$(sudo curl -d "eid=${uuid}&epw=${edge_password}" --location "http://spaceify.net/edge_register.php")
+		result=$(curl -d "eid=${uuid}&epw=${edge_password}" --location "http://spaceify.net/edge_register.php")
 		if [[ "$result" == "" ]]; then
 			echo "${uuid},${edge_password}" > /var/lib/spaceify/data/db/edge_id.uuid
 
@@ -385,28 +390,28 @@ fi
 # Update the created/restored edge_id and password AND admin password to the database.
 admin_salt=$(openssl rand -hex 64)
 admin_password_hash=$(echo -n "${admin_password}${admin_salt}" | openssl dgst -sha512 -hex | awk '{print $2}')
-sudo sqlite3 /var/lib/spaceify/data/db/spaceify.db "INSERT OR REPLACE INTO user (edge_id, edge_password, admin_password_hash, admin_salt)  VALUES('${uuid}', '${edge_password}', '${admin_password_hash}', '${admin_salt}');"
+sqlite3 /var/lib/spaceify/data/db/spaceify.db "INSERT OR REPLACE INTO user (edge_id, edge_password, admin_password_hash, admin_salt)  VALUES('${uuid}', '${edge_password}', '${admin_password_hash}', '${admin_salt}');"
 
 #----- Start services -----#
 
-if [[ -z $(sudo service network-manager status |& grep running) ]]; then
+if [[ -z $(service network-manager status |& grep running) ]]; then
 	printf "\nNetworking not restarted, please do it manually\n"
 else
-	sudo service network-manager restart
-	sudo ifconfig ${wlan} down
-	sudo ifconfig ${wlan} 10.0.0.1 netmask 255.255.255.0 up
+	service network-manager restart
+	ifconfig ${wlan} down
+	ifconfig ${wlan} 10.0.0.1 netmask 255.255.255.0 up
 fi
 
 if [ "$intext" -eq 1 ]; then
-	sudo service hostapd restart > /dev/null 2>&1 || true
+	service hostapd restart > /dev/null 2>&1 || true
 fi
 
-sudo service spaceifydns restart > /dev/null 2>&1 || true
-sudo service spaceifydhcp restart > /dev/null 2>&1 || true
-sudo service spaceifyipt restart > /dev/null 2>&1 || true
-sudo service spaceify restart > /dev/null 2>&1 || true
+service spaceifydns restart > /dev/null 2>&1 || true
+service spaceifydhcp restart > /dev/null 2>&1 || true
+service spaceifyipt restart > /dev/null 2>&1 || true
+service spaceify restart > /dev/null 2>&1 || true
 
-sudo service monit restart > /dev/null 2>&1 || true
+service monit restart > /dev/null 2>&1 || true
 
 # Script is found here after installation, if testing is required (eg. finding where the script fails): /var/lib/dpkg/info/spaceify.postinst
 # After changing the script run dpkg-reconfigure spaceify

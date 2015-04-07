@@ -1,11 +1,30 @@
+#!/bin/bash
+
+echo "Managing versions..."
 versions=$(< versions)
 vs=$(echo $versions | awk -F : '{print $2}')
+vsp=$( grep -Po "(?<=\()\b$vs\b(?=\))" debian/changelog )
 
+if [ "$vs" = "$vsp" ]; then
+	echo "Version remains the same and changelog is not updated"
+else
+	echo "Version ${vs} added to the changelog"
+
+	vsdate=$( date +"%a, %d %b %Y %H:%M:%S %z" )
+
+        vss="spaceify (${vs}) unstable; urgency=low\n\n  * Release ${vs}\n\n -- Spaceify Inc. <admin@spaceify.net>  ${vsdate}\n\n"
+
+	changelog=$(< debian/changelog)
+	changelog="${vss}${changelog}"
+
+	printf "$changelog" > debian/changelog
+fi
+
+echo "Making directories..."
 dst="/tmp/build/spaceify-${vs}"
 
 rm -r $dst > /dev/null 2>&1 || true
 
-echo "Making directories..."
 mkdir -p $dst
 mkdir "${dst}/code/"
 mkdir "${dst}/data/"

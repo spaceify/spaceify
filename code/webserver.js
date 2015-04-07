@@ -18,6 +18,7 @@ var Config = require("./config")();
 var Utility = require("./utility");
 var Language = require("./language");
 var contentTypes = require("./contenttypes");
+var Validator = require("./validateapplication");
 
 function WebServer()
 {
@@ -141,7 +142,7 @@ var getWebPage = function(request, response, body)
 			if(purl.query.app && purl.query.type)															// load files from <type>/<unique_name>/volume/application/www directory
 				{
 				var type_path = "";
-				var base_path = Utility.makeUniqueDirectory(purl.query.app) + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY + Config.WWW_DIRECTORY;
+				var base_path = Validator.makeUniqueDirectory(purl.query.app) + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY + Config.WWW_DIRECTORY;
 
 				if(purl.query.type == Config.SPACELET)
 					type_path = Config.SPACELETS_PATH;

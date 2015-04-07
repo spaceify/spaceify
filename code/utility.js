@@ -12,7 +12,6 @@ var mkdirp = require("mkdirp");
 var AdmZip = require("adm-zip");
 var fibrous = require("fibrous");
 var request = require("request");
-var zipper = require("zipper").Zipper;
 var spawn = require("child_process").spawn;
 var Language = require("./language");
 var Config = require("./config")();
@@ -194,29 +193,26 @@ self.moveFile = fibrous( function(sourceFile, targetFile, bThrows)
 		}
 });
 
-self.zipDirectory = fibrous( function(source, target, zipfile)			// Recursively add files to the zip archive zipfile
+self.zipDirectory = fibrous( function(source, zipfile)				// Craete a zip file from the contents of the source directory
 	{
+	source = source + (source != "" && source.search(/\/$/) == -1 ? "/" : "");
+
 	try {
-		var stats = fs.sync.stat(source);
-		if(typeof stats == "undefined" || !stats.isDirectory()) return;
+		var log = console.log;										// Disable console.log for a while, bacuse adm-zip prints directory content unnecessarily
+		console.log = function() {};
 
-		var zipa = new zipper(zipfile);
+		var zip = new AdmZip();
+		zip.addLocalFolder(source);
+		zip.writeZip(zipfile);
 
-		fs.sync.readdir(source).forEach(function(file, index)
-			{
-			var sourcePath = source + file;
-			var targetPath = target + (target != "" ? "/" : "") + file;
-			if(fs.sync.stat(sourcePath).isDirectory())
-				self.sync.zipDirectory(sourcePath + "/", targetPath, zipfile);
-			else
-				zipa.sync.addFile(sourcePath, targetPath);
-			});
+		console.log = log;
 		}
 	catch(err)
 		{
-		throw self.error(Language.E_ZIPDIRECTORY.p("Utility::zipDirectory()"), err);
+		console.log(err);
 		}
 	});
+}
 
 self.getFileFromZip = function(zipFilename, filename, extractPath, deleteAfter)
 	{ // Get a text file from a zip file. Extracts file to the extractPath if path is defined. Deletes archive if requested.

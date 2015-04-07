@@ -35,6 +35,7 @@
     "github": "0.2.3",
     "kiwi": "0.2.2",
     "mkdirp": "0.3.5",
+    "mmmagic": "0.3.13",
     "native-dns": "0.7.0",
     "netmask": "^1.0.5",
     "read": "1.0.5",
@@ -44,7 +45,6 @@
     "websocket": "1.0.15",
     "winston": "0.7.2",
     "ypatterns": "0.2.4",
-    "zipper": "0.3.0"
   },
 
   "readme": "The Spaceify core.",

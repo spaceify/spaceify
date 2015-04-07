@@ -427,7 +427,7 @@ self.publishPackage = fibrous( function(package, username, password, github_user
 			messages.sync(Utility.replace(Language.TRYING_TO_PUBLISH, {":what": Language.LOCAL_DIRECTORY, ":package": package, }));
 
 			mkdirp.sync(Config.WORK_PATH, 0777);
-			Utility.sync.zipDirectory(package, "", Config.WORK_PATH + Config.PUBLISHZIP);
+			Utility.sync.zipDirectory(package, Config.WORK_PATH + Config.PUBLISHZIP);
 			package = Config.WORK_PATH + Config.PUBLISHZIP;
 			}
 		// 2. Try local <package>.zip
@@ -443,7 +443,7 @@ self.publishPackage = fibrous( function(package, username, password, github_user
 			git.sync(gitoptions, github_username, github_password);
 
 			mkdirp.sync(Config.WORK_PATH, 0777);
-			Utility.sync.zipDirectory(Config.WORK_PATH, "", Config.WORK_PATH + Config.PUBLISHZIP);
+			Utility.sync.zipDirectory(Config.WORK_PATH, Config.WORK_PATH + Config.PUBLISHZIP);
 			package = Config.WORK_PATH + Config.PUBLISHZIP;
 			}
 		// Else fail

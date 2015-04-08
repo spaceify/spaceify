@@ -9,6 +9,8 @@ if [ "$1" = "purge" -a -e /usr/share/debconf/confmodule ]; then
 	db_purge
 fi
 
+echo PURGE | debconf-communicate spaceify > /dev/null 2>&1 || true
+
 #############
 # CONSTANTS #
 #############
@@ -27,11 +29,11 @@ sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d
 
 #----- /etc/default/docker -----#
 
-sudo sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/default/docker
+sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/default/docker
 
 #----- /etc/rc.local -----#
 
-sudo sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/rc.local
+sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/rc.local
 
 #----- /etc/sysctl.conf -----#
 
@@ -49,20 +51,20 @@ sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d
 # REMOVE SPACEIFY'S FILES #
 ###########################
 
-sudo stop spaceify > /dev/null 2>&1 || true													# stop core first
-sudo stop spaceifydns > /dev/null 2>&1 || true
-sudo stop spaceifydhcp > /dev/null 2>&1 || true
-sudo stop spaceifyipt > /dev/null 2>&1 || true
+service spaceify stop > /dev/null 2>&1 || true												# stop core first
+service spaceifydns stop > /dev/null 2>&1 || true
+service spaceifydhcp stop > /dev/null 2>&1 || true
+service spaceifyipt stop > /dev/null 2>&1 || true
 
 if [ "$1" = "remove" ]; then
-	sudo rm /etc/init/spaceify.conf > /dev/null 2>&1 || true
-	sudo rm /etc/init/spaceifydns.conf > /dev/null 2>&1 || true
-	sudo rm /etc/init/spaceifydhcp.conf > /dev/null 2>&1 || true
-	sudo rm /etc/init/spaceifyipt.conf > /dev/null 2>&1 || true
+	rm /etc/init/spaceify.conf > /dev/null 2>&1 || true
+	rm /etc/init/spaceifydns.conf > /dev/null 2>&1 || true
+	rm /etc/init/spaceifydhcp.conf > /dev/null 2>&1 || true
+	rm /etc/init/spaceifyipt.conf > /dev/null 2>&1 || true
 
-	sudo rm -r /var/lib/spaceify/code > /dev/null 2>&1 || true
-	sudo rm -r /var/lib/spaceify/dev/iptpiper > /dev/null 2>&1 || true
-	sudo rm -r /var/lib/spaceify/dev/iptpipew > /dev/null 2>&1 || true
+	rm -r /var/lib/spaceify/code > /dev/null 2>&1 || true
+	rm -r /var/lib/spaceify/dev/iptpiper > /dev/null 2>&1 || true
+	rm -r /var/lib/spaceify/dev/iptpipew > /dev/null 2>&1 || true
 	printf "\n\nSpaceify's data stored in directory /var/lib/spaceify/data is not removed. Remove it by hand if necessary.\n\n"
 fi
 
@@ -70,33 +72,36 @@ fi
 # REMOVE SPACEIFY'S CHAINS FROM IPTABLES #
 ##########################################
 
-sudo iptables -t mangle -D PREROUTING -j Spaceify-mangle > /dev/null 2>&1 || true
-sudo iptables -t mangle -F Spaceify-mangle > /dev/null 2>&1 || true
-sudo iptables -t mangle -X Spaceify-mangle > /dev/null 2>&1 || true
-sudo iptables -t nat -D PREROUTING -m mark --mark 99 -p tcp --dport 80 -j DNAT --to-destination 10.0.0.1 > /dev/null 2>&1 || true
-sudo iptables -t nat -D PREROUTING -m mark --mark 99 -p tcp --dport 443 -j DNAT --to-destination 10.0.0.1 > /dev/null 2>&1 || true
-sudo iptables -t filter -D FORWARD -m mark --mark 99 -j DROP > /dev/null 2>&1 || true
+iptables -t mangle -D PREROUTING -j Spaceify-mangle > /dev/null 2>&1 || true
+iptables -t mangle -F Spaceify-mangle > /dev/null 2>&1 || true
+iptables -t mangle -X Spaceify-mangle > /dev/null 2>&1 || true
+iptables -t nat -D PREROUTING -m mark --mark 99 -p tcp --dport 80 -j DNAT --to-destination 10.0.0.1 > /dev/null 2>&1 || true
+iptables -t nat -D PREROUTING -m mark --mark 99 -p tcp --dport 443 -j DNAT --to-destination 10.0.0.1 > /dev/null 2>&1 || true
+iptables -t filter -D FORWARD -m mark --mark 99 -j DROP > /dev/null 2>&1 || true
 
-sudo iptables -t nat -D PREROUTING -j Spaceify-HTTP-Nat-Redir > /dev/null 2>&1 || true
-sudo iptables -t nat -D POSTROUTING -j Spaceify-HTTP-Nat-Masq > /dev/null 2>&1 || true
-sudo iptables -t nat -F Spaceify-HTTP-Nat-Masq > /dev/null 2>&1 || true
-sudo iptables -t nat -X Spaceify-HTTP-Nat-Masq > /dev/null 2>&1 || true
-sudo iptables -t nat -F Spaceify-HTTP-Nat-Redir > /dev/null 2>&1 || true
-sudo iptables -t nat -X Spaceify-HTTP-Nat-Redir > /dev/null 2>&1 || true
+iptables -t nat -D PREROUTING -j Spaceify-HTTP-Nat-Redir > /dev/null 2>&1 || true
+iptables -t nat -D POSTROUTING -j Spaceify-HTTP-Nat-Masq > /dev/null 2>&1 || true
+iptables -t nat -F Spaceify-HTTP-Nat-Masq > /dev/null 2>&1 || true
+iptables -t nat -X Spaceify-HTTP-Nat-Masq > /dev/null 2>&1 || true
+iptables -t nat -F Spaceify-HTTP-Nat-Redir > /dev/null 2>&1 || true
+iptables -t nat -X Spaceify-HTTP-Nat-Redir > /dev/null 2>&1 || true
 
-sudo iptables -t nat -D PREROUTING -j Spaceify-HTTPS-Nat-Redir > /dev/null 2>&1 || true
-sudo iptables -t nat -D POSTROUTING -j Spaceify-HTTPS-Nat-Masq > /dev/null 2>&1 || true
-sudo iptables -t nat -F Spaceify-HTTPS-Nat-Masq > /dev/null 2>&1 || true
-sudo iptables -t nat -X Spaceify-HTTPS-Nat-Masq > /dev/null 2>&1 || true
-sudo iptables -t nat -F Spaceify-HTTPS-Nat-Redir > /dev/null 2>&1 || true
-sudo iptables -t nat -X Spaceify-HTTPS-Nat-Redir > /dev/null 2>&1 || true
+iptables -t nat -D PREROUTING -j Spaceify-HTTPS-Nat-Redir > /dev/null 2>&1 || true
+iptables -t nat -D POSTROUTING -j Spaceify-HTTPS-Nat-Masq > /dev/null 2>&1 || true
+iptables -t nat -F Spaceify-HTTPS-Nat-Masq > /dev/null 2>&1 || true
+iptables -t nat -X Spaceify-HTTPS-Nat-Masq > /dev/null 2>&1 || true
+iptables -t nat -F Spaceify-HTTPS-Nat-Redir > /dev/null 2>&1 || true
+iptables -t nat -X Spaceify-HTTPS-Nat-Redir > /dev/null 2>&1 || true
 
 ###########################
 # REMOVE APPLICATION DATA #
 ###########################
 
-sudo docker stop $(docker ps -a -q)															# Stop and remove all containers
-sudo docker rm $(docker ps -a -q)
+conteiners=$(docker ps -a -q)																# Stop and remove all containers
+if [[ "$conteiners" != "" ]]; then
+	docker stop $(docker ps -a -q) --t=0 > /dev/null 2>&1 || true
+	docker rm $(docker ps -a -q) > /dev/null 2>&1 || true
+fi
 
 #dbs="/var/lib/spaceify/data/db/spaceify.db"
 
@@ -116,7 +121,7 @@ sudo docker rm $(docker ps -a -q)
 #	#$(sqlite3 $dbs "DELETE FROM inject_hostnames WHERE unique_name='${unique_name}'")
 #	#$(sqlite3 $dbs "DELETE FROM inject_files WHERE unique_name='${unique_name}'")
 #
-#	sudo docker rmi $docker_image_id  > /dev/null 2>&1 || true								# Remove application images
+#	docker rmi $docker_image_id  > /dev/null 2>&1 || true									# Remove application images
 #
 #	directory=""																			# Remove applications files but leave persistent volume untouched
 #	if [[ "$type" == "spacelet" ]]; then
@@ -127,9 +132,9 @@ sudo docker rm $(docker ps -a -q)
 #		directory="/var/lib/spaceify/data/native/${unique_directory}volume/"	
 #	fi
 #
-#	sudo rm -r "${directory}application" > /dev/null 2>&1 || true
-#	sudo rm -r "${directory}tls" > /dev/null 2>&1 || true
+#	rm -r "${directory}application" > /dev/null 2>&1 || true
+#	rm -r "${directory}tls" > /dev/null 2>&1 || true
 #
 #done
 
-#sudo docker rmi spaceifyubuntu > /dev/null 2>&1 || true									# Remove Spaceify's images
+#docker rmi spaceifyubuntu > /dev/null 2>&1 || true											# Remove Spaceify's images

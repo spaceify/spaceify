@@ -4,8 +4,10 @@
 versions=$(< versions)											# Get the current version string
 vs=$(echo $versions | awk -F : '{print $2}')
 
+vsdate=$( date +"%F %H:%M:%S" )
+
 git add --all .													# Add changes
 
-git commit -m 'version ${vs}'									# Commit the changes
+git commit -m "version ${vs} $(vsdate)"									# Commit the changes
 
 git push														# Push to GitHub

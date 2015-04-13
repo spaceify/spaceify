@@ -15,6 +15,7 @@ var request = require("request");
 var spawn = require("child_process").spawn;
 var Language = require("./language");
 var Config = require("./config")();
+var SpaceifyError = require("./spaceifyerror");
 
 function utility()
 {
@@ -30,11 +31,11 @@ self.loadRemoteFile = fibrous( function(fileUrl)
 		}
 	catch(err)
 		{
-		throw self.error(Language.E_FAILED_TO_INITIATE_HTTP_GET.p("Utility::loadRemoteFile()"), err);
+		throw self.error(Language.E_FAILED_TO_INITIATE_HTTP_GET.p("Utility::loadRemoteFile"), err);
 		}
 
 	if(result.statusCode != 200)
-		throw self.ferror(Language.E_FAILED_TO_LOAD_REMOTE_FILE.p("Utility::loadRemoteFile()"), {":file": fileUrl, ":code": result.statusCode});
+		throw self.ferror(Language.E_FAILED_TO_LOAD_REMOTE_FILE.p("Utility::loadRemoteFile"), {":file": fileUrl, ":code": result.statusCode});
 
 	return result;
 	});
@@ -52,7 +53,7 @@ self.loadRemoteFileToLocalFile = fibrous( function(fileUrl, targetDir, targetFil
 	catch(err)
 		{
 		if(bThrows)
-			throw self.error(Language.E_LOADREMOTEFILETOLOCALFILE.p("Utility::loadRemoteFileToLocalFile()"), err);
+			throw self.error(Language.E_LOAD_REMOTE_FILE_TO_LOCAL_FILE.p("Utility::loadRemoteFileToLocalFile"), err);
 		}
 
 	return false;
@@ -94,7 +95,7 @@ self.deleteDirectory = fibrous( function(source, bThrows)						// Recursively de
 	catch(err)
 		{
 		if(bThrows)
-			throw self.error(Language.E_DELETEDIRECTORY.p("Utility::deleteDirectory()"), err);
+			throw self.error(Language.E_DELETE_DIRECTORY.p("Utility::deleteDirectory"), err);
 		}
 	});
 
@@ -130,7 +131,7 @@ self.copyDirectory = fibrous( function(source, target, bThrows)
 	catch(err)
 		{
 		if(bThrows)
-			throw self.error(Language.E_COPYDIRECTORY.p("Utility::copyDirectory()"), err);
+			throw self.error(Language.E_COPY_DIRECTORY.p("Utility::copyDirectory"), err);
 		}
 	});
 
@@ -143,7 +144,7 @@ self.moveDirectory = fibrous( function(source, target, bThrows)
 	catch(err)
 		{
 		if(bThrows)
-			throw self.error(Language.E_MOVEDIRECTORY.p("Utility::moveDirectory()"), err);
+			throw self.error(Language.E_MOVE_DIRECTORY.p("Utility::moveDirectory"), err);
 		}
 	});
 
@@ -157,7 +158,7 @@ self.deleteFile = fibrous( function(source, bThrows)
 	catch(err)
 		{
 		if(bThrows)
-			throw self.error(Language.E_DELETEFILE.p("Utility::deleteFile()"), err);
+			throw self.error(Language.E_DELETE_FILE.p("Utility::deleteFile"), err);
 		}
 	});
 
@@ -176,7 +177,7 @@ self.copyFile = fibrous( function(sourceFile, targetFile, bThrows)
 	catch(err)
 		{
 		if(bThrows)
-			throw self.error(Language.E_COPYFILE.p("Utility::copyFile()"), err);
+			throw self.error(Language.E_COPY_FILE.p("Utility::copyFile"), err);
 		}
 	});
 
@@ -189,7 +190,7 @@ self.moveFile = fibrous( function(sourceFile, targetFile, bThrows)
 	catch(err)
 		{
 		if(bThrows)
-			throw self.error(Language.E_MOVEFILE.p("Utility::moveFile()"), err);
+			throw self.error(Language.E_MOVE_FILEE.p("Utility::moveFile"), err);
 		}
 });
 
@@ -212,7 +213,6 @@ self.zipDirectory = fibrous( function(source, zipfile)				// Craete a zip file f
 		console.log(err);
 		}
 	});
-}
 
 self.getFileFromZip = function(zipFilename, filename, extractPath, deleteAfter)
 	{ // Get a text file from a zip file. Extracts file to the extractPath if path is defined. Deletes archive if requested.
@@ -244,7 +244,7 @@ self.unZip = function(zipFilename, extractPath, deleteAfter)
 	if(deleteAfter)
 		self.sync.deleteFile(zipFilename);
 
-	return null;
+	return true;
 	}
 
 self.writeFile = fibrous( function(targetDir, targetFile, data)
@@ -253,6 +253,11 @@ self.writeFile = fibrous( function(targetDir, targetFile, data)
 
 	fs.sync.writeFile(targetDir + targetFile, data);
 	});
+
+self.preparePath = function(directory)
+	{ // Add / at the end of path, if it is not empty and doesn't have it already
+	return directory + (!directory.match(/^$/) && !directory.match(/\/$/) ? "/" : "");	// Not empty, doesn't end with /
+	}
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 // WWW / NETWORK  // // // // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -264,11 +269,11 @@ self.postForm = fibrous( function(url, form)
 		}
 	catch(err)
 		{
-		throw self.error(Language.E_FAILED_TO_INITIATE_HTTP_POST.p("Utility::postForm()"), err);
+		throw self.error(Language.E_FAILED_TO_INITIATE_HTTP_POST.p("Utility::postForm"), err);
 		}
 
 	if(result.statusCode != 200)
-		throw self.ferror(Language.E_FAILED_TO_POST_FORM.p("Utility::postForm()"), {":url": url, ":code": result.statusCode});
+		throw self.ferror(Language.E_FAILED_TO_POST_FORM.p("Utility::postForm"), {":url": url, ":code": result.statusCode});
 
 	return result;
 	});
@@ -384,45 +389,9 @@ self.printErrors = function(err)
 	require("./logger").error(message);
 	}
 
-// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-// MANIFEST // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-self.loadManifest = fibrous( function(file, bParse, bThrows)
+self.makeError = function(code, message, path)
 	{
-	var manifest = null;
-
-	try {
-		var manifest = fs.sync.readFile(file, {encoding: "utf8"});
-		if(bParse)
-			manifest = self.parseManifest(manifest);
-		}
-	catch(err)
-		{
-		manifest = null;
-		if(bThrows)
-			throw self.error(Language.E_LOADMANIFEST.p("Utility::loadManifest()"), err);
-		}
-
-	return manifest;
-	});
-
-self.parseManifest = function(manifest, type)
-	{
-	manifest = self.parseJSON(manifest, true);
-
-	// Add fields required internally by Spaceify Core
-	manifest.unique_directory = self.makeUniqueDirectory(manifest.unique_name);
-
-	return manifest;
-	}
-
-self.makeUniqueDirectory = function(unique_name)
-	{ // make a file system safe directory name: lowercase, allowed characters, can't start or end with /
-	unique_name = unique_name.toLowerCase();
-	unique_name = unique_name.replace(/[^a-z0-9\/]/g, "/");
-	unique_name = unique_name.replace(/^\/+/, "");
-	unique_name += (unique_name.search(/\/$/) != -1 ? "" : "/");
-
-	return unique_name;
+	return new SpaceifyError({code: code, message: message, path: path});
 	}
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -441,6 +410,25 @@ self.makeServices = function(unique_name, services, ports, ip)
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 // PARSE / FORMAT // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+self.loadJSON = fibrous( function(file, bParse, bThrows)
+	{
+	var manifest = null;
+
+	try {
+		var manifest = fs.sync.readFile(file, {encoding: "utf8"});
+		if(bParse)
+			manifest = self.parseJSON(manifest, bThrows);
+		}
+	catch(err)
+		{
+		manifest = null;
+		if(bThrows)
+			throw self.error(Language.E_LOAD_JSON.p("Utility::loadJSON"), err);
+		}
+
+	return manifest;
+	});
+
 self.parseJSON = function(str, throws)
 	{
 	var json;
@@ -552,6 +540,15 @@ self.getLocalDateTime = function()
 self.isObjectEmpty = function(obj)
 	{
 	return (typeof obj != "object" ? true : (Object.keys(obj).length == 0 ? true : false));
+	}
+
+self.assoc = function(_array, _key, _value)
+	{ // Imitate associative arrays
+//console.log(_key in _array, _key, _value)
+console.log(_key in _array);
+	_key in _array ? _array[_key] = [_value] : _array[key].push(_value);
+
+	return _array;
 	}
 
 }

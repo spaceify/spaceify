@@ -21,6 +21,7 @@ module.exports = function()
 	"SPACEIFY_WWW_PATH": spaceify_code_path + "www/",
 	"SPACEIFY_TLS_PATH": spaceify_data_path + "tls/",
 	"SPACEIFY_DATABASE_FILE": spaceify_data_path + "db/spaceify.db",
+	"SPACEIFY_MANIFEST_FILE": spaceify_data_path + "manifest/manifest.rules",
 
 	"SPACELETS_PATH": spaceify_data_path + "spacelets/",
 	"SANDBOXED_PATH": spaceify_data_path + "sandboxed/",
@@ -88,26 +89,26 @@ module.exports = function()
 	"DNS_PORT": 53,
 
 	"MACREGX": new RegExp("^([0-9A-F]{2}[:-]){5}([0-9A-F]{2})$", "i"),
-	"IPREGX": new RegExp("\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"),
-	
+	"IP_REGX": new RegExp("\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"),
+
 	/*
-	 * CONSTANTS
+	 * PACKAGE/APPLICATION CONSTANTS
 	 */
 	"JAVASCRIPT": "javascript",
 	"CSS": "css",
 	"FILE": "file",
 	"INJECT_TYPES": ["javascript", "css", "file"],
-	// +++
+
 	"UTF8": "utf",
 	"ASCII": "ascii",
 	"BASE64": "base64",
-	// +++
+
 	"SPACELET": "spacelet",
 	"SANDBOXED": "sandboxed",
 	"NATIVE": "native",
 	"ANY": "any",
 	"SHORT_APPLICATION_TYPES": {spacelet: "spacelet", sandboxed: "sandboxed", native: "native"},
-	// +++
+
 	"OPEN": "open",
 	"OPEN_LOCAL": "open_local",
 	"STANDARD": "standard",
@@ -118,13 +119,14 @@ module.exports = function()
 	"EXT_ZIP": ".zip",
 	"PACKAGE_DELIMITER": "@",
 
-	// +++
 	"MANIFEST": "spaceify.manifest",
 	"READMEMD": "readme.md",
 	"PACKAGEZIP": "package.zip",
 	"PUBLISHZIP": "publish.zip",
 	"SPMERRORSJSON": "spm_errors.json",
 	"SPMHELP": "spm.help",
+	"DOCKERFILE": "Dockerfile",
+	"MANIFESTRULES": "manifest.rules",
 	"VERSIONS": "versions",
 
 	"ENGINEIOJS": "engine.io.js",
@@ -138,6 +140,9 @@ module.exports = function()
 	"CUSTOM": "custom_",
 
 	"CLIENT_READY": "client application ready",
+
+	"IMAGE_DIRECTORY": "www/images/",
+	"IMAGE_TYPES": ["image/jpg", "image/gif", "image/png"],
 
 	"FIRST_SERVICE_PORT": 2777,
 	"FIRST_SERVICE_PORT_SECURE": 3777,

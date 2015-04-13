@@ -59,7 +59,7 @@ self.startSpacelet = fibrous( function(unique_name)
 		}
 	catch(err)
 		{
-		throw Utility.error(Language.E_FAILED_TO_START_SPACELET.p("SpaceifyCore::startSpacelet()"), err);
+		throw Utility.error(Language.E_FAILED_TO_START_SPACELET.p("SpaceifyCore::startSpacelet"), err);
 		}
 
 	return spacelet.getServices();														// return value is the array of service names-ports of the spacelet!
@@ -73,14 +73,14 @@ self.registerService = fibrous( function(service_name)
 	var _find = self.find("remote_address", connobj.remoteAddress);
 
 	if(_find.obj == null)
-		throw Utility.ferror(Language.E_REGISTER_SERVICE_UNKNOWN_ADDRESS.p("SpaceifyCore::registerService()"), {":address": connobj.remoteAddress});
+		throw Utility.ferror(Language.E_REGISTER_SERVICE_UNKNOWN_ADDRESS.p("SpaceifyCore::registerService"), {":address": connobj.remoteAddress});
 
 	// ToDo: Other security considerations before accepting the registration?
 
 	// APPLICATION CAN REGISTER ONLY ITS OWN SERVICES = SERVICE NAME FOUND IN THE SERVICES
 	var service = _find.obj.registerService(service_name, true);
 	if(!service)
-		throw Utility.ferror(Language.E_REGISTER_SERVICE_UNKNOWN_SERVICE_NAME.p("SpaceifyCore::registerService()"), {":name": service_name});
+		throw Utility.ferror(Language.E_REGISTER_SERVICE_UNKNOWN_SERVICE_NAME.p("SpaceifyCore::registerService"), {":name": service_name});
 
 	return service;
 	});
@@ -93,14 +93,14 @@ self.unregisterService = fibrous( function(service_name)
 	var _find = self.find("remote_address", connobj.remoteAddress);
 
 	if(_find.obj == null)
-		throw Utility.error(Language.E_UNREGISTER_SERVICE_UNKNOWN_ADDRESS.p("SpaceifyCore::unregisterService()"), {address: connobj.remoteAddress});
+		throw Utility.error(Language.E_UNREGISTER_SERVICE_UNKNOWN_ADDRESS.p("SpaceifyCore::unregisterService"), {address: connobj.remoteAddress});
 
 	// ToDo: Other security considerations before accepting the unregistration?
 
 	// APPLICATION CAN UNREGISTER ONLY ITS OWN SERVICES = SERVICE NAME FOUND IN THE SERVICES
 	var service = _find.obj.registerService(service_name, false);
 	if(!service)
-		throw Utility.error(Language.E_UNREGISTER_SERVICE_UNKNOWN_SERVICE_NAME.p("SpaceifyCore::unregisterService()"), {name: service_name});
+		throw Utility.error(Language.E_UNREGISTER_SERVICE_UNKNOWN_SERVICE_NAME.p("SpaceifyCore::unregisterService"), {name: service_name});
 
 	return service;
 	});
@@ -133,10 +133,10 @@ self.getService = fibrous( function(service_name, unique_name)
 	var _find = self.find("service", {service_name: service_name, unique_name: unique_name});
 
 	if(_find.obj == null)
-		throw Utility.ferror(Language.E_FIND_SERVICE_UNKNOWN.p("SpaceifyCore::findService()"), {":name": service_name});
+		throw Utility.ferror(Language.E_FIND_SERVICE_UNKNOWN.p("SpaceifyCore::findService"), {":name": service_name});
 
 	if(!_find.obj.registered)
-		throw Utility.error(Language.E_FIND_SERVICE_UNREGISTERED.p("SpaceifyCore::findService()"));
+		throw Utility.error(Language.E_FIND_SERVICE_UNREGISTERED.p("SpaceifyCore::findService"));
 
 	// ToDo:
 	// SPACELET, SANDBOXED APPLICATION OR NATIVE APPLICATION CAN ASK SERVICES THAT ARE LISTED IN THEIR MANIFESTS REQUIRED SERVICES?
@@ -144,7 +144,7 @@ self.getService = fibrous( function(service_name, unique_name)
 	/*if(_find.obj.service_type == Config.OPEN_LOCAL) // UNLESS SERVICE TYPE IS OPEN_LOCAL
 		{
 		if((client = self.find("remote_address", connobj.remoteAddress)) == null)
-		throw Utility.error(Language.E_FIND_SERVICE_UNKNOWN_ADDRESS.p("SpaceifyCore::findService()"));
+		throw Utility.error(Language.E_FIND_SERVICE_UNKNOWN_ADDRESS.p("SpaceifyCore::findService"));
 		// ip not from local source
 		}
 	else if(_find.obj.service_type == Config.STANDARD)
@@ -177,26 +177,26 @@ self.adminLogIn = fibrous( function(password)
 		checkSessionTTL.sync();
 
 		if(connobj.remoteAddress == "")
-			throw Utility.error(Language.E_ADMIN_LOGIN_ADDRESS.p("SpaceifyCore::adminLogIn()"));
+			throw Utility.error(Language.E_ADMIN_LOGIN_ADDRESS.p("SpaceifyCore::adminLogIn"));
 
 		// GET CLIENTS MAC
 		var lease = dhcpserver.getDHCPLeaseByIP(connobj.remoteAddress);
 		if(!lease)
-			throw Utility.error(Language.E_UNKNOWN_MAC.p("SpaceifyCore::adminLogIn()"));
+			throw Utility.error(Language.E_UNKNOWN_MAC.p("SpaceifyCore::adminLogIn"));
 
 		// CHECK THE PASSWORD - UPDATE DATABASE
 		database.open(Config.SPACEIFY_DATABASE_FILE);
 		user = database.sync.getUserData();
 
 		if(typeof user == "undefined")
-			throw Utility.error(Language.E_ADMIN_LOGIN_USER.p("SpaceifyCore::adminLogIn()"));
+			throw Utility.error(Language.E_ADMIN_LOGIN_USER.p("SpaceifyCore::adminLogIn"));
 
 		var shasum = crypto.createHash("sha512");
 		shasum.update(password + user.admin_salt);
 		var password_hash = shasum.digest("hex").toString();
 
 		if(password_hash != user.admin_password_hash)
-			throw Utility.error(Language.E_ADMIN_LOGIN_PASSWORD.p("SpaceifyCore::adminLogIn()"));
+			throw Utility.error(Language.E_ADMIN_LOGIN_PASSWORD.p("SpaceifyCore::adminLogIn"));
 
 		var last_login = Date.now();
 		database.sync.adminLoggedIn([last_login]);
@@ -229,12 +229,12 @@ self.adminLogOut = fibrous( function(session_id)
 		checkSessionTTL.sync();
 
 		if(connobj.remoteAddress == "")
-			throw Utility.error(Language.E_ADMIN_LOGIN_ADDRESS.p("SpaceifyCore::adminLogOut()"));
+			throw Utility.error(Language.E_ADMIN_LOGIN_ADDRESS.p("SpaceifyCore::adminLogOut"));
 
 		// GET CLIENTS MAC
 		var lease = dhcpserver.getDHCPLeaseByIP(connobj.remoteAddress);
 		if(!lease)
-			throw Utility.error(Language.E_UNKNOWN_MAC.p("SpaceifyCore::adminLogOut()"));
+			throw Utility.error(Language.E_UNKNOWN_MAC.p("SpaceifyCore::adminLogOut"));
 
 		// UNSET SESSION - SESSION CAN BE UNSET ONLY BY THE SAME USER WHO SET IT (LOGGED IN USER)
 		if(sessions[lease["mac_or_duid"]] && sessions[lease["mac_or_duid"]].session_id == session_id)
@@ -262,13 +262,13 @@ self.saveOptions = fibrous( function(session_id, unique_name, directory, file, d
 
 	try {
 		if(!session || session.ip != connobj.remoteAddress)								// Accept only from the same ip (= logged in device)
-			throw Utility.error(Language.E_OPTIONS_SESSION_INVALID.p("SpaceifyCore::saveOptions()"));
+			throw Utility.error(Language.E_OPTIONS_SESSION_INVALID.p("SpaceifyCore::saveOptions"));
 
 		database.open(Config.SPACEIFY_DATABASE_FILE);
 
 		var app = database.sync.getApplication([unique_name], false) || null;			// Get application, path to volume, create directory and save
 		if(!app)
-			throw Utility.ferror(Language.E_OPTIONS_UNKNOWN_APPLICATION.p("SpaceifyCore::saveOptions()"), {":name": unique_name});
+			throw Utility.ferror(Language.E_OPTIONS_UNKNOWN_APPLICATION.p("SpaceifyCore::saveOptions"), {":name": unique_name});
 
 		var volume = "";
 		if(app.type == Config.SPACELET)
@@ -308,13 +308,13 @@ self.loadOptions = fibrous( function(session_id, unique_name, directory, file)
 
 	try {
 		if(!session || session.ip != connobj.remoteAddress)								// Accept only from the same ip (= logged in device)
-			throw Utility.error(Language.E_OPTIONS_SESSION_INVALID.p("SpaceifyCore::loadOptions()"));
+			throw Utility.error(Language.E_OPTIONS_SESSION_INVALID.p("SpaceifyCore::loadOptions"));
 
 		database.open(Config.SPACEIFY_DATABASE_FILE);
 
 		var app = database.sync.getApplication([unique_name], false) || null;			// Get application, path to volume and load
 		if(!app)
-			throw Utility.ferror(Language.E_OPTIONS_UNKNOWN_APPLICATION.p("SpaceifyCore::loadOptions()"), {":name": unique_name});
+			throw Utility.ferror(Language.E_OPTIONS_UNKNOWN_APPLICATION.p("SpaceifyCore::loadOptions"), {":name": unique_name});
 
 		var volume = "";
 		if(app.type == Config.SPACELET)
@@ -348,10 +348,10 @@ self.setSplashAccepted = fibrous( function()
 	try {
 		var lease = dhcpserver.getDHCPLeaseByIP(connobj.remoteAddress);					// Lease must exist for the device
 		if(!lease)
-			throw Utility.error(Language.E_UNKNOWN_MAC.p("SpaceifyCore::setSplashAccepted()"));
+			throw Utility.error(Language.E_UNKNOWN_MAC.p("SpaceifyCore::setSplashAccepted"));
 
 		if(!iptables.sync.splashAddRule(lease.mac_or_duid))								// Add MAC to the iptables rules
-			throw Utility.error(Language.E_SPLASH_ADD_FAILED.p("SpaceifyCore::setSplashAccepted()"));
+			throw Utility.error(Language.E_SPLASH_ADD_FAILED.p("SpaceifyCore::setSplashAccepted"));
 
 		/*	The following line removes connection tracking for the PC. This clears any previous (incorrect) route info for the redirection
 			exec("sudo rmtrack ".$_SERVER['REMOTE_ADDR']);
@@ -452,7 +452,7 @@ self.getApplicationData = fibrous(function(unique_name)
 				{
 				app_dir = Config.SPACELETS_PATH + spacelets[i].unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY;
 
-				manifest = Utility.sync.loadManifest(app_dir + Config.MANIFEST, true, true);
+				manifest = Utility.sync.loadJSON(app_dir + Config.MANIFEST, true, true);
 				manifest.services = spaceletManager.find("services", manifest.unique_name);
 				manifest.has_tile = Utility.sync.isLocal(app_dir + Config.WWW_DIRECTORY + Config.TILEFILE, "file");
 				//manifest.has_options = Utility.sync.isLocal(app_dir + Config.WWW_DIRECTORY + Config.OPTIONSFILE, "file");
@@ -464,7 +464,7 @@ self.getApplicationData = fibrous(function(unique_name)
 				{
 				app_dir = Config.SANDBOXED_PATH + sandboxed[i].unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY;
 
-				manifest = Utility.sync.loadManifest(app_dir + Config.MANIFEST, true, true);
+				manifest = Utility.sync.loadJSON(app_dir + Config.MANIFEST, true, true);
 				manifest.services = sandboxedManager.find("services", manifest.unique_name);
 				manifest.has_tile = Utility.sync.isLocal(app_dir + Config.WWW_DIRECTORY + Config.TILEFILE, "file");
 				//manifest.has_options = Utility.sync.isLocal(app_dir + Config.WWW_DIRECTORY + Config.OPTIONSFILE, "file");
@@ -476,11 +476,11 @@ self.getApplicationData = fibrous(function(unique_name)
 				{
 				app_dir = Config.NATIVE_PATH + native[i].unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY;
 					
-				manifest = Utility.sync.loadManifest(app_dir + Config.MANIFEST, true, true);
+				manifest = Utility.sync.loadJSON(app_dir + Config.MANIFEST, true, true);
 				manifest.services = nativeManager.find("services", manifest.unique_name);
 				manifest.has_tile = Utility.sync.isLocal(app_dir + Config.WWW_DIRECTORY + Config.TILEFILE, "file");
 				//manifest.has_options = Utility.sync.isLocal(app_dir + Config.WWW_DIRECTORY + Config.OPTIONSFILE, "file");
-				app_data.native.push(Utility.parseManifest(manifest));
+				app_data.native.push(Utility.parseJSON(manifest), true);
 				}*/
 			}
 		else
@@ -488,7 +488,7 @@ self.getApplicationData = fibrous(function(unique_name)
 		}
 	catch(err)
 		{
-		throw Utility.error(Language.E_GET_APP_DATA_FAILED.p("SpaceifyCore::getApplicationData()"), err);
+		throw Utility.error(Language.E_GET_APP_DATA_FAILED.p("SpaceifyCore::getApplicationData"), err);
 		}
 	finally
 		{
@@ -506,7 +506,7 @@ self.getManifest = fibrous( function(unique_name)
 	var _find = self.find("manifest", unique_name);
 
 	if(_find.obj == null)
-		throw Utility.ferror(Language.E_GET_MANIFEST_NOT_FOUND.p("SpaceifyCore::getManifest()"), {":name": unique_name});
+		throw Utility.ferror(Language.E_GET_MANIFEST_NOT_FOUND.p("SpaceifyCore::getManifest"), {":name": unique_name});
 
 	return _find.obj;
 	});
@@ -553,7 +553,7 @@ self.loginToSpaceifyNet = fibrous( function(mode)
 		{
 		isLoggedInToSpaceifyNet = false;
 
-		throw Utility.error(Language.E_EDGE_LOGIN.p("SpaceifyCore::loginToSpaceifyNet()"), err);
+		throw Utility.error(Language.E_EDGE_LOGIN.p("SpaceifyCore::loginToSpaceifyNet"), err);
 		}
 	finally
 		{

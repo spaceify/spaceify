@@ -61,7 +61,7 @@ self.splashAddRule = fibrous( function(MAC)
 	MAC = formatMAC(MAC);
 	var splash = pubSub.value("splash", Config.IPTABLES_PATH) || {};
 
-	if(!MAC.match(Config.MACREGX))
+	if(!MAC.match(Config.MAC_REGX))
 		return false;
 
 	try {																				// Add to the iptables rules and splash object
@@ -87,7 +87,7 @@ self.splashRemoveRule = fibrous( function(MAC)
 	MAC = formatMAC(MAC);
 	var splash = pubSub.value("splash", Config.IPTABLES_PATH) || {};
 
-	if(!MAC.match(Config.MACREGX))
+	if(!MAC.match(Config.MAC_REGX))
 		return false;
 
 	try {																				// Remove from the iptables rules and splash object

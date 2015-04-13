@@ -45,7 +45,7 @@ self.start = fibrous( function(unique_name)
 			self.sync.run(application);
 
 			if(!application.isInitialized())
-				throw Utility.error(Language.E_SANDBOXED_FAILED_INIT_ITSELF.p("SandboxedManager::start()"));
+				throw Utility.error(Language.E_SANDBOXED_FAILED_INIT_ITSELF.p("SandboxedManager::start"));
 			}
 		}
 	catch(err)
@@ -67,8 +67,8 @@ self.build = fibrous( function(docker_image_id, unique_directory)
 	var application = null;
 
 	try {
-		if((manifest = Utility.sync.loadManifest(Config.SANDBOXED_PATH + unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY + Config.MANIFEST, true)) == null)
-			throw Utility.error(Language.E_SANDBOXED_FAILED_TO_READ_MANIFEST.p("SandboxedManager::build()"));
+		if((manifest = Utility.sync.loadJSON(Config.SANDBOXED_PATH + unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY + Config.MANIFEST, true)) == null)
+			throw Utility.error(Language.E_SANDBOXED_FAILED_TO_READ_MANIFEST.p("SandboxedManager::build"));
 
 		application = new Application.obj(manifest);
 		application.setDockerImageId(docker_image_id);
@@ -109,7 +109,7 @@ self.run = fibrous( function(application)
 		}
 	catch(err)
 		{
-		throw Utility.error(Language.E_SANDBOXED_FAILED_TO_RUN.p("SandboxedManager::run()"), err);
+		throw Utility.error(Language.E_SANDBOXED_FAILED_TO_RUN.p("SandboxedManager::run"), err);
 		}
 	});
 

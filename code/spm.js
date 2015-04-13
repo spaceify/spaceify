@@ -70,14 +70,14 @@ self.start = fibrous( function()
 	try {
 		// CHECK INPUT (node ..path/spm.js command ...)
 		if(process.argv.length < 3)
-			process.argv.push(QUICKHELP);//throw Utility.ferror(Language.E_WRONG_NUMBER_OF_ARGUMENTS.p("SPM::start()"), {":commands": commands, ":options": options});
+			process.argv.push(QUICKHELP);//throw Utility.ferror(Language.E_WRONG_NUMBER_OF_ARGUMENTS.p("SPM::start"), {":commands": commands, ":options": options});
 
 		command = process.argv[2].trim();																// command is always the third argument
 		if(command.search(oper_regex) == -1 && command != QUICKHELP)
-			throw Utility.ferror(Language.E_UNKNOW_COMMAND.p("SPM::start()"), {":command": command, ":commands": commands});
+			throw Utility.ferror(Language.E_UNKNOW_COMMAND.p("SPM::start"), {":command": command, ":commands": commands});
 
 		if((command != HELP && command != QUICKHELP && command != LIST) && process.argv.length < 4)		// help and list do not need options or package name
-			throw Utility.ferror(Language.E_WRONG_NUMBER_OF_ARGUMENTS.p("SPM::start()"), {":commands": commands, ":options": options});
+			throw Utility.ferror(Language.E_WRONG_NUMBER_OF_ARGUMENTS.p("SPM::start"), {":commands": commands, ":options": options});
 
 		for(var i=3; i<process.argv.length; i++)														// options are always after $>spm command, ignore if not recognized as an option
 			{
@@ -319,7 +319,7 @@ var list = fibrous( function(type, bVerbose)
 				else if(apps[i].type == Config.NATIVE)
 					path = Config.NATIVE_PATH;
 
-				var manifest = Utility.sync.loadManifest(path + apps[i].unique_directory + Config.APPLICATION_PATH + Config.MANIFEST, true);
+				var manifest = Utility.sync.loadJSON(path + apps[i].unique_directory + Config.APPLICATION_PATH + Config.MANIFEST, true);
 
 				logger.force((bLast ? "  ├── " : "│ ├── ") + Language.M_NAME + manifest.name);
 

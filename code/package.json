@@ -44,7 +44,7 @@
     "sqlite3": "2.2.0",
     "websocket": "1.0.15",
     "winston": "0.7.2",
-    "ypatterns": "0.2.4",
+    "ypatterns": "0.2.4"
   },
 
   "readme": "The Spaceify core.",

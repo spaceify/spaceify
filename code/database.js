@@ -26,7 +26,7 @@ self.open = function(dp_path)
 		}
 	catch(err)
 		{
-			Utility.error(Language.E_DATABASE_OPEN.p("Database::open()"), err);
+			Utility.error(Language.E_DATABASE_OPEN.p("Database::open"), err);
 		throw err;
 		}
 	}
@@ -47,7 +47,7 @@ self.begin = fibrous( function(str)
 		}
 	catch(err)
 		{
-			Utility.error(Language.E_DATABASE_BEGIN.p("Database::begin()"), err);
+			Utility.error(Language.E_DATABASE_BEGIN.p("Database::begin"), err);
 		throw err;
 		}
 	});
@@ -61,7 +61,7 @@ self.commit = fibrous( function(str)
 		}
 	catch(err)
 		{
-			Utility.error(Language.E_DATABASE_COMMIT.p("Database::commit()"), err);
+			Utility.error(Language.E_DATABASE_COMMIT.p("Database::commit"), err);
 		throw err;
 		}
 	});
@@ -75,7 +75,7 @@ self.rollback = fibrous( function(str)
 		}
 	catch(err)
 		{
-			Utility.error(Language.E_DATABASE_ROLLBACK.p("Database::rollback()"), err);
+			Utility.error(Language.E_DATABASE_ROLLBACK.p("Database::rollback"), err);
 		throw err;
 		}
 	});
@@ -92,7 +92,7 @@ self.getApplication = fibrous( function(params, bAll)
 		}
 	catch(err)
 		{
-		Utility.error(Language.E_DATABASE_GETAPPLICATION.p("Database::getApplication()"), err);
+		Utility.error(Language.E_DATABASE_GETAPPLICATION.p("Database::getApplication"), err);
 		throw err;
 		}
 	});
@@ -121,7 +121,7 @@ self.getApplications = fibrous( function(type)
 		}
 	catch(err)
 		{
-		Utility.error(Language.E_DATABASE_GETAPPLICATIONS.p("Database::getApplications()"), err);
+		Utility.error(Language.E_DATABASE_GETAPPLICATIONS.p("Database::getApplications"), err);
 		throw err;
 		}
 	});
@@ -150,7 +150,7 @@ self.insertApplication = fibrous( function(manifest)
 	catch(err)
 		{
 		self.sync.rollback();
-		Utility.error(Language.E_DATABASE_INSERTAPPLICATION.p("Database::insertApplication()"), err);
+		Utility.error(Language.E_DATABASE_INSERTAPPLICATION.p("Database::insertApplication"), err);
 		throw err;
 		}
 	});
@@ -178,7 +178,7 @@ self.updateApplication = fibrous( function(manifest)
 	catch(err)
 		{
 		self.sync.rollback();
-		Utility.error(Language.E_DATABASE_UPDATEAPPLICATION.p("Database::updateApplication()"), err);
+		Utility.error(Language.E_DATABASE_UPDATEAPPLICATION.p("Database::updateApplication"), err);
 		throw err;
 		}
 	});
@@ -193,7 +193,7 @@ self.removeApplication = fibrous( function(unique_name)
 		}
 	catch(err)
 		{
-		Utility.error(Language.E_DATABASE_REMOVEAPPLICATION.p("Database::removeApplication()"), err);
+		Utility.error(Language.E_DATABASE_REMOVEAPPLICATION.p("Database::removeApplication"), err);
 		throw err;
 		}
 	});
@@ -283,7 +283,7 @@ self.updateSettings = fibrous( function(params, inject_files)
 		}
 	catch(err)
 		{
-		Utility.error(Language.E_DATABASE_UPDATESETTINGS.p("Database::updateSettings()"), err);
+		Utility.error(Language.E_DATABASE_UPDATESETTINGS.p("Database::updateSettings"), err);
 		throw err;
 		}
 	});
@@ -295,7 +295,7 @@ self.getSettings = fibrous( function()
 		}
 	catch(err)
 		{
-		Utility.error(Language.E_DATABASE_GETSETTINGS.p("Database::getSettings()"), err);
+		Utility.error(Language.E_DATABASE_GETSETTINGS.p("Database::getSettings"), err);
 		throw err;
 		}
 	});
@@ -317,7 +317,7 @@ self.getSetting = fibrous( function(setting, defaultVal, bThrows)
 	catch(err)
 		{
 		if(bThrows)
-		Utility.error(Language.E_DATABASE_GETSETTING.p("Database::getSetting()"), err);
+		Utility.error(Language.E_DATABASE_GETSETTING.p("Database::getSetting"), err);
 		throw err;
 		}
 	finally
@@ -338,7 +338,7 @@ self.getUserData = fibrous( function()
 		}
 	catch(err)
 		{
-		Utility.error(Language.E_DATABASE_GETUSERDATA.p("Database::getUserData()"), err);
+		Utility.error(Language.E_DATABASE_GETUSERDATA.p("Database::getUserData"), err);
 		throw err;
 		}
 	});
@@ -350,7 +350,7 @@ self.adminLoggedIn = fibrous( function(params)
 		}
 	catch(err)
 		{
-		Utility.error(Language.E_DATABASE_ADMINLOGGEDIN.p("Database::adminLoggedIn()"), err);
+		Utility.error(Language.E_DATABASE_ADMINLOGGEDIN.p("Database::adminLoggedIn"), err);
 		throw err;
 		}
 	});

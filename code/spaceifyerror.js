@@ -15,12 +15,27 @@ self.p = function(path)
 	{
 	self.path = path;
 
-	return getAsObject();
+	return self.getAsObject();
 	}
 
-var getAsObject = function()
+self.getAsObject = function()
 	{
 	return {path: self.path, code: self.code, message: self.message};
+	}
+
+self.getMessage = function()
+	{
+	return self.message;
+	}
+
+self.getCode = function()
+	{
+	return self.code;
+	}
+
+self.getPath = function()
+	{
+	return self.path;
 	}
 }
 

@@ -61,7 +61,7 @@ self.start = function(unique_name, callback)
 			run.sync(application);
 
 			if(!application.isInitialized())
-				throw Utility.error(Language.E_SPACELET_FAILED_INIT_ITSELF.p("SpaceletManager::start()"));
+				throw Utility.error(Language.E_SPACELET_FAILED_INIT_ITSELF.p("SpaceletManager::start"));
 
 			callback(null, application);
 			}
@@ -95,8 +95,8 @@ self.build = fibrous( function(unique_name)
 
 		for(var i=0; i<_applications.length; i++)
 			{
-			if((manifest = Utility.sync.loadManifest(Config.SPACELETS_PATH + _applications[i].unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY + Config.MANIFEST, true)) == null)
-				throw Utility.error(Language.E_FAILED_TO_READ_SPACELET_MANIFEST.p("SpaceletManager::build()"));
+			if((manifest = Utility.sync.loadJSON(Config.SPACELETS_PATH + _applications[i].unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY + Config.MANIFEST, true)) == null)
+				throw Utility.error(Language.E_FAILED_TO_READ_SPACELET_MANIFEST.p("SpaceletManager::build"));
 
 			application = self.find("unique_name", manifest.unique_name);					// Don't create/add existing application
 			if(application) continue;
@@ -147,7 +147,7 @@ var run = fibrous( function(application)
 		}
 	catch(err)
 		{
-		throw Utility.error(Language.E_SPACELET_FAILED_RUN.p("SpaceletManager::run()"), err);
+		throw Utility.error(Language.E_SPACELET_FAILED_RUN.p("SpaceletManager::run"), err);
 		}
 	});
 

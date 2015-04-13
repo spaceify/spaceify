@@ -34,15 +34,15 @@ var language =
 	"E_PROVIDED_FIELDS_UNDEFINED": new SpaceifyError({"code": 1015, "message": "Manifest file must have provided_services objects and the objects must have properly defined service_name and service_type fields"}),
 	"E_REQUIRED_FIELDS_UNDEFINED": new SpaceifyError({"code": 1016, "message": "Manifest file must have required_services objects and the objects must have properly defined service_name and service_type fields"}),
 	"E_REQUIRED_INJECT_UNDEFINED": new SpaceifyError({"code": 1017, "message": "Spacelet manifest file must have inject_files objects and the objects must have properly defined directory, name and type fields"}),
-	"E_LOADREMOTEFILETOLOCALFILE": new SpaceifyError({"code": 1018, "message": "Failed to load remote file"}),
-	"E_DELETEDIRECTORY": new SpaceifyError({"code": 1019, "message": "Failed to delete directory"}),
-	"E_COPYDIRECTORY": new SpaceifyError({"code": 1020, "message": "Failed copy directory"}),
-	"E_MOVEDIRECTORY": new SpaceifyError({"code": 1021, "message": "Failed to move dfirectory"}),
-	"E_DELETEFILE": new SpaceifyError({"code": 1022, "message": "Failed to delete file"}),
-	"E_COPYFILE": new SpaceifyError({"code": 1023, "message": "Failed to copy file"}),
-	"E_MOVEFILE": new SpaceifyError({"code": 1024, "message": "Failed to move file"}),
-	"E_ZIPDIRECTORY": new SpaceifyError({"code": 1025, "message": "Failed to compress files"}),
-	"E_LOADMANIFEST": new SpaceifyError({"code": 1026, "message": "Failed to load manifest"}),
+	"E_LOAD_REMOTE_FILE_TO_LOCAL_FILE": new SpaceifyError({"code": 1018, "message": "Failed to load remote file"}),
+	"E_DELETE_DIRECTORY": new SpaceifyError({"code": 1019, "message": "Failed to delete directory"}),
+	"E_COPY_DIRECTORY": new SpaceifyError({"code": 1020, "message": "Failed copy directory"}),
+	"E_MOVE_DIRECTORY": new SpaceifyError({"code": 1021, "message": "Failed to move dfirectory"}),
+	"E_DELETE_FILE": new SpaceifyError({"code": 1022, "message": "Failed to delete file"}),
+	"E_COPY_FILE": new SpaceifyError({"code": 1023, "message": "Failed to copy file"}),
+	"E_MOVE_FILE": new SpaceifyError({"code": 1024, "message": "Failed to move file"}),
+	"E_ZIP_DIRECTORY": new SpaceifyError({"code": 1025, "message": "Failed to compress files"}),
+	"E_LOAD_JSON": new SpaceifyError({"code": 1026, "message": "Failed to load JSON file"}),
 
 	// SpaceifyCore
 	"E_FIND_SERVICE_UNKNOWN": new SpaceifyError({"code": 2000, "message": "Get service failed because service :name was not found"}),
@@ -78,7 +78,6 @@ var language =
 	"E_FAILED_TO_START_SPACELET": new SpaceifyError({"code": 2020, "message": "Failed to start spacelet"}),
 
 	// Common
-	"E_FAILED_TO_LOAD_MANIFEST": new SpaceifyError({"code": 3001, "message": "Failed to load manifest file"}),
 	"E_MANIFEST_PARSE_FAILED": new SpaceifyError({"code": 3002, "message": "Failed to parse manifest file content"}),
 	"E_JSON_PARSE_FAILED": new SpaceifyError({"code": 3003, "message": "Failed to parse json"}),
 	"E_FAILED_TO_LOAD_APPLICATION": new SpaceifyError({"code": 3004, "message": "Failed to load application file"}),
@@ -113,6 +112,7 @@ var language =
 	"E_FAILED_TO_LIST_APPLICATIONS": new SpaceifyError({"code": 7009, "message": "Failed to list applications"}),
 	"E_FAILED_CERTIFICATE_CREATE": new SpaceifyError({"code": 7010, "message": "Failed to create certificate for the application"}),
 	"E_FAILED_GITHUB_DATA": new SpaceifyError({"code": 7011, "message": "Failed to get data from GitHub"}),
+	"E_FAILED_TO_PROCESS_PACKAGE": new SpaceifyError({"code": 7012, "message": "Processing the package :package failed"}),
 
 	// SandboxedManager
 	"E_SANDBOXED_FAILED_TO_READ_MANIFEST": new SpaceifyError({"code": 8000, "message": "Unable to read/parse manifest file from sandboxed applications directory"}),
@@ -159,6 +159,18 @@ var language =
 	"E_DATABASE_GETSETTING": new SpaceifyError({"code": 12011, "message": "Failed to get setting"}),
 	"E_DATABASE_GETUSERDATA": new SpaceifyError({"code": 12012, "message": "Failed to get user data"}),
 	"E_DATABASE_ADMINLOGGEDIN": new SpaceifyError({"code": 12013, "message": "Failed to set admin log in"}),
+
+	// ValidatePackage
+	"E_NO_APPLICATION_DIRECTORY": new SpaceifyError({"code": 13000, "message": "Package does not have application directory"}),
+	"E_NO_MANIFEST_FILE": new SpaceifyError({"code": 13001, "message": "Package does not have manifest file"}),
+	
+	"E_INJECT_FILE": new SpaceifyError({"code": 13002, "message": "Inject file :file is defined in the manifest but is not found in the applications www directory :directory"}),
+	"E_IMAGE_FILE": new SpaceifyError({"code": 13003, "message": "Image file :file is defined in the manifest but is not found in the applications image directory :directory"}),
+	"E_IMAGE_TYPES": new SpaceifyError({"code": 13004, "message": "Supported image formats are jpg, gif and png"}),
+	"E_DOCKER_IMAGE": new SpaceifyError({"code": 13005, "message": "Custom Docker image creation is defined but file Dockerfile is not found from applications directory"}),
+
+	"E_MANIFEST_TYPE": new SpaceifyError({"code": 13006, "message": "Manifest must have type field defined and type must be spacelet, sandboxed or native"}),
+	
 
 	/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** 
 	** TEXTS ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
@@ -219,7 +231,7 @@ var language =
 	"PACKAGE_POST_ERROR": "Failed to publish the package.",
 	"PACKAGE_POST_OK": "Success. The package is now published.",
 	"APPLICATION_REMOVED": "Application :app is now removed.",
-	"INSTALL_PARSING_MANIFEST": "Parsing manifest.",
+	"VALIDATING_PACKAGE": "Validating package.",
 	"STOPPING_APPLICATION": "Stopping application.",
 	"REMOVING_APPLICATION": "Removing existing application.",
 	"STARTING_APPLICATION": "Starting application.",
@@ -237,7 +249,7 @@ var language =
 	"ALREADY_RUNNING": "Application :app is already running.",
 	"SERVICE_ALREADY_REGISTERED": "Service name :name is already registered by application :app",
 	"PACKAGE_INSTALL_ERROR": "Failed to get the requested package.",
-	"GET_SOURCES_OK": "Application :app@:version source codes are now downloaded.",
+	"GET_SOURCES_OK": "Application :app@:version source codes are now fetched and are in directory :directory.",
 
 	"REQUIRED_SERVICE_NOT_AVAILABLE": "Required service :name is not registered to the edge. Because suggested application is not defined edge can not try to install an application which implements the service. See http://:name for applications that implement the service and install suitable application manually.",
 	"REQUIRED_SERVICE_ALREADY_REGISTERED": "Required service :name is registered by application :app@:version",

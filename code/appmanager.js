@@ -19,7 +19,7 @@ var Language = require("./language");
 var Database = require("./database");
 var Application = require("./application");
 var http_status = require("./httpstatus");
-var Validator = require("./validateapplication");
+var ValidateApplication = require("./validateapplication");
 var DockerImage = require("./dockerimage.js");
 var DockerContainer = require("./dockercontainer.js");
 var WebSocketRPCServer = require("./websocketrpcserver");
@@ -126,12 +126,14 @@ self.installApplication = fibrous( function(package, isSuggested, username, pass
 
 		// Try to get the package
 		var registry_url = Config.REGISTRY_INSTALL_URL + "?package=" + package + "&release=" + settings["release_name"];
-		if(!getPackage.sync(package, isSuggested, username, password, registry_url))
+		if(!getPackage.sync(package, isSuggested, true, username, password, registry_url))
 			throw Utility.ferror(Language.E_FAILED_TO_PROCESS_PACKAGE.p("AppManager::installApplication"), {":package": package});
 
 		// Validate the package for any errors
 		messages.sync(Language.VALIDATING_PACKAGE);
-		var manifest = Validator.sync.validate(Config.WORK_PATH);
+
+		var validator = new ValidateApplication();
+		var manifest = validator.sync.validate(Config.WORK_PATH, Config.WORK_PATH + Config.APPLICATION_DIRECTORY);
 
 		// Application must not have same service names with already installed applications
 		var errors = database.sync.checkProvidedServices(manifest);
@@ -417,7 +419,7 @@ self.publishPackage = fibrous( function(package, username, password, github_user
 		purl.pathname = purl.pathname.replace(/^\/|\/$/g, "");
 		var gitoptions = purl.pathname.split("/");
 
-		// 1. Try local directory <package>
+		// --- 1. --- Try local directory <package>
 		if(Utility.sync.isLocal(package, "directory"))
 			{
 			messages.sync(Utility.replace(Language.TRYING_TO_PUBLISH, {":what": Language.LOCAL_DIRECTORY, ":package": package, }));
@@ -426,12 +428,14 @@ self.publishPackage = fibrous( function(package, username, password, github_user
 			Utility.sync.zipDirectory(package, Config.WORK_PATH + Config.PUBLISHZIP);
 			package = Config.WORK_PATH + Config.PUBLISHZIP;
 			}
-		// 2. Try local <package>.zip
+
+		// --- 2. --- Try local <package>.zip
 		else if(Utility.sync.isLocal(package, "file") && package.search(/\.zip$/i) != -1)
 			{
 			messages.sync(Utility.replace(Language.TRYING_TO_PUBLISH, {":what": Language.LOCAL_ARCHIVE, ":package": package}));
 			}
-		// 3. Try GitHub <package>
+
+		// --- 3. --- Try GitHub <package>
 		else if(purl.hostname && purl.hostname.match(/(github\.com)/i) != null && gitoptions.length == 2)
 			{
 			messages.sync(Utility.replace(Language.TRYING_TO_PUBLISH, {":what": Language.GIT_REPOSITORY, ":package": package}));
@@ -442,7 +446,8 @@ self.publishPackage = fibrous( function(package, username, password, github_user
 			Utility.sync.zipDirectory(Config.WORK_PATH, Config.WORK_PATH + Config.PUBLISHZIP);
 			package = Config.WORK_PATH + Config.PUBLISHZIP;
 			}
-		// Else fail
+
+		// --- FAILURE--- 
 		else
 			throw Utility.ferror(Language.E_FAILED_TO_RESOLVE_PACKAGE.p("AppManager::publishPackage"), {":package": package});
 
@@ -450,12 +455,12 @@ self.publishPackage = fibrous( function(package, username, password, github_user
 		var result = Utility.sync.postPublish(package, username, password, settings["release_name"]);
 
 		result = Utility.parseJSON(result, true);
-		if(typeof result != "object")																// Other than 200 OK was received
+		if(typeof result != "object")																// Other than 200 OK was received?
 			{
 			messages.sync(Language.PACKAGE_POST_ERROR);
 			messages.sync(result + " " + (http_status[result] ? http_status[result].message : http_status["unknown"].message));
 			}
-		else if(result.err != null)																	// Errors in the package zip archive and/or manifest
+		else if(result.err != null)																	// Errors in the package zip archive and/or manifest?
 			{
 			messages.sync(Language.PACKAGE_POST_ERROR);
 			for(e in result.err)
@@ -471,7 +476,7 @@ self.publishPackage = fibrous( function(package, username, password, github_user
 	finally
 		{
 		database.close();
-		//removeTemporaryFiles.sync();
+		removeTemporaryFiles.sync();
 		}
 
 	return true;
@@ -486,19 +491,20 @@ self.sourceCode = fibrous( function(package, username, password)
 		database.open(Config.SPACEIFY_DATABASE_FILE);
 		var settings = database.sync.getSettings();
 
+		// Get sources
 		var registry_url = Config.REGISTRY_INSTALL_URL + "?package=" + package + "&release=" + settings["release_name"];
-		if(!getPackage.sync(package, false, username, password, registry_url))
+		if(!getPackage.sync(package, false, false, username, password, registry_url))
 			throw Utility.ferror(Language.E_FAILED_TO_PROCESS_PACKAGE.p("AppManager::sourceCode"), {":package": package});
 
-		// Validate the package for any errors
-		messages.sync(Language.VALIDATING_PACKAGE);
-		var manifest = Validator.sync.validate(Config.WORK_PATH);
+		var dest = package.replace(/[^0-9a-zA-Z-_]/g, "_");
+		dest = dest.replace(/_{2,}/g, "_");
+		dest = dest.replace(/^_*|_*$/g, "");
+		dest = process.cwd() + "/" + Config.SOURCES_DIRECTORY + dest;
 
-		var dest = process.cwd() + "/" + manifest.unique_name + "/" + manifest.version + "/";
 		Utility.sync.deleteDirectory(dest);															// Remove previous files
-		Utility.sync.copyDirectory(Config.WORK_PATH, dest);											// Copy files to applications directory
+		Utility.sync.copyDirectory(Config.WORK_PATH, dest);											// Copy files to sources directory
 
-		messages.sync(Utility.replace(Language.GET_SOURCES_OK, {":app": manifest.unique_name, ":version": manifest.version, ":directory": dest}));
+		messages.sync(Utility.replace(Language.GET_SOURCES_OK, {":directory": dest}));
 		}
 	catch(err)
 		{
@@ -507,13 +513,13 @@ self.sourceCode = fibrous( function(package, username, password)
 	finally
 		{
 		database.close();
-		//removeTemporaryFiles.sync();
+		removeTemporaryFiles.sync();
 		}
 	});
 
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 /* PRIVATE  ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
-var getPackage = fibrous( function(package, isSuggested, username, password, registry_url)
+var getPackage = fibrous( function(package, isSuggested, tryLocal, username, password, registry_url)
 	{ // Get package by (unique name|directory|archive|url|git url)
 	var is_package = false;
 
@@ -524,17 +530,21 @@ var getPackage = fibrous( function(package, isSuggested, username, password, reg
 	var cwd_package = process.cwd() + "/" + package;
 
 	// --- 1.0 --- Try local directory <package>
-	if(!isSuggested && Utility.sync.isLocal(package, "directory"))
+	if(!isSuggested && tryLocal && Utility.sync.isLocal(package, "directory"))
 		is_package = getLocalDirectory.sync(package);
+
 	// --- 1.1 --- Try local directory <cwd/package>
-	else if(!isSuggested && Utility.sync.isLocal(cwd_package, "directory"))
+	else if(!isSuggested && tryLocal && Utility.sync.isLocal(cwd_package, "directory"))
 		is_package = getLocalDirectory.sync(cwd_package);
+
 	// --- 2.0 --- Try local <package>.zip
-	else if(!isSuggested && Utility.sync.isLocal(package, "file") && package.search(/\.zip$/i) != -1)
+	else if(!isSuggested && tryLocal && Utility.sync.isLocal(package, "file") && package.search(/\.zip$/i) != -1)
 		is_package = getLocalZip.sync(package);
+
 	// --- 2.1 --- Try local <cwd/package>.zip
-	else if(!isSuggested && Utility.sync.isLocal(cwd_package, "file") && package.search(/\.zip$/i) != -1)
+	else if(!isSuggested && tryLocal && Utility.sync.isLocal(cwd_package, "file") && package.search(/\.zip$/i) != -1)
 		is_package = getLocalZip.sync(cwd_package);
+
 	// --- 3.0 --- Try remote <package>.zip (remote url)
 	else if(!isSuggested && Utility.sync.loadRemoteFileToLocalFile(package, Config.WORK_PATH, Config.PACKAGEZIP))
 		{
@@ -542,6 +552,7 @@ var getPackage = fibrous( function(package, isSuggested, username, password, reg
 
 		is_package = Utility.unZip(Config.WORK_PATH + Config.PACKAGEZIP, Config.WORK_PATH, true);
 		}
+
 	// --- 4.0 --- Try "pulling" a git repository <package>
 	else if(!isSuggested && purl.hostname && purl.hostname.match(/(github\.com)/i) != null && gitoptions.length == 2)
 		{
@@ -549,7 +560,8 @@ var getPackage = fibrous( function(package, isSuggested, username, password, reg
 
 		is_package = git.sync(gitoptions, username, password);
 		}
-	// --- 5.0 --- Try <unique_name>[@<version>] from registry
+
+	// --- 5.0 --- Try <unique_name>[@<version>] from registry - suggested applications can be tried from the registry!!!
 	else if(Utility.sync.loadRemoteFileToLocalFile(registry_url + "&username=" + username + "&password=" + password, Config.WORK_PATH, Config.PACKAGEZIP))
 		{
 		messages.sync(Utility.replace(Language.TRYING_TO_GET, {":from": Language.SPACEIFY_REGISTRY, ":package": package}));
@@ -571,6 +583,7 @@ var getPackage = fibrous( function(package, isSuggested, username, password, reg
 			throw errors;
 			}
 		}
+
 	// --- FAILURE ---
 	else
 		throw Utility.ferror(Language.E_FAILED_TO_RESOLVE_PACKAGE.p("AppManager::getPackage"), {":package": package});

@@ -43,6 +43,7 @@ var language =
 	"E_MOVE_FILE": new SpaceifyError({"code": 1024, "message": "Failed to move file"}),
 	"E_ZIP_DIRECTORY": new SpaceifyError({"code": 1025, "message": "Failed to compress files"}),
 	"E_LOAD_JSON": new SpaceifyError({"code": 1026, "message": "Failed to load JSON file"}),
+	"E_SAVE_JSON": new SpaceifyError({"code": 1027, "message": "Failed to save JSON file"}),
 
 	// SpaceifyCore
 	"E_FIND_SERVICE_UNKNOWN": new SpaceifyError({"code": 2000, "message": "Get service failed because service :name was not found"}),
@@ -249,7 +250,7 @@ var language =
 	"ALREADY_RUNNING": "Application :app is already running.",
 	"SERVICE_ALREADY_REGISTERED": "Service name :name is already registered by application :app",
 	"PACKAGE_INSTALL_ERROR": "Failed to get the requested package.",
-	"GET_SOURCES_OK": "Application :app@:version source codes are now fetched and are in directory :directory.",
+	"GET_SOURCES_OK": "Source codes are now loaded and are in the directory :directory.",
 
 	"REQUIRED_SERVICE_NOT_AVAILABLE": "Required service :name is not registered to the edge. Because suggested application is not defined edge can not try to install an application which implements the service. See http://:name for applications that implement the service and install suitable application manually.",
 	"REQUIRED_SERVICE_ALREADY_REGISTERED": "Required service :name is registered by application :app@:version",

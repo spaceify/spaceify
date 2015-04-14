@@ -1,26 +1,19 @@
 #!/bin/bash
 
-echo "Managing versions..."
+# Build Spaceify debian package
+
+############
+# VERSIONS #
+############
 versions=$(< versions)
 vs=$(echo $versions | awk -F : '{print $2}')
-vsp=$( grep -Po "(?<=\()\b$vs\b(?=\))" debian/changelog )
 
-if [ "$vs" = "$vsp" ]; then
-	echo "Version remains the same and changelog is not updated"
-else
-	echo "Version ${vs} added to the changelog"
+./version-updater.sh
 
-	vsdate=$( date +"%a, %d %b %Y %H:%M:%S %z" )
-
-        vss="spaceify (${vs}) unstable; urgency=low\n\n  * Release ${vs}\n\n -- Spaceify Inc. <admin@spaceify.net>  ${vsdate}\n\n"
-
-	changelog=$(< debian/changelog)
-	changelog="${vss}${changelog}"
-
-	printf "$changelog" > debian/changelog
-fi
-
-echo "Making directories..."
+###############
+# DIRECTORIES #
+###############
+echo "Creating directories..."
 dst="/tmp/build/spaceify-${vs}"
 
 rm -r $dst > /dev/null 2>&1 || true
@@ -33,6 +26,9 @@ mkdir "${dst}/docker/"
 mkdir "${dst}/monit/"
 mkdir "${dst}/upstart/"
 
+#################
+# COPYING FILES #
+#################
 echo "Copying files..."
 cp -r code/* "${dst}/code/"
 cp -r data/* "${dst}/data/"
@@ -46,6 +42,9 @@ cp LICENSE "${dst}"
 cp README.md "${dst}"
 cp versions "${dst}"
 
+#############
+# COMPILING #
+#############
 echo "Compiling Spaceify version ${vs}"
 cd $dst
 

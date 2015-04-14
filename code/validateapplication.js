@@ -11,7 +11,7 @@ var errors = [];
 var rules = null;
 var unique_values = [];
 
-self.validate = fibrous( function(package_path)
+self.validate = fibrous( function(package_path, save_path_manifest)
 	{
 	try {
 		errors = [];
@@ -32,7 +32,12 @@ self.validate = fibrous( function(package_path)
 		var manifest = self.validateManifest.sync(manifest_path);
 
 		// VALIDATE DIRECTORIES AND FILES IN THE PACKAGE
-		self.validateDirectories.sync(application_path, manifest);
+		if(errors.length == 0)
+			self.validateDirectories.sync(application_path, manifest);
+
+		// SAVE MANIFEST IF SAVE PATH IS SET
+		if(save_path_manifest && errors.length == 0)
+			Utility.sync.saveJSON(save_path_manifest + Config.MANIFEST, manifest, true);
 		}
 	catch(err)
 		{
@@ -169,7 +174,7 @@ self.validateManifest = fibrous( function(manifest_path)
 			{
 			sub_rule_errors = rule.sub_rules.errors;														// Every array rule has its own sub_rules
 
-			if(manifest[field].length == 0)																		// Add error if array is empty
+			if(manifest[field].length == 0)																	// Add error if array is empty
 				addErrorManifest(rule_errors.empty, rules.errors[rule_errors.empty], "");
 
 			field_errors = false;
@@ -224,12 +229,12 @@ var isValue = function(value, validator)
 	{
 	var regx;
 
-	if(validator.type == "regx")																	// Must not have the format in the pattern
+	if(validator.type == "regx")																	// Must not have the format of the pattern
 		{
 		regx = rules.regxs[validator.match].replace(/^\/|\/$/g, "");
 		return (value.match(new RegExp(regx)) ? false : true);
 		}
-	else if(validator.type == "nregx")																// Must have the format in the pattern
+	else if(validator.type == "nregx")																// Must have the format of the pattern
 		{
 		regx = rules.regxs[validator.match].replace(/^\/|\/$/g, "");
 		return (!value.match(new RegExp(regx)) ? false : true);
@@ -242,56 +247,54 @@ var isValue = function(value, validator)
 
 var isUnique = function(rule, vobj, type)
 	{
-	var i, j, unique, compare, compare_type, unique_value, value, rxuv, rxv;
+	var i, j, unique, compare, compare_type, value, uvalue, rxuv, rxv;
 
 	if(!rule.unique)
 		return;
 
-	for(i=0; i<rule.unique.length; i++)																// array of objects = multiple fields (values) to check for uniqueness
+	for(i=0; i<rule.unique.length; i++)																// there might be multiple fields to check for uniqueness in a rule
 		{
 		unique = rule.unique[i];
-		compare = unique.compare;																	// this is the name of the array where specific unique values are stored for comparison (e.g. service names)
-		compare_type = unique.compare_type;															// string match (equal) or regular expression match (regx)
+		compare = unique.compare;																		// name of the compare array (e.g. service_name)
+		compare_type = unique.compare_type;																// string match (equal) or regular expression match (regx)
 
-		unique_value = "";
+		value = "";
 		if(type == "objects" || type == "object")
 			{
-			for(j=0; j<unique.fields.length; j++)														// unique value can be a single value or compound of multiple values (e.g. single: service_name, compound: directory+file)
-				unique_value += (vobj[unique.fields[j]] ? vobj[unique.fields[j]] + "+" : "");			// check does field exist because some fields can be optional
+			for(j=0; j<unique.fields.length; j++)														// value can be a single or compound value (service_name, directory+file)
+				value += (vobj[unique.fields[j]] ? vobj[unique.fields[j]] + "+" : "");					// ignore optional fields
 			}
 		else if(type == "array" || "string")
-			unique_value = vobj + "+";
+			value = vobj + "+";
 
-		if(unique_values[compare])																		// can values be found from the already stored unique_values
+		if(unique_values[compare])																		// does the compare array exist (e.g. for service_name)
 			{
 			for(j=0; j<unique_values[compare].length; j++)
 				{
-				value = unique_values[compare][j];
+				uvalue = unique_values[compare][j];
 
 				if(compare_type == "equal")																	// simple string comparison
 					{
-					if(unique_value == value)
+					if(value == uvalue)
 						addErrorManifest(unique.error, rules.errors[unique.error], "");
 					}
 				else if(compare_type == "regx")																// match values (like hostname) using RegExp
 					{
-					rxuv = unique_value.replace(/\./, "\.");													// escape for RegExp
+					rxuv = value.replace(/\./, "\.");															// escape values for RegExp
 					rxuv = rxuv.replace(/\*/, ".*");
-					rxv = value.replace(/\./, "\.");
+					rxv = uvalue.replace(/\./, "\.");
 					rxv = rxv.replace(/\*/, ".*");
 
-					if(value.match(new RegExp(rxuv)) || unique_value.match(new RegExp(rxv)) )					// neither can match the other
+					if(uvalue.match(new RegExp(rxuv)) || value.match(new RegExp(rxv)) )							// neither can match the other
 						addErrorManifest(unique.error, rules.errors[unique.error], "");
 					}
 				}
 			}
 
-		if(unique.store)																				// store value for next comparisons. don't store if value is not a part of this object (e.g. unique_name is not a part of services)
-			!(compare in unique_values) ? unique_values[compare] = [unique_value] : unique_values[compare].push(unique_value);
+		if(unique.store)																				// store value for next comparisons
+			!(compare in unique_values) ? unique_values[compare] = [value] : unique_values[compare].push(value);
 		}
-		
-//console.log(unique_values);
-//console.log();
+
 	}
 
 self.suggestedApplication = function(value, params)
@@ -352,4 +355,4 @@ var addErrorManifest = function(code, message, path)
 	}
 }
 
-module.exports = new ValidateApplication();
+module.exports = ValidateApplication;

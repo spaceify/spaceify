@@ -44,6 +44,7 @@ module.exports = function()
 	"WWW_DIRECTORY": "www/",
 
 	"WORK_PATH": "/tmp/packet/",
+	"SOURCES_DIRECTORY": "sources/",
 
 	"TEMPLATES_PATH": spaceify_code_path + "www/templates/",
 	"LANGUAGES_PATH": spaceify_code_path + "www/languages/",

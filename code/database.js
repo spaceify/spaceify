@@ -200,55 +200,87 @@ self.removeApplication = fibrous( function(unique_name)
 
 var addProvidedServices = fibrous( function(manifest)
 	{
-	db.sync.run("DELETE FROM provided_services WHERE unique_name=?", manifest.unique_name);
+	var stmt;
 
-	var stmt = db.prepare("INSERT INTO provided_services (unique_name, service_name, service_type) VALUES(?, ?, ?)");
+	try {
+		db.sync.run("DELETE FROM provided_services WHERE unique_name=?", manifest.unique_name);
 
-	for(var i=0; i<manifest.provides_services.length; i++)
-		stmt.sync.run([manifest.unique_name, manifest.provides_services[i].service_name, manifest.provides_services[i].service_type]);
+		stmt = db.prepare("INSERT INTO provided_services (unique_name, service_name, service_type) VALUES(?, ?, ?)");
 
-	stmt.finalize();
+		for(var i=0; i<manifest.provides_services.length; i++)
+			stmt.sync.run([manifest.unique_name, manifest.provides_services[i].service_name, manifest.provides_services[i].service_type]);
+		}
+	catch(err)
+		{
+		throw err;
+		}
+	finally
+		{
+		if(stmt)
+			stmt.finalize();
+		}
 	});
 
 var addInjectHostnames = fibrous( function(manifest)
 	{
-	db.sync.run("DELETE FROM inject_hostnames WHERE unique_name=?", manifest.unique_name);
+	var stmt;
 
-	var stmt = db.prepare("INSERT INTO inject_hostnames (unique_name, inject_hostname) VALUES(?, ?)");
+	try {
+		db.sync.run("DELETE FROM inject_hostnames WHERE unique_name=?", manifest.unique_name);
 
-	for(var i=0; i<manifest.inject_hostnames.length; i++)
-		{
-		var inject_hostname = manifest.inject_hostnames[i].replace("*", "%");			// IN MANIFEST: *.google.* -> CHANGED FOR SQLITE: %.google.%
-		stmt.sync.run([manifest.unique_name, inject_hostname]);
+		stmt = db.prepare("INSERT INTO inject_hostnames (unique_name, inject_hostname) VALUES(?, ?)");
+
+		for(var i=0; i<manifest.inject_hostnames.length; i++)
+			{
+			var inject_hostname = manifest.inject_hostnames[i].replace("*", "%");			// IN MANIFEST: *.google.* -> CHANGED FOR SQLITE: %.google.%
+			stmt.sync.run([manifest.unique_name, inject_hostname]);
+			}
 		}
-
-	stmt.finalize();
+	catch(err)
+		{
+		throw err;
+		}
+	finally
+		{
+		if(stmt)
+			stmt.finalize();
+		}
 	});
 
 var addInjectFiles = fibrous( function(manifest)
 	{
 	var stmt;
 
-	db.sync.run("DELETE FROM inject_files WHERE unique_name=?", manifest.unique_name);
-	stmt = db.prepare("INSERT INTO inject_files (unique_name, url_or_path, directory, file, inject_type, inject_order, is_spaceify) VALUES(?, ?, ?, ?, ?, ?, 0)");
+	try {
+		db.sync.run("DELETE FROM inject_files WHERE unique_name=?", manifest.unique_name);
 
-	application_path = Config.SPACELETS_PATH + manifest.unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY + Config.WWW_DIRECTORY;
+		stmt = db.prepare("INSERT INTO inject_files (unique_name, url_or_path, directory, file, inject_type, inject_order, is_spaceify) VALUES(?, ?, ?, ?, ?, ?, 0)");
 
-	var order = 1;
-	for(var i=0; i<manifest.inject_files.length; i++)
-		{
-		var directory = manifest.inject_files[i].directory.trim();
-		if(directory != "" && directory.search(/\/$/) == -1)
-			directory += "/";
-		var file = manifest.inject_files[i].file.trim();
-		var type = manifest.inject_files[i].type.trim();
+		application_path = Config.SPACELETS_PATH + manifest.unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY + Config.WWW_DIRECTORY;
 
-		var url_or_path = (type == Config.JAVASCRIPT || type == Config.CSS ? Config.WWW_URL : application_path);		// Inject as url or file
+		var order = 1;
+		for(var i=0; i<manifest.inject_files.length; i++)
+			{
+			var directory = (manifest.inject_files[i].directory ? manifest.inject_files[i].directory.trim() : "");
+			if(directory != "" && directory.search(/\/$/) == -1)
+				directory += "/";
+			var file = manifest.inject_files[i].file.trim();
+			var type = manifest.inject_files[i].type.trim();
 
-		stmt.sync.run([manifest.unique_name, url_or_path, directory, file, type, order++]);
+			var url_or_path = (type == Config.JAVASCRIPT || type == Config.CSS ? Config.WWW_URL : application_path);		// Inject as url or file
+
+			stmt.sync.run([manifest.unique_name, url_or_path, directory, file, type, order++]);
+			}
 		}
-
-	stmt.finalize();
+	catch(err)
+		{
+		throw err;
+		}
+	finally
+		{
+		if(stmt)
+			stmt.finalize();
+		}
 	});
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //

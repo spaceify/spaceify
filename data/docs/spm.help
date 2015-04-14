@@ -94,24 +94,16 @@ Commands and options they accept
 
   source [authenticate] package
   
-    Get the source code for a package.
+    Get the source codes for a package.
   
     The authenticate option can be used for authenticating to GitHub repository. The username
     and password will be prompted if this option is set.
   
-    The source can be in a local directory, local or remote zip archive, GitHub repository or
-    in the Spaceify registry. When loading remote zip archives any url can be given as long as
-    the response is a valid zip archive. Packages from GitHub can be loaded using html, git or
-    clone url. After the operation source code is in directory package/version (as defined in
-    packages unique_name and version fields) of the current working directory.
-  
-    Local directory or zip archive:
-      spm source <directory>
-      spm source <zip archive>
-  
-      spm source /home/galaxy/spacelets/star
-      spm source /home/galaxy/spacelets/star/application
-      spm source /home/galaxy/spacelets/star.zip
+    The source can be in a remote zip archive, GitHub repository or in the Spaceify registry.
+    When loading remote zip archives any url can be given as long as the response is a valid 
+    zip archive. Packages from GitHub can be loaded using html, git or clone url. After the
+    operation source code is in directory sources/<package> of the current working directory.
+    The <package> name is the name given to spm formatted as a valid directory name.
   
     Remote zip archive:
       spm source <zip archive url>
@@ -134,8 +126,16 @@ Commands and options they accept
       spm source spaceify/star@1.0.0
   
     Result
-      For example the source code after GitHub operation could be a directory
-      spaceify/star/1.0.0 containing all the source code.
+      For example if the sources are from:
+  
+      zip
+      sources/https_www_example_com_spacelets_star_zip
+  
+      GitHub
+      sources/https_github_com_spaceify_star_git
+  
+      Spaceify registry
+      sources/spaceify_star_1_0_0
 
   remove unique_name
   

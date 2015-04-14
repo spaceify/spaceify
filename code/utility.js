@@ -102,6 +102,9 @@ self.deleteDirectory = fibrous( function(source, bThrows)						// Recursively de
 self.copyDirectory = fibrous( function(source, target, bThrows)
 	{ // Recursively copy source directory content to target directory.
 	try {
+		source += (source.search(/\/$/) != -1 ? "" : "/");
+		target += (target.search(/\/$/) != -1 ? "" : "/");
+
 		var stats = fs.sync.stat(source);
 		if(typeof stats == "undefined" || !stats.isDirectory()) return;
 
@@ -427,6 +430,26 @@ self.loadJSON = fibrous( function(file, bParse, bThrows)
 		}
 
 	return manifest;
+	});
+
+self.saveJSON = fibrous( function(file, json, bThrows)
+	{
+	var success = false;
+
+	try {
+		var jsondata = JSON.stringify(json);
+
+		fs.sync.writeFile(file, jsondata, {encoding: "utf8"});
+
+		success = true;
+		}
+	catch(err)
+		{
+		if(bThrows)
+			throw self.error(Language.E_SAVE_JSON.p("Utility::saveJSON"), err);
+		}
+
+	return success;
 	});
 
 self.parseJSON = function(str, throws)

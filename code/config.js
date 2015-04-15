@@ -88,6 +88,7 @@ module.exports = function()
 	"GITHUB_HOSTNAME": "github.com",
 
 	"DNS_PORT": 53,
+	"EXTERNAL_DNS_IP": spaceify_data_path + "dns/ip",
 
 	"MACREGX": new RegExp("^([0-9A-F]{2}[:-]){5}([0-9A-F]{2})$", "i"),
 	"IP_REGX": new RegExp("\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"),

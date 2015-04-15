@@ -26,8 +26,8 @@ self.connect = function(opts)
 	options.v6_address = opts.v6_address || null;
 	options.url2ip = opts.url2ip || {};
 	options.ttl = opts.ttl || 0;
+	options.external_dns = opts.external_dns;
 	options.default_response = opts.default_response || null;
-	options.external_dns = opts.external_dns || { address: "8.8.8.8", port: 53, type: "udp"};
 	options.debug = opts.debug || false;
 
 	serverUDP4 = dns.createUDPServer({dgram_type: "udp4"});

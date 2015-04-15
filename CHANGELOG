@@ -1,3 +1,6 @@
+0.1.4 Alpha Centauri (developer-pre-alpha)
+    * Spaceify's DNS server uses now external networks DNS server IPs.
+
 0.1.3 Alpha Centauri (developer-pre-alpha)
     * Fixed several bugs affecting stability.
 

@@ -11,7 +11,7 @@ var errors = [];
 var rules = null;
 var unique_values = [];
 
-self.validate = fibrous( function(package_path, save_path_manifest)
+self.validatePackage = fibrous( function(package_path, save_path_manifest)
 	{
 	try {
 		errors = [];
@@ -29,7 +29,7 @@ self.validate = fibrous( function(package_path, save_path_manifest)
 			throw Utility.error(Language.E_NO_MANIFEST_FILE.p("ValidateApplication::validate"));
 
 		// VALIDATE MANIFEST
-		var manifest = self.validateManifest.sync(manifest_path);
+		var manifest = self.validateManifestFile.sync(manifest_path);
 
 		// VALIDATE DIRECTORIES AND FILES IN THE PACKAGE
 		if(errors.length == 0)
@@ -53,9 +53,6 @@ self.validate = fibrous( function(package_path, save_path_manifest)
 self.validateDirectories = fibrous( function(application_path, manifest)
 	{ // CHECKS THAT THE FILES DEFINED IN THE MANIFEST ARE IN THE PACKAGE
 	var i, obj, type, path = "";
-
-	if(errors.length != 0)
-		return;
 
 	try {
 		if(manifest.type == Config.SPACELET)												// inject_files
@@ -106,11 +103,26 @@ self.validateDirectories = fibrous( function(application_path, manifest)
 		}
 	});
 
-self.validateManifest = fibrous( function(manifest_path)
+self.validateManifestFile = fibrous( function(manifest_path)
+	{
+	var manifest = {};
+
+	try {
+		manifest = Utility.sync.loadJSON(manifest_path, true, true);
+
+		self.validateManifest.sync(manifest);
+		}
+	catch(err)
+		{
+		throw err;
+		}
+
+	return manifest;
+	});
+
+self.validateManifest = fibrous( function(manifest)
 	{
 	var i, j, rule, rule_errors, sub_rule, sub_rule_errors, required, type, value, is_required, is_set, is_type, objects, object, sub_rule_field, field_errors;
-
-	var manifest = Utility.sync.loadJSON(manifest_path, true, true);
 
 	rules = Utility.sync.loadJSON(Config.SPACEIFY_MANIFEST_FILE, true, true);							// Get the manifest parsing validation rules
 

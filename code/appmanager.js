@@ -133,7 +133,7 @@ self.installApplication = fibrous( function(package, isSuggested, username, pass
 		messages.sync(Language.VALIDATING_PACKAGE);
 
 		var validator = new ValidateApplication();
-		var manifest = validator.sync.validate(Config.WORK_PATH, Config.WORK_PATH + Config.APPLICATION_DIRECTORY);
+		var manifest = validator.sync.validatePackage(Config.WORK_PATH, Config.WORK_PATH + Config.APPLICATION_DIRECTORY);
 
 		// Application must not have same service names with already installed applications
 		var errors = database.sync.checkProvidedServices(manifest);

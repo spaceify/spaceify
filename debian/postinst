@@ -155,6 +155,45 @@ core_port="2497"
 #sed -i "s/%1/${core_port}/" /var/lib/spaceify/monit/spaceify.conf							# change the port to monitor to configuration
 sed -i "s/%1/${core_port}/" /etc/monit/conf.d/spaceify.conf
 
+#######################################
+# GET EXTERNAL DNS SERVERS IP ADDRESS #
+#######################################
+lease=""																					# Get the leases for the user selected network adapter connected to the internet
+if [[ -s "/var/lib/dhcp/dhclient.${eth}.leases" ]]; then									# Try different locations (FILE exists and has a size greater than zero)
+	lease="/var/lib/dhcp/dhclient.${eth}.leases"
+elif [[ -s "/var/lib/dhcp/dhclient.leases" ]]; then
+	lease="/var/lib/dhcp/dhclient.leases"
+elif [[ -s "/var/lib/dhcp3/dhclient.${eth}.leases"  ]]; then
+	lease="/var/lib/dhcp3/dhclient.${eth}.leases"
+elif [[ -s "/var/lib/dhcp3/dhclient.leases" ]]; then
+	lease="/var/lib/dhcp3/dhclient.leases"
+fi
+
+lines=""																					# Get the DNS servers from the DHCP leases. The users selected network
+while read line;
+do
+	lines=$lines$( echo $line | grep "option domain-name-servers" );
+done < $lease
+
+lines=${lines//option domain-name-servers /}												# Replace unwanted strings
+lines=${lines//;/,}
+
+IFS=',' read -a lines <<< "$lines"															# Split string into an array of IPs
+
+for ip in "${lines[@]}"																		# Find the first non-local IP
+do
+	if [[ "$ip" != "127.0.0.1" && "$ip" != "10.0.0.1" ]]; then
+		break;
+	fi
+done
+
+if [[ "$ip" == "" ]]; then																	# Use Google's DNS as a fallback
+	ip="8.8.8.8"
+fi
+
+mkdir -p /var/lib/spaceify/data/dns > /dev/null 2>&1 || true								# Save the IP to Spaceify's directory for its DNS server to find
+printf $ip > /var/lib/spaceify/data/dns/ip
+
 ####################
 # EXECUTE COMMANDS #
 ####################

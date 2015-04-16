@@ -1,7 +1,7 @@
 Spaceify
 ========
 
-**Version 0.1.4 Alpha Centauri (developer-pre-alpha)**
+**Version 0.1.5 Alpha Centauri (developer-pre-alpha)**
 
 Spaceify is a client-edge-server ecosystem that seamlessly integrates your physical space with the web. With Spaceify you can give web apps controlled access to resources such as big screens, sensors and lighting in your space.
 

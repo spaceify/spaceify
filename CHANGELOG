@@ -1,3 +1,6 @@
+0.1.5 Alpha Centauri (developer-pre-alpha)
+    * Fix to an error in installation process.
+
 0.1.4 Alpha Centauri (developer-pre-alpha)
     * Spaceify's DNS server uses now external networks DNS server IPs.
 

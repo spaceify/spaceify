@@ -1,3 +1,12 @@
+0.1.6 Alpha Centauri (developer-pre-alpha)
+    * Improvements to Spaceify's installation process.
+    * Added tools to help debugging applications:
+      - rsapp for restarting applications and displaying STDOUT and STDERR texts from 
+        inside applications Docker container (e.g. rsapp spaceify/bigscreen).
+      - applog display STDOUT and STDERR texts from inside applications Docker container
+        (e.g. applog spaceify/bigscreen).
+    * Various improvements and fixes to core and application manager.
+
 0.1.5 Alpha Centauri (developer-pre-alpha)
     * Fix to an error in installation process.
 

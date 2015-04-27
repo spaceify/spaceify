@@ -1,0 +1,411 @@
+{
+  "rules":
+  {
+    "name":
+    {
+      "type": "string",
+      "required": "all",
+      "validator": {"type": "regx", "match": "name"},
+      "errors": {"field": "E_NAME_UNDEFINED", "type": "E_NAME_STRING", "error": "E_NAME_FORMAT"}
+    },
+    "unique_name":
+    {
+      "type": "string",
+      "required": "all",
+      "unique": [{"compare": "unique_name", "compare_type": "equal", "fields": [], "store": true, "error": "E_SERVICE_SUGGESTED_SELF"}],
+      "validator": {"type": "regx", "match": "unique_name"},
+      "errors": {"field": "E_UNIQUE_NAME_UNDEFINED", "type": "E_UNIQUE_NAME_STRING", "error": "E_UNIQUE_NAME_FORMAT"}
+    },
+    "provides_services":
+    {
+      "type": "objects",
+      "required": "all",
+      "unique": [{"compare": "service_name", "compare_type": "equal", "fields": ["service_name"], "store": true, "error": "E_SERVICE_NAME_DUPLICATE"}],
+      "sub_rules":
+      {
+        "service_name": {"required": true, "type": "string", "validator": {"type": "function", "name": "serviceName", "params": ""}, "errors": {"field": "E_SERVICE_NAME_UNDEFINED_P", "type": "E_SERVICE_NAME_STRING_P", "error": "E_SERVICE_NAME_FORMAT_P"}},
+        "service_type": {"required": true, "type": "string", "validator": {"type": "list", "match": "service_types"}, "errors": {"field": "E_SERVICE_TYPE_UNDEFINED_P", "type": "E_SERVICE_TYPE_STRING_P", "error": "E_SERVICE_TYPE_P"}}
+      },
+      "errors": {"field": "E_SERVICE_PROVIDES_REQUIRED", "type": "E_SERVICE_ARRAY_P", "empty": "E_SERVICE_ARRAY_EMPTY_P"}      
+    },
+    "requires_services":
+    {
+      "type": "objects",
+      "required": "none",
+      "unique": [{"compare": "service_name", "compare_type": "equal", "fields": ["service_name"], "store": true, "error": "E_SERVICE_NAME_DUPLICATE"},
+                 {"compare": "unique_name", "compare_type": "equal", "fields": ["suggested_application"], "store": true, "error": "E_SERVICE_SUGGESTED_SELF"}],
+      "sub_rules":
+      {
+        "service_name": {"required": true, "type": "string", "validator": {"type": "function", "name": "serviceName", "params": ""}, "errors": {"field": "E_SERVICE_NAME_UNDEFINED_R", "type": "E_SERVICE_NAME_STRING_R", "error": "E_SERVICE_NAME_FORMAT_R"}},
+        "service_type": {"required": true, "type": "string", "validator": {"type": "list", "match": "service_types"}, "errors": {"field": "E_SERVICE_TYPE_UNDEFINED_R", "type": "E_SERVICE_TYPE_STRING_R", "error": "E_SERVICE_TYPE_R"}},
+        "suggested_application": {"required": true, "type": "string", "validator": {"type": "function", "name": "suggestedApplication", "params": ["unique_name", "version"]}, "errors": {"field": "E_SERVICE_SUGGESTED_UNDEFINED", "type": "E_SERVICE_SUGGESTED_STRING", "error": "E_SERVICE_SUGGESTED_FORMAT"}}
+      },
+      "errors": {"type": "E_SERVICE_ARRAY_R", "empty": "E_SERVICE_ARRAY_EMPTY_R"}
+    },
+    "version":
+    {
+      "type": "string",
+      "required": "all",
+      "validator": {"type": "nregx", "match": "version"},
+      "errors": {"field": "E_VERSION_UNDEFINED", "type": "E_VERSION_TYPE_STRING", "error": "E_VERSION_FORMAT"}
+    },
+    "type":
+    {
+      "type": "string",
+      "required": "all",
+      "validator": {"type": "list", "match": "application_types"},
+      "errors": {"field": "E_TYPE_UNDEFINED", "type": "E_TYPE_STRING", "error": "E_TYPE_FORMAT"}
+    },
+    "category":
+    {
+      "type": "string",
+      "required": "all",
+      "validator": {"type": "regx", "match": "category"},
+      "errors": {"field": "E_CATEGORY_UNDEFINED", "type": "E_CATEGORY_STRING", "error": "E_CATEGORY_FORMAT"}
+    },
+    "start_command":
+    {
+      "type": "string",
+      "required": "all",
+      "validator": {"type": "regx", "match": "not_empty"},
+      "errors": {"field": "E_START_COMMAND_UNDEFINED", "type": "E_START_COMMAND_STRING", "error": "E_START_COMMAND_FORMAT"}    
+    },
+    "stop_command":
+    {
+      "type": "string",
+      "required": "none",
+      "validator": {"type": "regx", "match": "not_empty"},
+      "errors": {"type": "E_STOP_COMMAND_UNDEFINED", "error": "E_STOP_COMMAND_FORMAT"}
+    },
+    "shared":
+    {
+      "type": "boolean",
+      "required": "spacelet",
+      "validator": {"type": "list", "match": "boolean_values"},
+      "errors": {"field": "E_SHARED_UNDEFINED", "type": "E_SHARED_TYPE", "error": "E_SHARED_FORMAT"}
+    },
+    "inject_identifier":
+    {
+      "type": "string",
+      "required": "spacelet",
+      "validator": {"type": "regx", "match": "not_empty"},
+      "errors": {"field": "E_INJECT_IDENTIFIER_UNDEFINED", "type": "E_INJECT_IDENTIFIER_TYPE", "error": "E_INJECT_IDENTIFIER_FORMAT"}
+    },
+    "inject_hostnames":
+    {
+      "type": "array",
+      "required": "spacelet",
+      "unique": [{"compare": "inject_hostnames", "compare_type": "regx", "store": true, "error": "E_INJECT_HOSTNAMES_DUPLICATE"}],
+      "sub_rules": {"type": "string", "validator": {"type": "regx", "match": "inject_hostnames"}, "errors": {"type": "E_INJECT_HOSTNAME_STRING", "error": "E_INJECT_HOSTNAME_FORMAT"}},
+      "errors": {"field": "E_INJECT_HOSTNAMES_UNDEFINED", "type": "E_INJECT_HOSTNAMES_TYPE", "empty": "E_INJECT_HOSTNAMES_EMPTY"}
+    },
+    "inject_files":
+    {
+      "type": "objects",
+      "required": "spacelet",
+      "unique": [{"compare": "inject_files", "compare_type": "equal", "fields": ["directory", "file"], "store": true, "error": "E_INJECT_FILES_DUPLICATE"}],
+      "sub_rules":
+      {
+        "directory": {"required": false, "type": "string", "validator": {"type": "regx", "match": "directory"}, "errors": {"type": "E_INJECT_FILE_DIRECTORY_TYPE", "error": "E_INJECT_FILE_DIRECTORY_FORMAT"}},
+        "file": {"required": true, "type": "string", "validator": {"type": "regx", "match": "file"}, "errors": {"field": "E_INJECT_FILE_FILE_UNDEFINED", "type": "E_INJECT_FILE_FILE_TYPE", "error": "E_INJECT_FILE_FILE_FORMAT"}},
+        "type": {"required": true, "type": "string", "validator": {"type": "list", "match": "inject_types"}, "errors": {"field": "E_INJECT_FILE_TYPE_UNDEFINED", "type": "E_INJECT_FILE_TYPE_TYPE", "error": "E_INJECT_FILE_TYPE_FORMAT"}}
+      },
+      "errors": {"field": "E_INJECT_FILES_UNDEFINED", "type": "E_INJECT_FILES_TYPE", "empty": "E_INJECT_FILES_EMPTY"}
+    },
+    "install_commands":
+    {
+      "type": "array",
+      "required": "none",
+      "sub_rules": {"type": "string", "validator": {"type": "regx", "match": "not_empty"}, "errors": {"type": "E_INSTALL_COMMAND_TYPE", "error": "E_INSTALL_COMMAND_FORMAT"}},
+      "errors": {"type": "E_INSTALL_COMMANDS_TYPE", "empty": "E_INSTALL_COMMANDS_EMPTY"}
+    },
+    "developer":
+    {
+      "type": "object",
+      "required": "all",
+      "sub_rules":
+      {
+        "name": {"required": true, "type": "string", "validator": {"type": "regx", "match": "not_empty_trimmed"}, "errors": {"field": "E_DEVELOPER_NAME_UNDEFINED", "type": "E_DEVELOPER_NAME_STRING", "error": "E_DEVELOPER_NAME_FORMAT"}},
+        "email": {"required": false, "type": "string", "validator": {"type": "nregx", "match": "email"}, "errors": {"type": "E_DEVELOPER_EMAIL_TYPE", "error": "E_DEVELOPER_EMAIL_FORMAT"}},
+        "url": {"required": false, "type": "string", "validator": {"type": "regx", "match": "url"}, "errors": {"type": "E_DEVELOPER_URL_TYPE", "error": "E_DEVELOPER_URL_FORMAT"}}
+      },
+      "errors": {"field": "E_DEVELOPER_UNDEFINED", "type": "E_DEVELOPER_TYPE", "error": "E_DEVELOPER_EMPTY"}
+    },
+    "contributors":
+    {
+      "type": "objects",
+      "required": "none",
+      "sub_rules":
+      {
+        "name": {"required": true, "type": "string", "validator": {"type": "regx", "match": "not_empty_trimmed"}, "errors": {"field": "E_CONTRIBUTORS_NAME_UNDEFINED", "type": "E_CONTRIBUTORS_NAME_TYPE", "error": "E_CONTRIBUTORS_NAME_FORMAT"}},
+        "email": {"required": false, "type": "string", "validator": {"type": "nregx", "match": "email"}, "errors": {"type": "E_CONTRIBUTORS_EMAIL_TYPE", "error": "E_CONTRIBUTORS_EMAIL_FORMAT"}},
+        "url": {"required": false, "type": "string", "validator": {"type": "regx", "match": "url"}, "errors": {"type": "E_CONTRIBUTORS_URL_TYPE", "error": "E_CONTRIBUTORS_URL_FORMAT"}}
+      },
+      "errors": {"type": "E_CONTRIBUTORS_TYPE", "empty": "E_CONTRIBUTORS_EMPTY"}
+    },
+    "short_description":
+    {
+      "type": "string",
+      "required": "all",
+      "validator": {"type": "regx", "match": "not_empty_trimmed"},
+      "errors": {"field": "E_SHORT_DESCRIPTION_UNDEFINED", "type": "E_SHORT_DESCRPTION_TYPE", "error": "E_SHORT_DESCRPTION_FORMAT"}
+    },
+    "keywords":
+    {
+      "type": "array",
+      "required": "none",
+      "sub_rules": {"type": "string", "validator": {"type": "regx", "match": "keywords"}, "errors": {"type": "E_KEYWORD_TYPE", "error": "E_KEYWORD_FORMAT"}},
+      "errors": {"type": "E_KEYWORDS_TYPE", "empty": "E_KEYWORDS_EMPTY"}
+    },
+    "license":
+    {
+      "type": "string",
+      "required": "none",
+      "validator": {"type": "regx", "match": "not_empty_trimmed"},
+      "errors": {"type": "E_LICENSE_TYPE", "error": "E_LICENSE_FORMAT"}
+    },
+    "images":
+    {
+      "type": "objects",
+      "required": "none",
+      "unique": [{"compare": "images", "compare_type": "equal", "fields": ["directory", "file"], "store": true}],
+      "sub_rules":
+      {
+        "directory": {"required": false, "type": "string", "validator": {"type": "regx", "match": "directory"}, "errors": {"type": "E_IMAGES_DIRECTORY_TYPE", "error": "E_IMAGES_DIRECTORY_FORMAT"}},
+        "file": {"required": true, "type": "string", "validator": {"type": "regx", "match": "file"}, "errors": {"field": "E_IMAGES_FILE_UNDEFINED", "type": "E_IMAGES_FILE_TYPE", "error": "E_IMAGES_FILE_FORMAT"}},
+        "title": {"required": false, "type": "string", "validator": {"type": "regx", "match": "not_empty_trimmed"}, "errors": {"type": "E_IMAGES_TITLE_TYPE", "error": "E_IMAGES_TITLE_FORMAT"}}
+      },
+      "errors": {"type": "E_IMAGES_TYPE", "empty": "E_IMAGES_EMPTY"}
+    },
+    "creation_date":
+    {
+      "type": "string",
+      "required": "none",
+      "validator": {"type": "nregx", "match": "date"},
+      "errors": {"type": "E_CREATION_DATE_TYPE", "error": "E_CREATION_DATE_FORMAT"}
+    },
+    "publish_date":
+    {
+      "type": "string",
+      "required": "none",
+      "validator": {"type": "nregx", "match": "date"},
+      "errors": {"type": "E_PUBLISH_DATE_TYPE", "error": "E_PUBLISH_DATE_FORMAT"}
+    },
+    "docker_image":
+    {
+      "type": "boolean",
+      "required": "none",
+      "validator": {"type": "list", "match": "boolean_values"},
+      "errors": {"type": "E_DOCKER_IMAGE_TYPE", "error": "E_DOCKER_IMAGE_FORMAT"}
+    },
+    "implements":
+    {
+      "type": "array",
+      "required": "none",
+      "unique": [{"compare": "implements", "compare_type": "equal", "store": true, "error": "E_IMPLEMENTS_DUPLICATE"}],
+      "sub_rules": {"type": "string", "validator": {"type": "list", "match": "constants"}, "errors": {"type": "E_IMPLEMENTS_CONSTANT_TYPE", "error": "E_IMPLEMENTS_CONSTANT_ACCEPTED"}},
+      "errors": {"type": "E_IMPLEMENTS_TYPE", "empty": "E_IMPLEMENTS_EMPTY"}
+    },
+    "repository":
+    {
+      "type": "string",
+      "required": "none",
+      "validator": {"type": "regx", "match": "url"},
+      "errors": {"type": "E_REPOSITORY_TYPE", "error": "E_REPOSITORY_FORMAT"}      
+    },
+    "web_url":
+    {
+      "type": "string",
+      "required": "none",
+      "validator": {"type": "regx", "match": "url"},
+      "errors": {"type": "E_WEB_URL_TYPE", "error": "E_WEB_URL_FORMAT"}
+    },
+    "bugs":
+    {
+      "type": "string",
+      "required": "none",
+      "validator": {"type": "regx", "match": "url"},
+      "errors": {"type": "E_BUGS_TYPE", "error": "E_BUGS_FORMAT"}
+    }
+  },
+
+  "regxs":
+  {
+    "service_name": "/^(spaceify.org\\/services\\/[0-9a-z_\\/]{3,106})$(?<!\\/http|https)/",
+    "unique_name": "/[^a-z0-9\\/]|\\s|^$|^\\/+|\\/+$|\\/{2,}|^.{129,}$/",
+    "name": "/[^0-9a-zA-Z\\x20_-]|^$|^\\s+|\\s+$|^.{129,}$/",
+    "category": "/[^a-z-_]|\\s|^$|^.{129,}$/",
+    "inject_hostnames": "/^$|\\s/",
+    "not_empty": "/^$/",
+    "not_empty_trimmed": "/^$|^\\s+|\\s+$/",
+    "directory": "/[^0-9a-zA-Z-._\\/]|^$|^\\.+|\\.+$|^\\/|^-|\\/$|\\/{2,}/",
+    "file": "/[^0-9a-zA-Z-._]|^$|^\\.+|\\.+$|^-+/",
+    "email": "/^[0-9a-zA-Z][-._a-zA-Z0-9]*@([0-9a-zA-Z][-._0-9a-zA-Z]*\\.)+[a-zA-Z]{2,4}$|^\\w/",
+    "url": "/^$|\\s/",
+    "version": "/^(\\d|[1-9]\\d{0,4})(\\.\\d|\\.[1-9]\\d{0,4})?(\\.\\d|\\.[1-9]\\d{0,4})?$/",
+    "date": "/^(((\\d{4})(-)(0[13578]|10|12)(-)(0[1-9]|[12][0-9]|3[01]))|((\\d{4})(-)(0[469]|1?1)(-)([0][1-9]|[12][0-9]|30))|((\\d{4})(-)(02)(-)(0[1-9]|1[0-9]|2[0-8]))|(([02468]?[048]00)(-)(02)(-)(29))|(([13579][26]00)(-)(02)(-)(29))|(([0-9][0-9][0][48])(-)(0?2)(-)(29))|(([0-9][0-9][2468][048])(-)(02)(-)(29))|(([0-9][0-9][13579][26])(-)(02?)(-)(29)))(\\s([0-1][0-9]|2[0-4]):([0-5][0-9]):([0-5][0-9]))$/",
+    "keywords": "/[^0-9a-zA-Z]|\\s|^$/"
+  },
+
+  "lists":
+  {
+    "service_types": ["open", "open_local", "standard"],
+    "application_types": ["spacelet", "sandboxed", "native"],
+    "boolean_values": [false, true],
+    "inject_types": ["javascript", "css", "file"],
+    "constants": ["WEB_SERVER"]
+  },
+
+  "errors":
+  {
+    "E_NAME_UNDEFINED": "Manifest: name field must be defined.",
+    "E_NAME_STRING": "Manifest: name type must be string.",
+    "E_NAME_FORMAT": "Manifest: name can contain characters 0-9a-zA-Z_- and space. Name can not be empty, have leading or trailing whitespace and maximum length is 128 characters.",
+
+    "E_UNIQUE_NAME_UNDEFINED": "Manifest: unique_name field must be defined.",
+    "E_UNIQUE_NAME_STRING": "Manifest: unique_name type must be string.",
+    "E_UNIQUE_NAME_FORMAT": "Manifest: unique_name can contain characters 0-9a-z/. Unique name can not be empty, have leading or trailing whitespace, start or end with / or have consecutive / and maximum length is 128 characters.",
+
+    "E_SERVICE_ARRAY_P": "Manifest: provides services type must be an array.",
+    "E_SERVICE_ARRAY_R": "Manifest: requires services type must be an array.",
+    "E_SERVICE_ARRAY_EMPTY_P": "Manifest: provides services array must have service(s) defined.",
+    "E_SERVICE_ARRAY_EMPTY_R": "Manifest: requires services array must have service(s) defined.",
+    "E_SERVICE_NAME_DUPLICATE": "Manifest: service_name can be defined only once in the provides_services and requires_services rows.",
+    "E_SERVICE_NAME_FORMAT_P": "Manifest: provides service_name has two parts <registry><name>. The registry part must always be spaceify.org/services/. Allowed characters for the name part are 0-9a-zA-Z/_ and length is 3 - 106 characters. Name can not be empty, http or https or end with /.",
+    "E_SERVICE_NAME_FORMAT_R": "Manifest: requires service_name has two parts <registry><name>. The registry part must always be spaceify.org/services/. Allowed characters for the name part are 0-9a-zA-Z/_ and length is 3 - 106 characters. Name can not be empty, http or https or end with /.",
+    "E_SERVICE_NAME_UNDEFINED_P": "Manifest: provides services must have service_name field defined.",
+    "E_SERVICE_NAME_UNDEFINED_R": "Manifest: requires services must have service_name field defined.",
+    "E_SERVICE_NAME_STRING_P": "Manifest: provides services service_name type must be string.",
+    "E_SERVICE_NAME_STRING_R": "Manifest: requires services service_name type must be string.",
+    "E_SERVICE_TYPE_P": "Manifest: provides service_type accepts values shared, open and open_local.",
+    "E_SERVICE_TYPE_R": "Manifest: requires service_type accepts values shared, open and open_local.",
+    "E_SERVICE_TYPE_UNDEFINED_P": "Manifest: provides services must have service_type field defined.",
+    "E_SERVICE_TYPE_UNDEFINED_R": "Manifest: requires provides services must have service_type field defined.",
+    "E_SERVICE_TYPE_STRING_P": "Manifest: provides services service_type type must be string.",
+    "E_SERVICE_TYPE_STRING_R": "Manifest: provides services service_type type must be string.",
+    "E_SERVICE_SUGGESTED_UNDEFINED": "Manifest: requires_services must have suggested_application field defined.",
+    "E_SERVICE_SUGGESTED_STRING": "Manifest: requires_services suggested_application type must be string.",
+    "E_SERVICE_SUGGESTED_FORMAT": "Manifest: suggested_application name can contain characters 0-9a-z/. Name can not be empty, have leading or trailing whitespace, start or end with a / or have consecutive /. Name can be optionally followed by @version, where version is one to three dot separated sequences of valid integers between 0 - 99999.",
+    "E_SERVICE_SUGGESTED_SELF": "The suggested_name in requires_services can not be same as the applications unique_name is (suggests self).",
+    "E_SERVICE_PROVIDES_REQUIRED": "Manifest: provides_services field must be defined.",
+
+    "E_VERSION_UNDEFINED": "Manifest: version field must be defined.",
+    "E_VERSION_TYPE_STRING": "Manifest: version type must be string.",    
+    "E_VERSION_FORMAT": "Manifest: version is in unsupported format. Supported format has one to three dot separated sequences of valid integers between 0 - 99999.",    
+
+    "E_TYPE_UNDEFINED": "Manifest: type field must be defined.",
+    "E_TYPE_STRING": "Manifest: type type must be string.",
+    "E_TYPE_FORMAT": "Manifest: type accepts values spacelet, sandboxed and native.",
+
+    "E_CATEGORY_UNDEFINED": "Manifest: category field must be defined.",
+    "E_CATEGORY_STRING": "Manifest: category type must be string.",
+    "E_CATEGORY_FORMAT": "Manifest: category can contain characters 0-9a-z-_. Category can not be empty, contain whitespace and maximum length is 128 characters.",
+
+    "E_START_COMMAND_UNDEFINED": "Manifest: start_command field must be defined.",
+    "E_START_COMMAND_STRING": "Manifest: start_command type must be string.",
+    "E_START_COMMAND_FORMAT": "Manifest: start_command can not be empty.",
+
+    "E_STOP_COMMAND_UNDEFINED": "Manifest: stop_command type must be string.",
+    "E_STOP_COMMAND_FORMAT": "Manifest: stop_command can not be empty or have leading or trailing whitespace. Leave it out if it is not required.",
+
+    "E_SHARED_UNDEFINED": "Manifest: shared field must be defined for spacelets.",
+    "E_SHARED_TYPE": "Manifest: shared type must be boolean.",
+    "E_SHARED_FORMAT": "Manifest: shared accepts values true and false.",
+
+    "E_INJECT_IDENTIFIER_UNDEFINED": "Manifest: inject_identifier field must be defined for spacelets.",
+    "E_INJECT_IDENTIFIER_TYPE": "Manifest: inject_identifier type must be string.",
+    "E_INJECT_IDENTIFIER_FORMAT": "Manifest: inject_identifier can not be empty.",
+
+    "E_INJECT_HOSTNAMES_UNDEFINED": "Manifest: inject_hostnames field must be defined for spacelets.",
+    "E_INJECT_HOSTNAMES_TYPE": "Manifest: inject_hostnames type must be array.",
+    "E_INJECT_HOSTNAMES_EMPTY": "Manifest: inject_hostnames must have hostname(s) defined.",
+    "E_INJECT_HOSTNAME_STRING": "Manifest: inject_hostnames hostname type must be string.",
+    "E_INJECT_HOSTNAME_FORMAT": "Manifest: inject_hostnames hostname value can not be empty or contain whitespace.",
+    "E_INJECT_HOSTNAMES_DUPLICATE": "Manifest: Duplicate host names in inject_hostnames.",
+
+    "E_INJECT_FILES_UNDEFINED": "Manifest: inject_files field must be defined for spacelets.",
+    "E_INJECT_FILES_TYPE": "Manifest: inject_files type must be array.",
+    "E_INJECT_FILES_EMPTY": "Manifest: inject_files must have inject files defined.",
+    "E_INJECT_FILE_DIRECTORY_TYPE": "Manifest: inject_files directory type must be string.",
+    "E_INJECT_FILE_DIRECTORY_FORMAT": "Manifest: inject_files directory can contain characters 0-9a-zA-Z/.-_. Directory can not be empty, have leading or trailing whitespace, start with ., / or - or end with . or / and can not have consecutive /.",
+    "E_INJECT_FILE_FILE_UNDEFINED": "Manifest: inject_files must have a file field defined.",
+    "E_INJECT_FILE_FILE_TYPE": "Manifest: inject_files file type must be string.",
+    "E_INJECT_FILE_FILE_FORMAT": "Manifest: inject_files file can contain characters 0-9a-zA-Z.-_. File can not be empty, have leading or trailing whitespace, start with . or - or end with .",
+    "E_INJECT_FILE_TYPE_UNDEFINED": "Manifest: inject_files must have a type field defined.",
+    "E_INJECT_FILE_TYPE_TYPE": "Manifest: inject_files type type must be string.",
+    "E_INJECT_FILE_TYPE_FORMAT": "Manifest: inject_files type accepts values javascript, css and file.",
+    "E_INJECT_FILES_DUPLICATE": "Manifest: Duplicate directory/name row(s) in inject_files.",
+
+    "E_INSTALL_COMMANDS_TYPE": "Manifest: install_commands type must be array.",
+    "E_INSTALL_COMMANDS_EMPTY": "Manifest: install_commands must have command(s) defined.",
+    "E_INSTALL_COMMAND_TYPE": "Manifest: install command type must be string.",
+    "E_INSTALL_COMMAND_FORMAT": "Manifest: install command can not be empty. Leave it out if it is not required.",
+
+    "E_DEVELOPER_UNDEFINED": "Manifest: developer field must be defined",
+    "E_DEVELOPER_TYPE": "Manifest: developer type must be object.",
+    "E_DEVELOPER_EMPTY": "Manifest: developer must have developers defined.",
+    "E_DEVELOPER_NAME_UNDEFINED": "Manifest: developer must have name field defined.",
+    "E_DEVELOPER_NAME_STRING": "Manifest: developer name type must be string.",
+    "E_DEVELOPER_NAME_FORMAT": "Manifest: developer name can not be empty or have leading or trailing whitespace.",
+    "E_DEVELOPER_EMAIL_TYPE": "Manifest: developer email type must be string.",
+    "E_DEVELOPER_EMAIL_FORMAT": "Manifest: developer email is in unrecognized format.",
+    "E_DEVELOPER_URL_TYPE": "Manifest: developer url type must be string.",
+    "E_DEVELOPER_URL_FORMAT": "Manifest: developer url can not be empty. Leave it out if it is not required.",
+
+    "E_CONTRIBUTORS_TYPE": "Manifest: contributors type must be array.",
+    "E_CONTRIBUTORS_EMPTY": "Manifest: contributors must have contributors defined.",
+    "E_CONTRIBUTORS_NAME_UNDEFINED": "Manifest: contributors must have name field defined.",
+    "E_CONTRIBUTORS_NAME_TYPE": "Manifest: contributors name type must be string.",
+    "E_CONTRIBUTORS_NAME_FORMAT": "Manifest: contributors name can not be empty or have leading or trailing whitespace.",
+    "E_CONTRIBUTORS_EMAIL_TYPE": "Manifest: contributors email type must be string.",
+    "E_CONTRIBUTORS_EMAIL_FORMAT": "Manifest: contributors email is in unrecognized format.",
+    "E_CONTRIBUTORS_URL_TYPE": "Manifest: contributors url type must be string.",
+    "E_CONTRIBUTORS_URL_FORMAT": "Manifest: contributors url can not be empty. Leave it out if it is not required.",
+
+    "E_SHORT_DESCRIPTION_UNDEFINED": "Manifest: short_description field must be defined",
+    "E_SHORT_DESCRPTION_TYPE": "Manifest: short_description type must be string.",
+    "E_SHORT_DESCRPTION_FORMAT": "Manifest: short_description can not be empty or have leading or trailing whitespace.",
+
+    "E_KEYWORDS_TYPE": "Manifest: keywords type must be array.",
+    "E_KEYWORDS_EMPTY": "Manifest: keywords must have keyword(s) defined.",
+    "E_KEYWORD_TYPE": "Manifest: keyword type must be string.",
+    "E_KEYWORD_FORMAT": "Manifest: keyword value can contain characters 0-9a-zA-Z. Keyword can not be empty.",
+
+    "E_LICENSE_TYPE": "Manifest: license type must be string.",
+    "E_LICENSE_FORMAT": "Manifest: license can not be empty or have leading or trailing whitespace. Leave it out if it is not required.",
+
+    "E_IMAGES_TYPE": "Manifest: images type must be array.",
+    "E_IMAGES_EMPTY": "Manifest: images must have image files defined.",
+    "E_IMAGES_DIRECTORY_TYPE": "Manifest: images directory type must be string.",
+    "E_IMAGES_DIRECTORY_FORMAT": "Manifest: images directory can contain characters 0-9a-zA-Z/.-_. Directory can not be empty, have leading or trailing whitespace, start with ., / or - or end with . or / and can not have consecutive /.",
+    "E_IMAGES_FILE_UNDEFINED": "Manifest: images must have a file field defined.",
+    "E_IMAGES_FILE_TYPE": "Manifest: images file type must be string.",
+    "E_IMAGES_FILE_FORMAT": "Manifest: images file can contain characters 0-9a-zA-Z.-_. File can not be empty, have leading or trailing whitespace, start with . or - or end with .",
+    "E_IMAGES_TITLE_TYPE": "Manifest: images title type must be string.",
+    "E_IMAGES_TITLE_FORMAT": "Manifest: images title can not be empty or have leading or trailing whitespace. Leave it out if it is not required.",
+
+    "E_CREATION_DATE_TYPE": "Manifest: creation_date type must be string.",
+    "E_CREATION_DATE_FORMAT": "Manifest: creation_date is not a valid date. Date format is YYYY-MM-DD HH:MM:SS and the date must be valid.",
+
+    "E_PUBLISH_DATE_TYPE": "Manifest: publish_date type must be string.",
+    "E_PUBLISH_DATE_FORMAT": "Manifest: publish_date is not a valid date. Date format is YYYY-MM-DD HH:MM:SS and the date must be valid.",
+
+    "E_DOCKER_IMAGE_TYPE": "Manifest: docker_image type must be boolean.",
+    "E_DOCKER_IMAGE_FORMAT": "Manifest: docker_image accepts values true and false.",
+
+    "E_IMPLEMENTS_TYPE": "Manifest: implements type must be array.",
+    "E_IMPLEMENTS_EMPTY": "Manifest: implements must have constant(s) defined.",
+	"E_IMPLEMENTS_CONSTANT_TYPE": "Manifest: implements constant type must be string.",
+    "E_IMPLEMENTS_CONSTANT_ACCEPTED": "Manifest: implements constant accepts value WEB_SERVER.",
+    "E_IMPLEMENTS_DUPLICATE": "Manifest: Duplicate constants in implements.",
+
+    "E_REPOSITORY_TYPE": "Manifest: repository type must be string.",
+    "E_REPOSITORY_FORMAT": "Manifest: repository can not be empty. Leave it out if it is not required.",
+
+    "E_WEB_URL_TYPE": "Manifest: url type must be string.",
+    "E_WEB_URL_FORMAT": "Manifest: url can not be empty. Leave it out if it is not required.",
+
+    "E_BUGS_TYPE": "Manifest: bugs type must be string.",
+    "E_BUGS_FORMAT": "Manifest: bugs can not be empty. Leave it out if it is not required."
+  }
+}

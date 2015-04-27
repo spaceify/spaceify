@@ -176,6 +176,8 @@ var language =
 	/* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** 
 	** TEXTS ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
 	** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+	// COMMON
+	"APPLICATIONLC": "application",
 
 	// CONNECTIONS
 	"NO_CONNECTION_TO_SERVER": "No connection to server",
@@ -236,6 +238,8 @@ var language =
 	"STOPPING_APPLICATION": "Stopping application.",
 	"REMOVING_APPLICATION": "Removing existing application.",
 	"STARTING_APPLICATION": "Starting application.",
+	"RESTARTING_APPLICATION": "Restarting application.",
+	"RESTARTED_APPLICATION": "The application is now restarted.",
 	"INSTALL_GENERATE_CERTIFICATE": "Generating a Spaceify CA signed certificate for the application.",
 	"INSTALL_CERTIFICATE_EXISTS": "Using existing certificate.",
 	"REMOVING_DOCKER": "Removing existing Docker image and container.",
@@ -244,7 +248,7 @@ var language =
 	"INSTALL_CREATE_DOCKER_IMAGE": "Creating a custom Docker image :image for the application.",
 	"INSTALL_UPDATE_DATABASE": "Writing database entries for the application.",
 	"INSTALL_APPLICATION_FILES": "Copying application files to volume.",
-	"INSTALL_APPLICATION_OK": "Application :app@:version is now installed.",
+	"INSTALL_APPLICATION_OK": ":type :app@:version is now installed.",
 	"REMOVE_FROM_DATABASE": "Removing applications entries from the database.",
 	"ALREADY_STOPPED": "Application :app is already stopped.",
 	"ALREADY_RUNNING": "Application :app is already running.",

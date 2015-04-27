@@ -3,8 +3,11 @@ code/* var/lib/spaceify/code
 data/spacelets/readme.txt var/lib/spaceify/data/spacelets
 data/sandboxed/readme.txt var/lib/spaceify/data/sandboxed
 data/native/readme.txt var/lib/spaceify/data/native
+data/installed/readme.txt var/lib/spaceify/data/installed
 data/scripts/* var/lib/spaceify/data/scripts
 data/scripts/spm usr/bin
+data/scripts/rsapp usr/bin
+data/scripts/applog usr/bin
 data/docs/* var/lib/spaceify/data/docs
 data/db/create.sql var/lib/spaceify/data/db
 
@@ -14,7 +17,7 @@ monit/spaceify.conf etc/monit/conf.d
 
 upstart/* etc/init
 
-CHANGELOG var/lib/spaceify
 LICENSE var/lib/spaceify
-README.md var/lib/spaceify
 versions var/lib/spaceify
+CHANGELOG var/lib/spaceify
+README.md var/lib/spaceify

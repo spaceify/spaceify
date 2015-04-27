@@ -14,6 +14,7 @@ url2ip[Config.EDGE_HOSTNAME] = {ip: Config.EDGE_IP, ttl: 0, class: 1};
 var external_ip;																		// Get the external IP acquired during Spaceify's installation
 try {
 	external_ip = fs.readFileSync(Config.EXTERNAL_DNS_IP, {encoding: "utf8"});
+	external_ip = external_ip.replace(/[^0-9\.]/g, "");
 	}
 catch(err)
 	{

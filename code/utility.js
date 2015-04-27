@@ -202,14 +202,16 @@ self.zipDirectory = fibrous( function(source, zipfile)				// Craete a zip file f
 	source = source + (source != "" && source.search(/\/$/) == -1 ? "/" : "");
 
 	try {
-		var log = console.log;										// Disable console.log for a while, bacuse adm-zip prints directory content unnecessarily
+		/*var log = console.log;										// Disable console.log for a while, bacuse adm-zip prints directory content unnecessarily
 		console.log = function() {};
 
 		var zip = new AdmZip();
 		zip.addLocalFolder(source);
 		zip.writeZip(zipfile);
 
-		console.log = log;
+		console.log = log;*/
+
+		self.execute.sync("zip", ["-r", "-q", zipfile, ".", "-i", "*"], {cwd: source}, null);
 		}
 	catch(err)
 		{
@@ -381,7 +383,7 @@ self.printErrors = function(err)
 		{
 		for(var i=0; i<err.messages.length; i++)
 			{
-			var path = (err.paths[i] ? err.paths[i] + "->" : "");
+			var path = (err.paths[i] ? err.paths[i] + " - " : "");
 			var code = (err.codes[i] ? "(" + err.codes[i] + ") " : "");
 			message += (message != "" ? ", " : "") + path + code + err.messages[i];
 			}
@@ -484,6 +486,11 @@ self.replace = function(str, strs)
 	for(i in strs)
 		str = str.replace(i, strs[i]);
 	return str;
+	}
+
+self.ucfirst = function(string)
+	{
+	return string.charAt(0).toUpperCase() + string.slice(1);
 	}
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //

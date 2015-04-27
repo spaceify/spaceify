@@ -1,23 +1,27 @@
-# VERSION 0.4.0
+# VERSION 0.5.0
 FROM ubuntu:14.04
 MAINTAINER Spaceify Inc.
 
-RUN apt-get update
+RUN apt-get update && \
 
-RUN apt-get upgrade -y
+apt-get upgrade -y && \
 
-RUN apt-get install -y openssh-server screen unzip netcat nano dnsutils
+apt-get install -y openssh-server screen unzip netcat nano dnsutils && \
 
-RUN apt-get install -y python-software-properties python g++ make software-properties-common fakeroot
+apt-get install -y python-software-properties python g++ make software-properties-common fakeroot && \
 
-RUN apt-get install -y libssl-dev libsqlite3-dev libzip-dev
+apt-get install -y libssl-dev libsqlite3-dev libzip-dev && \
 
-RUN apt-get install -y curl openssl sqlite3
+apt-get install -y curl openssl sqlite3 && \
 
-RUN add-apt-repository ppa:chris-lea/node.js
-RUN apt-get update
-RUN apt-get install -y nodejs
+add-apt-repository ppa:chris-lea/node.js && \
 
-RUN mkdir -p /var/run/sshd
+apt-get update && \
 
-RUN echo "root:docker123" | chpasswd
+apt-get install -y nodejs && \
+
+mkdir -p /var/run/sshd && \
+
+echo "root:docker123" | chpasswd && \
+
+rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*

@@ -1,0 +1,27 @@
+#!/bin/bash
+# Outputs STDOUT and STDERR texts from inside applications Docker container. Takes applications unique name as a parameter (e.g. applog spaceify/bigscreen).
+# Spaceify Inc. 15.4.2015
+
+if [[ "$1" == "" ]]; then
+	printf "\nUsage: applog unique_name\nwhere unique_name is the unique name of an application to restart.\n\n"
+	exit 1
+fi
+
+dops=$(docker ps)								# Get running containers from Docker
+
+aline=""										# Get the line with the applications unique name
+while read -r line;
+do
+	line=$( echo "$line" | grep -i "$1" )
+	if [[ "$line" != "" ]]; then
+		aline=$line
+		break
+	fi
+done <<< "$dops"
+
+if [[ $aline != "" ]]; then						# Get the log of the application
+	IFS=' ' read -ra array <<< "$aline"
+	printf "\n\nSTDOUT and STDERR for application '$1'\n\n"
+	docker logs "${array[0]}"
+	printf "\n\n"
+fi

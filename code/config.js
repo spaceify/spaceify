@@ -26,6 +26,7 @@ module.exports = function()
 	"SPACELETS_PATH": spaceify_data_path + "spacelets/",
 	"SANDBOXED_PATH": spaceify_data_path + "sandboxed/",
 	"NATIVE_PATH": spaceify_data_path + "native/",
+	"INSTALLED_PATH": spaceify_data_path + "installed/",
 
 	"DOCS_PATH": spaceify_data_path + "docs/",
 
@@ -43,7 +44,7 @@ module.exports = function()
 	"WWW_URL": edge_hostname + "/",
 	"WWW_DIRECTORY": "www/",
 
-	"WORK_PATH": "/tmp/packet/",
+	"WORK_PATH": "/tmp/package/",
 	"SOURCES_DIRECTORY": "sources/",
 
 	"TEMPLATES_PATH": spaceify_code_path + "www/templates/",
@@ -118,7 +119,7 @@ module.exports = function()
 	"HTTP_SERVICE": "http",
 	"HTTPS_SERVICE": "https",
 
-	"EXT_ZIP": ".zip",
+	"EXT_COMPRESSED": ".zip",
 	"PACKAGE_DELIMITER": "@",
 
 	"MANIFEST": "spaceify.manifest",

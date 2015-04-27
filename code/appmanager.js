@@ -145,20 +145,22 @@ self.installApplication = fibrous( function(package, isSuggested, username, pass
 			throw Utility.error(Language.E_SERVICE_ALREADY_REGISTERED.p("AppManager::installApplication"));
 			}
 
-		// Remove existing application if core is up
-		messages.sync(Language.REMOVING_APPLICATION);
-		if(options.coreIsUp)
+		// Stop existing application if core is up and application is running (and is installed)
+		if(options.coreIsUp && coreRPCClient.sync.call("isApplicationRunning", [manifest.type, manifest.unique_name], self))
+			{
+			messages.sync(Language.STOPPING_APPLICATION);
 			coreRPCClient.sync.call("stopApplication", [manifest.type, manifest.unique_name], self);
+			}
 
 		// Install the application
 		install.sync(manifest);
 
 		// Start the application again if it is not a spacelet
-		//if(options.coreIsUp && manifest.type != Config.SPACELET)
-		//	{
-		//	messages.sync(Language.STARTING_APPLICATION);
-		//	coreRPCClient.sync.call("startApplication", [manifest.type, manifest.unique_name], self);
-		//	}
+		if(options.coreIsUp && manifest.type != Config.SPACELET)
+			{
+			messages.sync(Language.STARTING_APPLICATION);
+			coreRPCClient.sync.call("startApplication", [manifest.type, manifest.unique_name], self);
+			}
 
 		// Check does the package have suggested applications in required_services.
 		if(manifest.requires_services)
@@ -242,11 +244,11 @@ self.removeApplication = fibrous( function(unique_name, spm)
 		// Remove application files directory
 		messages.sync(Language.DELETE_FILES);
 		if(app_data.type == Config.SPACELET)
-			removeUniqueDirectory.sync(Config.SPACELETS_PATH + app_data.unique_directory);
+			removeUniqueData.sync(Config.SPACELETS_PATH, app_data);
 		else if(app_data.type == Config.SANDBOXED)
-			removeUniqueDirectory.sync(Config.SANDBOXED_PATH + app_data.unique_directory);
+			removeUniqueData.sync(Config.SANDBOXED_PATH, app_data);
 		//else if(app_data.type == Config.NATIVE)
-		//	removeUniqueDirectory.sync(Config.NATIVE_PATH + app_data.unique_directory);
+		//	removeUniqueData.sync(Config.NATIVE_PATH, app_data);
 
 		// Remove database entries
 		messages.sync(Language.REMOVE_FROM_DATABASE);
@@ -356,6 +358,8 @@ self.restartApplication = fibrous( function(unique_name, spm)
 
 		messages.sync(Language.STARTING_APPLICATION);
 		coreRPCClient.sync.call("startApplication", [app_data.type, app_data.unique_name], self);
+
+		messages.sync(Language.RESTARTED_APPLICATION);
 		}
 	catch(err)
 		{
@@ -652,7 +656,7 @@ var install = fibrous( function(manifest)
 				}
 
 			messages.sync(Language.DELETE_FILES);															// delete existing application directory/files.
-			removeUniqueDirectory.sync(app_path + app_data.unique_directory);
+			removeUniqueData.sync(app_path, app_data);
 			}
 
 		// INSTALL APPLICATION AND API FILES TO VOLUME DIRECTORY
@@ -668,7 +672,7 @@ var install = fibrous( function(manifest)
 		if(customDockerImage)
 			{ // test: docker run -i -t image_name /bin/bash
 			messages.sync(Utility.replace(Language.INSTALL_CREATE_DOCKER_IMAGE, {":image": docker_image_name}));
-			Utility.execute.sync("docker", ["build", "-no-cache", "-rm", "-t", docker_image_name, "."], {cwd: app_path + manifest.unique_name + Config.APPLICATION_PATH}, null);
+			Utility.execute.sync("docker", ["build", "--no-cache", "--rm", "-t", docker_image_name, "."], {cwd: app_path + manifest.unique_name + Config.APPLICATION_PATH}, null);
 			}
 		else
 			messages.sync(Utility.replace(Language.INSTALL_CREATE_DOCKER, {":image": Config.SPACEIFY_DOCKER_IMAGE}));
@@ -688,7 +692,12 @@ var install = fibrous( function(manifest)
 
 		database.sync.commit();
 
-		messages.sync(Utility.replace(Language.INSTALL_APPLICATION_OK, {":app": manifest.unique_name, ":version": manifest.version}));
+		// COPY PACKAGE TO INSTALLED PACKAGES DIRECTORY
+		Utility.sync.zipDirectory(Config.WORK_PATH, Config.INSTALLED_PATH + manifest.docker_image_id + Config.EXT_COMPRESSED);
+
+		// APPLICATION IS NOW INSTALLED SUCCESSFULLY
+		var tstr = (manifest.type == Config.SPACELET ? "" : Language.APPLICATIONLC);
+		messages.sync(Utility.replace(Language.INSTALL_APPLICATION_OK, {":type": Utility.ucfirst(manifest.type) + " " + tstr, ":app": manifest.unique_name, ":version": manifest.version}));
 		}
 	catch(err)
 		{
@@ -696,7 +705,7 @@ var install = fibrous( function(manifest)
 
 		dockerImage.sync.removeImage((manifest.docker_image_id ? manifest.docker_image_id : ""), manifest.unique_name);
 
-		removeUniqueDirectory.sync(app_path + manifest.unique_directory);
+		removeUniqueData.sync(app_path, manifest);
 
 		throw Utility.error(Language.E_FAILED_TO_INSTALL_APPLICATION.p("AppManager::install"), err);
 		}
@@ -709,10 +718,13 @@ var removeTemporaryFiles = fibrous( function()
 	Utility.sync.deleteDirectory(Config.WORK_PATH, false);
 	});
 
-var removeUniqueDirectory = fibrous( function(unique_directory)
+var removeUniqueData = fibrous( function(path, obj)
 	{ // Removes existing application data and leaves users data untouched
-	Utility.sync.deleteDirectory(unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY);
-	Utility.sync.deleteDirectory(unique_directory + Config.VOLUME_DIRECTORY + Config.TLS_DIRECTORY);
+	Utility.sync.deleteDirectory(path + obj.unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY);
+	Utility.sync.deleteDirectory(path + obj.unique_directory + Config.VOLUME_DIRECTORY + Config.TLS_DIRECTORY);
+
+	if(Utility.sync.isLocal(Config.INSTALLED_PATH + obj.docker_image_id + Config.EXT_COMPRESSED, "file"))
+		fs.sync.unlink(Config.INSTALLED_PATH + obj.docker_image_id + Config.EXT_COMPRESSED);
 	});
 
 var createClientCertificate = fibrous( function(app_path, manifest)

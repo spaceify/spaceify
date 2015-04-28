@@ -342,7 +342,7 @@ typeset -i il
 packages=()																					# Get the installed application packages
 FILES=/var/lib/spaceify/data/installed/*
 for f in $FILES; do
-	if [[ "$f" != "/var/lib/spaceify/data/installed/*" ]] && [[ "$f" != "readme.txt" ]]; then
+	if [[ "$f" != "/var/lib/spaceify/data/installed/*" ]] && [[ "$f" != "/var/lib/spaceify/data/installed/readme.txt" ]]; then
 		packages+=("$f")
 	fi
 done

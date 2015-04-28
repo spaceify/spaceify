@@ -9,6 +9,6 @@ vsdate=$( date +"%F %H:%M:%S" )
 
 git add --all .													# Add changes
 
-git commit -m "version ${vs} $(vsdate)"							# Commit the changes
+git commit -m "version ${vs} ${vsdate}"							# Commit the changes
 
 git push														# Push to GitHub

@@ -342,7 +342,8 @@ typeset -i il
 packages=()																					# Get the installed application packages
 FILES=/var/lib/spaceify/data/installed/*
 for f in $FILES; do
-	if [[ "$f" != "/var/lib/spaceify/data/installed/*" ]]; then									# Only empty or non-existing directory returns the searched directory name (itself)
+	if [[ "$f" != "/var/lib/spaceify/data/installed/*" && \										# Only empty or non-existing directory returns the search
+		  "$f" != "readme.txt" ]]; then									
 		packages+=("$f")
 	fi
 done

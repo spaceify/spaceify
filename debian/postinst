@@ -342,8 +342,7 @@ typeset -i il
 packages=()																					# Get the installed application packages
 FILES=/var/lib/spaceify/data/installed/*
 for f in $FILES; do
-	if [[ "$f" != "/var/lib/spaceify/data/installed/*" ]] && \										# Only empty or non-existing directory returns the search
-	   [[ "$f" != "readme.txt" ]]; then									
+	if [[ "$f" != "/var/lib/spaceify/data/installed/*" ]] && [[ "$f" != "readme.txt" ]]; then
 		packages+=("$f")
 	fi
 done
@@ -358,8 +357,7 @@ if (($su == 0 && $il == 0 && $in == 0)) || (($su == 0 && $il != 0 && $in == 0));
 	docker build --no-cache --rm -t spaceifyubuntu . > /dev/null 2>&1 || true
 
 	reinst=1
-elif (($su == 0 && $il == 0 && $in != 0)) || (($su == 0 && $il != 0 && $in != 0)) || \
-	 (($su != 0 && $il == 0 && $in != 0)) || (($su != 0 && $il != 0 && $in != 0 && $il != $in)); then
+elif elif (($su == 0 && $il == 0 && $in != 0)) || (($su == 0 && $il != 0 && $in != 0)) || (($su != 0 && $il == 0 && $in != 0)) || (($su != 0 && $il != 0 && $in != 0 && $il != $in)); then
 	# 2 ---Import : No existing image build/installed and image exists in spaceify.org
 	# 3 ---Import + clean : Image exists but versions can't be compared OR image exists and versions can be compared
 

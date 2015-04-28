@@ -53,7 +53,7 @@ printf "$wlan_conf" > /etc/network/interfaces
 #----- /etc/default/docker -----#
 
 sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/default/docker > /dev/null 2>&1 || true	# remove spaceify's previous entries
-docker_conf=$(</etc/default/docker) > /dev/null 2>&1 || true
+if [ -s /etc/default/docker ] ; then docker_conf=$(</etc/default/docker) ; else docker_conf="" ; fi
 docker_conf=$( echo "${docker_conf}\n\n${start_spaceify}\n" )
 docker_conf=$( echo "${docker_conf}DOCKER_OPTS=\"--dns 10.0.0.1\"\n" )
 docker_conf=$( echo "${docker_conf}${end_spaceify}" )
@@ -314,6 +314,15 @@ chmod 0755 /usr/bin/spm  > /dev/null 2>&1 || true											# Spaceify Packet Ma
 
 chmod 0755 /var/lib/spaceify/data/scripts/stop_containers.sh > /dev/null 2>&1 || true		# a script to stop and remove running containers
 
+#----- Update node.js to the latest stable release and install the required node.js modules (versions are defined in package.json) -----#
+# npm cache clear -f
+# npm install -g n
+# n stable
+
+npm install -g node-gyp
+cd /var/lib/spaceify/code
+npm install
+
 #----- Create and initialize Docker image -----#
 work_path="/tmp/docimg/"
 installed_file="/var/lib/spaceify/data/docker/installed_version"
@@ -391,15 +400,6 @@ else
 
 	printf "$in" > "$installed_file"
 fi
-
-#----- Update node.js to the latest stable release and install the required node.js modules (versions are defined in package.json) -----#
-# npm cache clear -f
-# npm install -g n
-# n stable
-
-npm install -g node-gyp@0.6.2
-cd /var/lib/spaceify/code
-npm install
 
 #----- Create user names and passwords for edge and admin -----#
 

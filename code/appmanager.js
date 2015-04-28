@@ -549,20 +549,20 @@ var getPackage = fibrous( function(package, isSuggested, tryLocal, username, pas
 	else if(!isSuggested && tryLocal && Utility.sync.isLocal(cwd_package, "file") && package.search(/\.zip$/i) != -1)
 		is_package = getLocalZip.sync(cwd_package);
 
-	// --- 3.0 --- Try remote <package>.zip (remote url)
-	else if(!isSuggested && Utility.sync.loadRemoteFileToLocalFile(package, Config.WORK_PATH, Config.PACKAGEZIP))
-		{
-		messages.sync(Utility.replace(Language.TRYING_TO_GET, {":from": Language.REMOTE_ARCHIVE, ":package": package}));
-
-		is_package = Utility.unZip(Config.WORK_PATH + Config.PACKAGEZIP, Config.WORK_PATH, true);
-		}
-
-	// --- 4.0 --- Try "pulling" a git repository <package>
+	// --- 3.0 --- Try "pulling" a GitHub repository <package>
 	else if(!isSuggested && purl.hostname && purl.hostname.match(/(github\.com)/i) != null && gitoptions.length == 2)
 		{
 		messages.sync(Utility.replace(Language.TRYING_TO_GET, {":from": Language.GIT_REPOSITORY, ":package": package}));
 
 		is_package = git.sync(gitoptions, username, password);
+		}
+
+	// --- 4.0 --- Try remote <package>.zip (remote url)
+	else if(!isSuggested && Utility.sync.loadRemoteFileToLocalFile(package, Config.WORK_PATH, Config.PACKAGEZIP))
+		{
+		messages.sync(Utility.replace(Language.TRYING_TO_GET, {":from": Language.REMOTE_ARCHIVE, ":package": package}));
+
+		is_package = Utility.unZip(Config.WORK_PATH + Config.PACKAGEZIP, Config.WORK_PATH, true);
 		}
 
 	// --- 5.0 --- Try <unique_name>[@<version>] from registry - suggested applications can be tried from the registry!!!

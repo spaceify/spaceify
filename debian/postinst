@@ -185,7 +185,7 @@ lines=${lines//$find/}																		# Replace
 lines=${lines//;/,}
 lines=${lines// /}
 
-IFS=$split read -a lines <<< "$lines"														# Split into an array of IPs
+IFS="," read -a lines <<< "$lines"															# Split into an array of IPs
 
 dip=""
 for ip in "${lines[@]}"; do

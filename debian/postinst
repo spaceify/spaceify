@@ -357,7 +357,7 @@ if (($su == 0 && $il == 0 && $in == 0)) || (($su == 0 && $il != 0 && $in == 0));
 	docker build --no-cache --rm -t spaceifyubuntu . > /dev/null 2>&1 || true
 
 	reinst=1
-elif elif (($su == 0 && $il == 0 && $in != 0)) || (($su == 0 && $il != 0 && $in != 0)) || (($su != 0 && $il == 0 && $in != 0)) || (($su != 0 && $il != 0 && $in != 0 && $il != $in)); then
+elif (($su == 0 && $il == 0 && $in != 0)) || (($su == 0 && $il != 0 && $in != 0)) || (($su != 0 && $il == 0 && $in != 0)) || (($su != 0 && $il != 0 && $in != 0 && $il != $in)); then
 	# 2 ---Import : No existing image build/installed and image exists in spaceify.org
 	# 3 ---Import + clean : Image exists but versions can't be compared OR image exists and versions can be compared
 

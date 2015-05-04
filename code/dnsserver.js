@@ -5,7 +5,7 @@
  * @class DNSServer
  */
 
-var dns = require("native-dns");
+var dns = require("./lib/native-dns");
 var Config = require("./config")();
 var Netmask = require('netmask').Netmask
 
@@ -18,6 +18,8 @@ var serverUDP4 = null;
 var serverUDP6 = null;
 var serverTCP4 = null;
 var serverTCP6 = null;
+
+var cnames = {};
 
 self.connect = function(opts)
 	{
@@ -32,13 +34,13 @@ self.connect = function(opts)
 
 	serverUDP4 = dns.createUDPServer({dgram_type: "udp4"});
 	serverUDP6 = dns.createUDPServer({dgram_type: "udp6"});
-	//serverTCP4 = dns.createTCPServer({dgram_type: "tcp4"});
-	//serverTCP6 = dns.createTCPServer({dgram_type: "tcp6"});
+	serverTCP4 = dns.createTCPServer({dgram_type: "tcp4"});
+	serverTCP6 = dns.createTCPServer({dgram_type: "tcp6"});
 
 	startServer(serverUDP4, options.port, options.v4_address, "udp4");
 	startServer(serverUDP6, options.port, options.v6_address, "udp6");
-	//startServer(serverTCP4, options.port, "tcp4");
-	//startServer(serverTCP6, options.port, "tcp6");
+	startServer(serverTCP4, options.port, options.v4_address, "tcp4");
+	//startServer(serverTCP6, options.port, options.v4_address, "tcp6");
 	}
 
 self.close = function()
@@ -52,11 +54,11 @@ self.close = function()
 	if(serverTCP6)
 		serverTCP6.close();
 	}
-	
+
 var startServer = function(server, port, address, type)
 	{
 	server.on("request", function(request, response)
-		{
+		{	
 		var question = request.question[0];
 		var name = question.name;
 
@@ -100,7 +102,7 @@ var startServer = function(server, port, address, type)
 		server.serve(port);
 	}
 
-var makeRequest = function(question, response)
+var makeRequest = function(question, responseToClient)
 	{
 	var query_restarted = false;
 
@@ -122,59 +124,71 @@ var makeRequest = function(question, response)
 			if(a.type == 5)																// If answer is a CNAME record, restart the query with the new name
 				{
 				query_restarted = true;
-				makeRequest({name: a.data, type: question.type, class: question.class}, response);
+				cnames[responseToClient.header.id] = question.name;							// Return the clients original URL not the URL CNAME question returns
+				makeRequest({name: a.data, type: question.type, class: question.class}, responseToClient);
 				break;
 				}
 			else
-				response.answer.push(a);
+				{
+				if(responseToClient.header.id in cnames)
+					{
+					a.name = cnames[responseToClient.header.id];
+					delete cnames[responseToClient.header.id];
+					}
+				responseToClient.answer.push(a);
+				}
 			}
 
-		for(var i=0; i<answers.authority.length; i++)
+		if(!query_restarted)															// CNAME was not returned
 			{
-			var a = answers.authority[i];
-			response.authority.push(a);
+			for(var i=0; i<answers.authority.length; i++)
+				{
+				var a = answers.authority[i];
+				responseToClient.authority.push(a);
+				}
+
+			for(var i=0; i<answers.additional.length; i++)
+				{
+				var a = answers.additional[i];
+				responseToClient.additional.push(a);
+				}
+
+			if(	options.default_response &&
+				dns.consts.nameToQtype(options.default_response.type) == question.type &&
+				answers.answer.length == 0 &&
+				answers.authority.length == 0 &&
+				answers.additional.length == 0)												// If DNS request fails return the default response
+				{
+				responseToClient.answer.push(dns.A({
+					name: question.name,
+					type: dns.consts.nameToQtype(options.default_response.type),
+					class: options.default_response.class,
+					address: options.default_response.ip,
+					ttl: options.ttl}));
+				}
+
+			responseToClient.send();														// lib/packet.js::send()
 			}
 
-		for(var i=0; i<answers.additional.length; i++)
-			{
-			var a = answers.additional[i];
-			response.additional.push(a);
-			}
-
-		if(	options.default_response &&
-			dns.consts.nameToQtype(options.default_response.type) == question.type &&
-			answers.answer.length == 0 &&
-			answers.authority.length == 0 &&
-			answers.additional.length == 0)												// If DNS request fails return the default response
-			{
-			response.answer.push(dns.A({
-				name: question.name,
-				type: dns.consts.nameToQtype(options.default_response.type),
-				class: options.default_response.class,
-				address: options.default_response.ip,
-				ttl: options.ttl}));
-			}
-
+		// DEBUG - DEBUG - DEBUG
 		if(options.debug)
 			{
 			console.log();
 			console.log("QUESTION: " + question.name + " " + dns.consts.qtypeToName(question.type));
 
-			console.log("ANSWERS: " + response.answer.length);
-			for(i=0; i<response.answer.length; i++)
-				console.log(" => " + response.answer[i].address + " class: " + response.answer[i].class + " ttl: " + response.answer[i].ttl);
+			console.log("ANSWERS: " + responseToClient.answer.length);
+			for(i=0; i<responseToClient.answer.length; i++)
+				console.log(" => " + responseToClient.answer[i].address + " class: " + responseToClient.answer[i].class + " ttl: " + responseToClient.answer[i].ttl);
 
-			console.log("AUTHORITY: " + response.authority.length);
-			for(i=0; i<response.authority.length; i++)
-				console.log(" => " + response.authority[i].data + " class: " + response.authority[i].class + " ttl: " + response.authority[i].ttl);
+			console.log("AUTHORITY: " + responseToClient.authority.length);
+			for(i=0; i<responseToClient.authority.length; i++)
+				console.log(" => " + responseToClient.authority[i].data + " class: " + responseToClient.authority[i].class + " ttl: " + responseToClient.authority[i].ttl);
 
-			console.log("ADDITIONAL: " + response.additional.length);
-			/*for(i=0; i<response.additional.length; i++)
-				console.log(" => " + response.additional[i].address);*/
+			console.log("ADDITIONAL: " + responseToClient.additional.length);
+			/*for(i=0; i<responseToClient.additional.length; i++)
+				console.log(" => " + responseToClient.additional[i].address);*/
 			}
-
-		if(!query_restarted)															// CNAME was not returned
-			response.send();
+		// DEBUG - DEBUG - DEBUG
 		});
 
 	request.on("timeout", function()

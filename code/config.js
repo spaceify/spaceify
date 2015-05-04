@@ -63,6 +63,8 @@ module.exports = function()
 
 	// REMEMBER TO CHANGE THESE IN www/engigine.io.js AND www/spaceifyclient.js!!!
 	"EDGE_IP": "10.0.0.1",
+	"EDGE_IP_V4": "10.0.0.1",
+	//"EDGE_IP_V6": "",
 	"EDGE_SUBNET": "10.0.0.0/24",
 	"EDGE_IP_RANGE_START":  "10.0.0.2",
 	"EDGE_IP_RANGE_END":  "10.0.0.254",
@@ -89,6 +91,7 @@ module.exports = function()
 	"GITHUB_HOSTNAME": "github.com",
 
 	"DNS_PORT": 53,
+	"DNS_IP_V6": "::",
 	"EXTERNAL_DNS_IP": spaceify_data_path + "dns/ip",
 
 	"MACREGX": new RegExp("^([0-9A-F]{2}[:-]){5}([0-9A-F]{2})$", "i"),

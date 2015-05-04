@@ -2,9 +2,11 @@
 # Builds a new spceifyubuntu Docker image
 # Spaceify Inc. 21.4.2015
 
-echo "Creating a new spaceifyubuntu image. The image is uploaded to spaceify.org after its creation."
-eco "The existing spaceifyubuntu image on local machine is not updated."
-echo "This script uses the existing ubuntu base image if it already exists. The ubuntu image is pulled by Docker only if it isn't already pulled."
+cd docker
+
+printf "\n\nCreating a new spaceifyubuntu image. The image is uploaded to spaceify.org after its creation.\n"
+printf "The existing spaceifyubuntu image on local machine is not updated.\n"
+printf "This script uses the existing ubuntu base image if it already exists. The ubuntu image is pulled by Docker only if it isn't already pulled.\n\n"
 
 docker build --no-cache --rm -t spaceifyubuntu2 .												# Build the image from the Dockerfile
 

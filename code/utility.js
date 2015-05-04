@@ -488,11 +488,6 @@ self.replace = function(str, strs)
 	return str;
 	}
 
-self.ucfirst = function(string)
-	{
-	return string.charAt(0).toUpperCase() + string.slice(1);
-	}
-
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 // OPERATING SYSTEM  // // // // // // // // // // // // // // // // // // // // // // // // // // //
 self.execute = function(command, args, options, spmMessage, callback)

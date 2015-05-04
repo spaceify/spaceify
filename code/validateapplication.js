@@ -83,7 +83,7 @@ self.validateDirectories = fibrous( function(application_path, manifest)
 				else
 					{
 					mtype = magic.sync.detectFile(image);
-
+console.log(image, mtype);
 					type = obj.file.split(".");
 					if(Config.IMAGE_TYPES.indexOf(mtype) == -1)
 						addError( Utility.error(Language.E_IMAGE_TYPES.p("ValidateApplication::validateDirectories")) );

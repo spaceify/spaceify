@@ -5,7 +5,7 @@
         inside applications Docker container (e.g. rsapp spaceify/bigscreen).
       - applog display STDOUT and STDERR texts from inside applications Docker container
         (e.g. applog spaceify/bigscreen).
-    * Various improvements and fixes to core and application manager.
+    * Various improvements and fixes to core, DNS server and application manager.
 
 0.1.5 Alpha Centauri (developer-pre-alpha)
     * Fix to an error in installation process.

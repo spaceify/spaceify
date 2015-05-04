@@ -10,6 +10,7 @@ data/scripts/rsapp usr/bin
 data/scripts/applog usr/bin
 data/docs/* var/lib/spaceify/data/docs
 data/db/create.sql var/lib/spaceify/data/db
+data/manifest/manifest.rules var/lib/spaceify/data/manifest.rules
 
 docker/Dockerfile var/lib/spaceify/data/docker
 

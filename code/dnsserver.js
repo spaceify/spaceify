@@ -124,7 +124,7 @@ var makeRequest = function(question, responseToClient)
 			if(a.type == 5)																// If answer is a CNAME record, restart the query with the new name
 				{
 				query_restarted = true;
-				cnames[responseToClient.header.id] = question.name;							// Return the clients original URL not the URL CNAME question returns
+				cnames[responseToClient.header.id] = question.name;							// Return the original URL client sent, not the URL CNAME question returns
 				makeRequest({name: a.data, type: question.type, class: question.class}, responseToClient);
 				break;
 				}

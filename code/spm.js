@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
  * Spaceify Package Manager, 30.4.2014 Spaceify Inc.
- * 
+ *
  * @file spm-js
- * 
+ *
  * #/usr/bin/spm
  */
 
@@ -28,25 +28,33 @@ var spmRPCServer = null;
 var appManagerRPCClient = null;
 var appManager = new AppManager();
 
+// Update commands and options also to command completion script data/spmc!!!
 var INSTALL = "install";
+var PUBLISH = "publish";
+var SOURCE = "source";
 var REMOVE = "remove";
 var START = "start";
 var STOP = "stop";
 var RESTART = "restart";
-var PUBLISH = "publish";
-var SOURCE = "source";
 var LIST = "list";
 var HELP = "help";
-var QUICKHELP = "quickhelp";
-var AUTHENTICATE = "authenticate";
-var SPACELET = "spacelet";
-var SANDBOXED = "sandboxed";
-var NATIVE = "native";
-var VERBOSE = "verbose";
 
-var commands = INSTALL+"|"+REMOVE+"|"+START+"|"+STOP+"|"+RESTART+"|"+PUBLISH+"|"+SOURCE+"|"+LIST+"|"+HELP;
+var AUTH  = "authenticate";
+var AUTH_ = "-a";
+var SPAC  = "spacelet";
+var SPAC_ = "-s";
+var SAND  = "sandboxed";
+var SAND_ = "-S";
+var NATI  = "native";
+var NATI_ = "-n";
+var VERB  = "verbose";
+var VERB_ = "-v";
+
+var EMPTY = "empty";
+
+var commands = INSTALL+"|"+PUBLISH+"|"+SOURCE+"|"+REMOVE+"|"+START+"|"+STOP+"|"+RESTART+"|"+LIST+"|"+HELP;
 var oper_regex = new RegExp("^(" + commands + ")$");
-var options = AUTHENTICATE+"|"+SPACELET+"|"+SANDBOXED+"|"+NATIVE+"|"+VERBOSE;
+var options = AUTH+"|"+SPAC+"|"+SAND+"|"+NATI+"|"+VERB;
 var opts_regex = new RegExp("^(" + options + ")$");
 
 self.start = fibrous( function()
@@ -70,34 +78,40 @@ self.start = fibrous( function()
 	try {
 		// CHECK INPUT (node ..path/spm.js command ...)
 		if(process.argv.length < 3)
-			process.argv.push(QUICKHELP);//throw Utility.ferror(Language.E_WRONG_NUMBER_OF_ARGUMENTS.p("SPM::start"), {":commands": commands, ":options": options});
+			process.argv.push(EMPTY);//throw Utility.ferror(Language.E_WRONG_NUMBER_OF_ARGUMENTS.p("SPM::start"), {":commands": commands, ":options": options});
 
-		command = process.argv[2].trim();																// command is always the third argument
-		if(command.search(oper_regex) == -1 && command != QUICKHELP)
+		command = process.argv[2].trim();														// command is always the third argument
+		if(command.search(oper_regex) == -1 && command != EMPTY)
 			throw Utility.ferror(Language.E_UNKNOW_COMMAND.p("SPM::start"), {":command": command, ":commands": commands});
 
-		if((command != HELP && command != QUICKHELP && command != LIST) && process.argv.length < 4)		// help and list do not need options or package name
+		if((command != HELP && command != EMPTY && command != LIST) && process.argv.length < 4)	// help and list do not need options or package name
 			throw Utility.ferror(Language.E_WRONG_NUMBER_OF_ARGUMENTS.p("SPM::start"), {":commands": commands, ":options": options});
 
-		for(var i=3; i<process.argv.length; i++)														// options are always after $>spm command, ignore if not recognized as an option
+		for(var i=3; i<process.argv.length; i++)												// options are always after $>spm command, ignore if not recognized as an option
 			{
-			if(process.argv[i] == AUTHENTICATE)
+			var arg = process.argv[i];
+
+			if(arg == AUTH || arg == AUTH_)
 				authenticate = true;
 
-			if(process.argv[i] == SPACELET || process.argv[i] == SANDBOXED || process.argv[i] == NATIVE)
+			if(arg == SPAC || arg == SPAC_ || arg == SAND || arg == SAND_ || arg == NATI ||  arg == NATI_)
 				{
-				if(type.indexOf(process.argv[i]) == -1)
-					type.push(process.argv[i]);
+				if(type.indexOf(arg) == -1)
+					type.push(arg);
 				}
 
-			if(process.argv[i] == VERBOSE)
+			if(arg == VERB || arg == VERB_)
 				verbose = true;
 			}
 
-		if(command != HELP && command != LIST)
-			package = process.argv[process.argv.length - 1].trim();								// package is the last argument
+		if(command != HELP && command != LIST)													// package is the last argument
+			package = process.argv[process.argv.length - 1].trim();
 
-		// OPTIONS		  
+		if(	package == SPAC || package == SPAC_ || package == SAND || package == SAND_ || package == NATI ||  package == NATI_ ||
+			package == VERB || package == VERB_ || package == AUTH || package == AUTH_)
+			throw Utility.ferror(Language.E_WRONG_NUMBER_OF_ARGUMENTS.p("SPM::start"), {":commands": commands, ":options": options});
+
+		// OPTIONS
 		if((authenticate && (command == INSTALL || command == SOURCE)) || command == PUBLISH)	// Authenticate Spaceify registry
 			{
 			var auth_host = "";
@@ -119,7 +133,7 @@ self.start = fibrous( function()
 			}
 
 		// DO THE REQUESTED COMMAND
-		if(command != QUICKHELP)
+		if(command != EMPTY)
 			logger.force(Utility.ucfirst(command) + " " + package);
 		logger.force();
 
@@ -143,7 +157,7 @@ self.start = fibrous( function()
 			restart.sync(package);
 		else if(command == LIST)
 			list.sync(type, verbose);
-		else if(command == HELP || command == QUICKHELP)
+		else if(command == HELP || command == EMPTY)
 			help.sync(command == HELP ? true : false);
 		}
 	catch(err)
@@ -390,7 +404,7 @@ var splitPackageName = function(package)
 	{
 	return package.split(Config.PACKAGE_DELIMITER);
 	}
-	
+
 }
 
 fibrous.run(function()

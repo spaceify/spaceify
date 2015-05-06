@@ -36,6 +36,7 @@ module.exports = function()
 	"API_WWW_PATH": "/api/www/",
 	"API_NODE_MODULES_DIRECTORY": "/api/node_modules",
 	"APPLICATION": "application",
+	"APPLICATION_PATH": "/application/",
 	"APPLICATION_DIRECTORY": "application/",
 	"APPLICATION_PATH": "/volume/application/",
 	"APPLICATION_TLS_PATH": "/volume/tls/",
@@ -45,6 +46,7 @@ module.exports = function()
 	"WWW_DIRECTORY": "www/",
 
 	"WORK_PATH": "/tmp/package/",
+	"PACKAGE_PATH": "/package/",
 	"SOURCES_DIRECTORY": "sources/",
 
 	"TEMPLATES_PATH": spaceify_code_path + "www/templates/",

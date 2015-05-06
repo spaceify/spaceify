@@ -133,10 +133,10 @@ self.getService = fibrous( function(service_name, unique_name)
 	var _find = self.find("service", {service_name: service_name, unique_name: unique_name});
 
 	if(_find.obj == null)
-		throw Utility.ferror(Language.E_FIND_SERVICE_UNKNOWN.p("SpaceifyCore::findService"), {":name": service_name});
+		throw Utility.ferror(Language.E_GET_SERVICE_UNKNOWN.p("SpaceifyCore::findService"), {":name": service_name});
 
 	if(!_find.obj.registered)
-		throw Utility.error(Language.E_FIND_SERVICE_UNREGISTERED.p("SpaceifyCore::findService"));
+		throw Utility.error(Language.E_GET_SERVICE_UNREGISTERED.p("SpaceifyCore::findService"));
 
 	// ToDo:
 	// SPACELET, SANDBOXED APPLICATION OR NATIVE APPLICATION CAN ASK SERVICES THAT ARE LISTED IN THEIR MANIFESTS REQUIRED SERVICES?
@@ -144,7 +144,7 @@ self.getService = fibrous( function(service_name, unique_name)
 	/*if(_find.obj.service_type == Config.OPEN_LOCAL) // UNLESS SERVICE TYPE IS OPEN_LOCAL
 		{
 		if((client = self.find("remote_address", connobj.remoteAddress)) == null)
-		throw Utility.error(Language.E_FIND_SERVICE_UNKNOWN_ADDRESS.p("SpaceifyCore::findService"));
+		throw Utility.error(Language.E_GET_SERVICE_UNKNOWN_ADDRESS.p("SpaceifyCore::findService"));
 		// ip not from local source
 		}
 	else if(_find.obj.service_type == Config.STANDARD)

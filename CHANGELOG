@@ -1,10 +1,17 @@
+0.1.7 Alpha Centauri (developer-pre-alpha)
+    * spm improved:
+      - TAB key completion for commands and options.
+      - Short version of options, e.g. -v = verbose.
+    * Improvements to application installation error handling.
+    * Better handling of fetching external networks DNS server IPs.
+
 0.1.6 Alpha Centauri (developer-pre-alpha)
     * Improvements to Spaceify's installation process.
     * Added tools to help debugging applications:
       - rsapp for restarting applications and displaying STDOUT and STDERR texts from 
-        inside applications Docker container (e.g. rsapp spaceify/bigscreen).
-      - applog display STDOUT and STDERR texts from inside applications Docker container
-        (e.g. applog spaceify/bigscreen).
+        inside applications Docker container, e.g. rsapp spaceify/bigscreen.
+      - applog displays STDOUT and STDERR texts from inside applications Docker container,
+        e.g. applog spaceify/bigscreen.
     * Various improvements and fixes to core, DNS server and application manager.
 
 0.1.5 Alpha Centauri (developer-pre-alpha)

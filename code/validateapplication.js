@@ -19,10 +19,10 @@ self.validatePackage = fibrous( function(package_path, save_path_manifest)
 		unique_values = [];
 
 		var application_path = package_path + Config.APPLICATION_DIRECTORY;
-		var manifest_path = application_path + Config.MANIFEST
+		var manifest_path = application_path + Config.MANIFEST;
 
 		// REQUIRED DIRECTORIES AND FILES
-		if(!Utility.sync.isLocal(package_path, "directory"))
+		if(!Utility.sync.isLocal(package_path + Config.APPLICATION_PATH, "directory"))
 			throw Utility.error(Language.E_NO_APPLICATION_DIRECTORY.p("ValidateApplication::validate"));
 
 		if(!Utility.sync.isLocal(manifest_path, "file"))

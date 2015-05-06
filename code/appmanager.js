@@ -524,7 +524,7 @@ self.sourceCode = fibrous( function(package, username, password)
 /* ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 /* PRIVATE  ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 var getPackage = fibrous( function(package, isSuggested, tryLocal, username, password, registry_url)
-	{ // Get package by (unique name|directory|archive|url|git url)
+	{ // Get package by (unique name|directory|archive|url|git url), if is suggested than try only registry, if local try local directories
 	var is_package = false;
 
 	var purl = url.parse(package, true);
@@ -534,7 +534,7 @@ var getPackage = fibrous( function(package, isSuggested, tryLocal, username, pas
 	var cwd_package = process.cwd() + "/" + package;
 
 	// --- 1.0 --- Try local directory <package>
-	if(!isSuggested && tryLocal && Utility.sync.isLocal(package, "directory"))
+	if(!isSuggested && tryLocal && Utility.sync.isLocal(package, "directory"))	
 		is_package = getLocalDirectory.sync(package);
 
 	// --- 1.1 --- Try local directory <cwd/package>
@@ -582,7 +582,10 @@ var getPackage = fibrous( function(package, isSuggested, tryLocal, username, pas
 
 			var errors = [];
 			for(e in result.err)
-				errors.push(Utility.makeError(e, result.err[e], ""));
+				{
+				var str = result.err[e].replace("Manifest: ", "");
+				errors.push(Utility.makeError(e, str, ""));
+				}
 
 			throw errors;
 			}
@@ -598,6 +601,9 @@ var getPackage = fibrous( function(package, isSuggested, tryLocal, username, pas
 var getLocalDirectory = fibrous( function(package)
 	{
 	messages.sync(Utility.replace(Language.TRYING_TO_GET, {":from": Language.LOCAL_DIRECTORY, ":package": package}));
+
+	if(package + Config.PACKAGE_PATH == Config.WORK_PATH)				// Prevent infinite recursion
+		return false;
 
 	package += (package.search(/\/$/) == -1 ? "/" : "");
 	Utility.sync.copyDirectory(package, Config.WORK_PATH, true);

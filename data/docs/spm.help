@@ -10,23 +10,26 @@
             list
             help
   
-  options: authenticate
-           spacelet
-           sandboxed
-           native
-           verbose
+  options: authenticate | -a
+           spacelet | -s
+           sandboxed | -S
+           native | -n
+           verbose | -v
   
   package: URL, directory, zip archive, Spaceify registry, GitHub repository or unique_name
            (unique name of an application) depending of the command.
 
+  Command line completion with TAB key can be used with commands and options. Double-tap
+  to show available commands or options for current command.
+
 @verbose
 Commands and options they accept
   
-  help [verbose]
+  help
   
     Displays the complete help text of spm commands and options.
 
-  install [authenticate] package
+  install [authenticate | -a] package
   
     Installs an application package to the Spaceify Core.
   
@@ -66,7 +69,7 @@ Commands and options they accept
       spm install spaceify/star
       spm install spaceify/star@1.0.0
 
-  publish [authenticate] package
+  publish [authenticate | -a] package
   
     Publish a Spaceify application package in the Spaceify registry (spaceify.org).
   
@@ -92,7 +95,7 @@ Commands and options they accept
       spm publish https://github.com/star/voyager.git
       spm publish authenticate https://github.com/star/voyager.git
 
-  source [authenticate] package
+  source [authenticate | -a] package
   
     Get the source codes for a package.
   
@@ -163,7 +166,7 @@ Commands and options they accept
   
       spm restart unique_name
 
-  list [spacelet, sandboxed, native, verbose]
+  list [spacelet | -s, sandboxed | -S, native | -n, verbose | -v]
   
     Lists information about the installed applications.
   

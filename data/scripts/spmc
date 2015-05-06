@@ -1,0 +1,58 @@
+#!/bin/bash
+# Bash TAB key completion script for Spaceify's spm command, 5.5.2015 Spaceify Inc.
+# Location: /etc/bash_completion.d/
+
+_default ()																		# For displaying default possibilities
+{
+	local param
+	param="$1"
+	COMPREPLY=( $( compgen -W "$param" -- $cur ) )
+}
+
+_spm ()
+{
+	local cur																	# Pointer to current completion word.
+	COMPREPLY=()																# Array variable storing the possible completions.
+	cur=${COMP_WORDS[COMP_CWORD]}
+
+	is_command=true; if [ ${#COMP_WORDS[@]} -ge 3 ] && [ $COMP_CWORD -ne 1 ]; then is_command=false; fi
+
+	if [ "$is_command" == true ]; then											# Complete commands
+		case "$cur" in
+			i*) COMPREPLY=( $( compgen -W 'install' $cur ) ) ;;
+			p*) COMPREPLY=( $( compgen -W 'publish' $cur ) ) ;;
+			r*) COMPREPLY=( $( compgen -W 'remove restart' $cur ) ) ;;
+			s*) COMPREPLY=( $( compgen -W 'source start stop' $cur ) ) ;;
+			l*) COMPREPLY=( $( compgen -W 'list' $cur ) ) ;;
+			h*) COMPREPLY=( $( compgen -W 'help' $cur ) ) ;;
+			 *) _default "install publish remove restart source start stop list help" ;;
+		esac
+	else																		# Complete options for commands
+		command=${COMP_WORDS[1]}
+
+		case "$command" in
+			install | publish | source)
+				case "$cur" in
+					a*) COMPREPLY=( $( compgen -W 'authenticate' $cur ) ) ;;
+					 *) _default "authenticate" ;;
+				esac
+			;;
+			list)
+				case "$cur" in
+					s*) COMPREPLY=( $( compgen -W 'spacelet sandboxed' $cur ) ) ;;
+					n*) COMPREPLY=( $( compgen -W 'native' $cur ) ) ;;
+					v*) COMPREPLY=( $( compgen -W 'verbose' $cur ) ) ;;
+					 *) _default "spacelet sandboxed native verbose" ;;
+				esac
+			;;
+			help)
+				case "$cur" in
+					v*) COMPREPLY=( $( compgen -W 'verbose' $cur ) ) ;;
+					 *) _default "verbose" ;;
+				esac
+			;;
+		esac
+	fi
+}
+
+complete -F _spm -o filenames -o dirnames spm

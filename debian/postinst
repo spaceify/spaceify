@@ -65,7 +65,8 @@ printf "$docker_conf" > /etc/default/docker
 sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/rc.local
 
 # Get external DNS servers IP address
-get_dns="${get_dns}\.\/var\/lib\/spaceify\/data\/scripts\/get_dns.sh\n"
+get_dns="\.\/var\/lib\/spaceify\/data\/scripts\/get_dns.sh\n"
+get_dns="${get_dns}service spaceifydns restart\n"
 
 # Create mangle chain
 rclocal1="\/sbin\/iptables -t mangle -N Spaceify-mangle"

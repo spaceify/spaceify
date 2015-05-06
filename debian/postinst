@@ -167,6 +167,9 @@ sed -i "s/%1/${core_port}/" /etc/monit/conf.d/spaceify.conf
 # EXECUTE COMMANDS #
 ####################
 
+#----- Spaceify's DNS server must be on -----#
+service spaceifydns restart > /dev/null 2>&1 || true
+
 #----- Add custom iptables chains for Spaceify -----#
 
 # To avoid duplicates delete existing rules

@@ -404,7 +404,7 @@ self.makeError = function(code, message, path)
 self.makeServices = function(unique_name, services, ports, ip)
 	{
 	var mservices = [];
-	for(var i=0; i<services.length; i+=2)
+	for(var i=0; i<services.length; i++)
 		mservices.push({"unique_name": unique_name, "service_name": services[i].service_name, "service_type": services[i].service_type, "port": ports[i], "secure_port": ports[i + 1], "ip": ip, "registered": false});
 
 	mservices.push({"unique_name": unique_name, "service_name": Config.HTTP_SERVICE, "service_type": Config.HTTP_SERVICE, "port": ports[ports.length - 2], "ip": ip, "registered": true});

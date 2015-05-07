@@ -1,3 +1,7 @@
+0.1.8 Alpha Centauri (developer-pre-alpha)
+    * Fix to an error in application installation.
+    * Fix to an error in service discovery.
+
 0.1.7 Alpha Centauri (developer-pre-alpha)
     * spm improved:
       - TAB key completion for commands and options.

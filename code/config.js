@@ -36,7 +36,6 @@ module.exports = function()
 	"API_WWW_PATH": "/api/www/",
 	"API_NODE_MODULES_DIRECTORY": "/api/node_modules",
 	"APPLICATION": "application",
-	"APPLICATION_PATH": "/application/",
 	"APPLICATION_DIRECTORY": "application/",
 	"APPLICATION_PATH": "/volume/application/",
 	"APPLICATION_TLS_PATH": "/volume/tls/",

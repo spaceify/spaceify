@@ -1,4 +1,4 @@
-core:0.1.8:Alpha Centauri:spm:0.1.3:database:4:
+core:0.1.9:Alpha Centauri:spm:0.1.3:database:4:
 core = current release version, release name (tag)
 spm = current release version
 database = current release version

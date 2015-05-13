@@ -65,7 +65,7 @@ printf "$docker_conf" > /etc/default/docker
 sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/rc.local
 
 # Get external DNS servers IP address
-get_dns="\.\/var\/lib\/spaceify\/data\/scripts\/get_dns.sh\n"
+get_dns="\/var\/lib\/spaceify\/data\/scripts\/get_dns.sh\n"
 get_dns="${get_dns}service spaceifydns restart\n"
 
 # Create mangle chain
@@ -162,11 +162,19 @@ sed -i "s/%1/${core_port}/" /etc/monit/conf.d/spaceify.conf
 #######################################
 # GET EXTERNAL DNS SERVERS IP ADDRESS #
 #######################################
-./var/lib/spaceify/data/scripts/get_dns.sh
+/var/lib/spaceify/data/scripts/get_dns.sh
 
 ####################
 # EXECUTE COMMANDS #
 ####################
+
+#----- Symbolic links for Spaceify's services  -----#
+ln -s /etc/init/spaceify.conf /etc/init.d/spaceify > /dev/null 2>&1 || true
+ln -s /etc/init/spaceifydns.conf /etc/init.d/spaceifydns > /dev/null 2>&1 || true
+ln -s /etc/init/spaceifydhcp.conf /etc/init.d/spaceifydhcp > /dev/null 2>&1 || true
+ln -s /etc/init/spaceifyipt.conf /etc/init.d/spaceifyipt > /dev/null 2>&1 || true
+ln -s /etc/init/spaceifyconnhub.conf /etc/init.d/spaceifyconnhub > /dev/null 2>&1 || true
+ln -s /etc/init/spaceifyappman.conf /etc/init.d/spaceifyappman > /dev/null 2>&1 || true
 
 #----- Spaceify's DNS server must be on -----#
 service spaceifydns restart > /dev/null 2>&1 || true
@@ -445,6 +453,8 @@ fi
 service spaceifydns restart > /dev/null 2>&1 || true
 service spaceifydhcp restart > /dev/null 2>&1 || true
 service spaceifyipt restart > /dev/null 2>&1 || true
+service spaceifyconnhub restart > /dev/null 2>&1 || true
+service spaceifyappman restart > /dev/null 2>&1 || true
 service spaceify restart > /dev/null 2>&1 || true
 
 service monit restart > /dev/null 2>&1 || true

@@ -1,3 +1,6 @@
+0.1.9  Alpha Centauri (developer-pre-alpha)
+    * Fetching external networks DNS server IPs improved.
+
 0.1.8 Alpha Centauri (developer-pre-alpha)
     * Fix to an error in application installation.
     * Fix to an error in service discovery.

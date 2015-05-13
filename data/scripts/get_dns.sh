@@ -20,22 +20,16 @@ else
 	lease="/etc/resolv.conf"
 fi
 
-lines=""																					# Get the DNS servers from the DHCP leases
-while read line; do
-	odns=$(grep -i "$find" <<< "$line" || true)
-	if [ ! -z "$odns" ]; then
-		lines="$lines$odns;"
-	fi
-done < $lease
+ips=$(grep "$find" "$lease" | tail -1)														# Find last occurance = latest lease
 
-lines=${lines//$find/}																		# Replace
-lines=${lines//;/,}
-lines=${lines// /}
+ips=${ips//$find/}																		# Replace
+ips=${ips//;/,}
+ips=${ips// /}
 
-IFS="," read -a lines <<< "$lines"															# Split into an array of IPs
+IFS="," read -a ips <<< "$ips"															# Split into an array of IPs
 
 dip=""
-for ip in "${lines[@]}"; do
+for ip in "${ips[@]}"; do
 	ip=${ip//,/}
 
 	if [[ "$ip" != "127.0.0.1" && "$ip" != "10.0.0.1" ]]; then

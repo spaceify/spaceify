@@ -47,20 +47,26 @@ sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d
 
 #sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/monit/monitrc
 
+# ----- /etc/dhcp/dhcpd.conf -----#
+
+sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d" /etc/dhcp/dhcpd.conf
+
 ###########################
 # REMOVE SPACEIFY'S FILES #
 ###########################
 
 service spaceify stop > /dev/null 2>&1 || true												# stop core first
-service spaceifydns stop > /dev/null 2>&1 || true
-service spaceifydhcp stop > /dev/null 2>&1 || true
 service spaceifyipt stop > /dev/null 2>&1 || true
+service spaceifydns stop > /dev/null 2>&1 || true
 
 if [ "$1" = "remove" ]; then
 	rm /etc/init/spaceify.conf > /dev/null 2>&1 || true
 	rm /etc/init/spaceifydns.conf > /dev/null 2>&1 || true
-	rm /etc/init/spaceifydhcp.conf > /dev/null 2>&1 || true
 	rm /etc/init/spaceifyipt.conf > /dev/null 2>&1 || true
+
+	rm /etc/init.d/spaceify > /dev/null 2>&1 || true
+	rm /etc/init.d/spaceifydns > /dev/null 2>&1 || true
+	rm /etc/init.d/spaceifyipt > /dev/null 2>&1 || true
 
 	rm -r /var/lib/spaceify/code > /dev/null 2>&1 || true
 	rm -r /var/lib/spaceify/dev/iptpiper > /dev/null 2>&1 || true

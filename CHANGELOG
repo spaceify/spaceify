@@ -1,3 +1,6 @@
+0.2.0  Alpha Centauri (developer-pre-alpha)
+    * Spaceify's DHCP server replaced with isc-dhcp-server.
+
 0.1.9  Alpha Centauri (developer-pre-alpha)
     * Fetching external networks DNS server IPs improved.
 

@@ -53,7 +53,13 @@ printf "$wlan_conf" > /etc/network/interfaces
 #----- /etc/default/docker -----#
 
 sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/default/docker > /dev/null 2>&1 || true	# remove spaceify's previous entries
-if [ -s /etc/default/docker ] ; then docker_conf=$(</etc/default/docker) ; else docker_conf="" ; fi
+
+if [ -s /etc/default/docker ]; then
+	docker_conf=$(</etc/default/docker)
+else
+	docker_conf=""
+fi
+
 docker_conf=$( echo "${docker_conf}\n\n${start_spaceify}\n" )
 docker_conf=$( echo "${docker_conf}DOCKER_OPTS=\"--dns 10.0.0.1\"\n" )
 docker_conf=$( echo "${docker_conf}${end_spaceify}" )
@@ -159,6 +165,52 @@ core_port="2497"
 #sed -i "s/%1/${core_port}/" /var/lib/spaceify/monit/spaceify.conf							# change the port to monitor to configuration
 sed -i "s/%1/${core_port}/" /etc/monit/conf.d/spaceify.conf
 
+# ----- /etc/dhcp/dhcpd.conf -----#
+
+dhcpd=$(</etc/dhcp/dhcpd.conf)
+dhcpd=$( echo "$dhcpd" | sed "s/${comm_out_spaceify}//g" )									# remove spaceify's previous comments
+dhcpd=$( echo "$dhcpd" | sed "/${start_spaceify}/,/${end_spaceify}/d" )						# remove spaceify's previous entries
+
+dhcpd=$( echo "$dhcpd" | sed "s/.*domain-name.*/${comm_out_spaceify}&/" )
+dhcpd=$( echo "$dhcpd" | sed "s/.*-lease-.*/${comm_out_spaceify}&/" )
+dhcpd=$( echo "$dhcpd" | sed "s/.*log-facility.*/${comm_out_spaceify}&/" )
+
+dhcpd="${dhcpd}\n${start_spaceify}\n"
+
+dhcpd="${dhcpd}default-lease-time 600;\n"
+dhcpd="${dhcpd}max-lease-time 7200;\n"
+dhcpd="${dhcpd}option subnet-mask 255.255.255.0;\n"
+dhcpd="${dhcpd}option broadcast-address 10.0.0.255;\n"
+dhcpd="${dhcpd}option routers 10.0.0.1;\n"
+dhcpd="${dhcpd}option domain-name-servers 10.0.0.1, 10.0.0.1, 10.0.0.1;\n"
+dhcpd="${dhcpd}option domain-name \"edge.spaceify.net\";\n\n"
+
+dhcpd="${dhcpd}subnet 10.0.0.0 netmask 255.255.255.0 {\n"
+dhcpd="${dhcpd}range 10.0.0.2 10.0.0.254;\n"
+dhcpd="${dhcpd}}\n\n"
+
+dhcpd="${dhcpd}on commit {\n"
+dhcpd="${dhcpd}  set ClientIP = binary-to-ascii(10, 8, \".\", leased-address);\n"
+dhcpd="${dhcpd}  set ClientMac = binary-to-ascii(16, 8, \":\", substring(hardware, 1, 6));\n"
+dhcpd="${dhcpd}  execute(\"node /var/lib/spaceify/code/dhcpdlog\", \"commit\", ClientIP, ClientMac, host-decl-name);\n"
+dhcpd="${dhcpd}}\n\n"
+
+dhcpd="${dhcpd}on release {\n"
+dhcpd="${dhcpd}  set ClientIP = binary-to-ascii(10, 8, \".\", leased-address);\n"
+dhcpd="${dhcpd}  set ClientMac = binary-to-ascii(16, 8, \":\", substring(hardware, 1, 6));\n"
+dhcpd="${dhcpd}  execute(\"node /var/lib/spaceify/code/dhcpdlog\", \"release\", ClientIP, ClientMac, host-decl-name);\n"
+dhcpd="${dhcpd}}\n\n"
+
+dhcpd="${dhcpd}on expiry {\n"
+dhcpd="${dhcpd}  set ClientIP = binary-to-ascii(10, 8, \".\", leased-address);\n"
+dhcpd="${dhcpd}  set ClientMac = binary-to-ascii(16, 8, \":\", substring(hardware, 1, 6));\n"
+dhcpd="${dhcpd}  execute(\"node /var/lib/spaceify/code/dhcpdlog\", \"expiry\", ClientIP, ClientMac, host-decl-name);\n"
+dhcpd="${dhcpd}}\n"
+
+dhcpd="${dhcpd}${end_spaceify}"
+
+printf "$dhcpd" > /etc/dhcp/dhcpd.conf
+
 #######################################
 # GET EXTERNAL DNS SERVERS IP ADDRESS #
 #######################################
@@ -171,10 +223,7 @@ sed -i "s/%1/${core_port}/" /etc/monit/conf.d/spaceify.conf
 #----- Symbolic links for Spaceify's services  -----#
 ln -s /etc/init/spaceify.conf /etc/init.d/spaceify > /dev/null 2>&1 || true
 ln -s /etc/init/spaceifydns.conf /etc/init.d/spaceifydns > /dev/null 2>&1 || true
-ln -s /etc/init/spaceifydhcp.conf /etc/init.d/spaceifydhcp > /dev/null 2>&1 || true
 ln -s /etc/init/spaceifyipt.conf /etc/init.d/spaceifyipt > /dev/null 2>&1 || true
-ln -s /etc/init/spaceifyconnhub.conf /etc/init.d/spaceifyconnhub > /dev/null 2>&1 || true
-ln -s /etc/init/spaceifyappman.conf /etc/init.d/spaceifyappman > /dev/null 2>&1 || true
 
 #----- Spaceify's DNS server must be on -----#
 service spaceifydns restart > /dev/null 2>&1 || true
@@ -451,10 +500,7 @@ if [ "$intext" -eq 1 ]; then
 fi
 
 service spaceifydns restart > /dev/null 2>&1 || true
-service spaceifydhcp restart > /dev/null 2>&1 || true
 service spaceifyipt restart > /dev/null 2>&1 || true
-service spaceifyconnhub restart > /dev/null 2>&1 || true
-service spaceifyappman restart > /dev/null 2>&1 || true
 service spaceify restart > /dev/null 2>&1 || true
 
 service monit restart > /dev/null 2>&1 || true

@@ -9,7 +9,7 @@ var fs = require("fs");
 var mkdirp = require("mkdirp");
 var crypto = require("crypto");
 var fibrous = require("fibrous");
-var DHCPServer = require("./dhcpserver");
+var DHCPDLog = require("./dhcpdlog");
 var logger = require("./logger");
 var Config = require("./config")();
 var Utility = require("./utility");
@@ -30,7 +30,7 @@ var isLoggedInToSpaceifyNet = false;
 var sandboxedManager = new SandboxedManager();
 var spaceletManager = new SpaceletManager();
 var connectionHub = new ConnectionHub();
-var dhcpserver = new DHCPServer();
+var dhcpdlog = new DHCPDLog();
 var database = new Database();
 var iptables = new Iptables();
 
@@ -180,7 +180,7 @@ self.adminLogIn = fibrous( function(password)
 			throw Utility.error(Language.E_ADMIN_LOGIN_ADDRESS.p("SpaceifyCore::adminLogIn"));
 
 		// GET CLIENTS MAC
-		var lease = dhcpserver.getDHCPLeaseByIP(connobj.remoteAddress);
+		var lease = dhcpdlog.getDHCPLeaseByIP(connobj.remoteAddress);
 		if(!lease)
 			throw Utility.error(Language.E_UNKNOWN_MAC.p("SpaceifyCore::adminLogIn"));
 
@@ -232,7 +232,7 @@ self.adminLogOut = fibrous( function(session_id)
 			throw Utility.error(Language.E_ADMIN_LOGIN_ADDRESS.p("SpaceifyCore::adminLogOut"));
 
 		// GET CLIENTS MAC
-		var lease = dhcpserver.getDHCPLeaseByIP(connobj.remoteAddress);
+		var lease = dhcpdlog.getDHCPLeaseByIP(connobj.remoteAddress);
 		if(!lease)
 			throw Utility.error(Language.E_UNKNOWN_MAC.p("SpaceifyCore::adminLogOut"));
 
@@ -346,7 +346,7 @@ self.setSplashAccepted = fibrous( function()
 	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
 
 	try {
-		var lease = dhcpserver.getDHCPLeaseByIP(connobj.remoteAddress);					// Lease must exist for the device
+		var lease = dhcpdlog.getDHCPLeaseByIP(connobj.remoteAddress);					// Lease must exist for the device
 		if(!lease)
 			throw Utility.error(Language.E_UNKNOWN_MAC.p("SpaceifyCore::setSplashAccepted"));
 

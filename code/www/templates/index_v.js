@@ -6,20 +6,20 @@
 var fs  = require("fs");
 var url = require("url");
 var Config = require("../../config")();
-var DHCPServer = require("../../dhcpserver");
+var DHCPDLog = require("../../dhcpdlog");
 var Iptables = require("../../iptables");
 
 function View()
 {
 var self = this;
 var iptables = new Iptables();
-var dhcpserver = new DHCPServer();
+var dhcpdlog = new DHCPDLog();
 
 self.getData = function(IP, URL, GET, POST, language, section, configuration)
 	{
 	/*var splash = true;
 	try {
-		var lease = dhcpserver.getDHCPLeaseByIP(IP);															// Show splash if mac is not in the accepted list
+		var lease = dhcpdlog.getDHCPLeaseByIP(IP);																// Show splash if mac is not in the accepted list
 		if(lease)
 			splash = !iptables.hasSplashMAC(lease.mac_or_duid);
 		}

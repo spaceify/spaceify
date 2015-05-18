@@ -75,15 +75,16 @@ get_dns="\/var\/lib\/spaceify\/data\/scripts\/get_dns.sh\n"
 get_dns="${get_dns}service spaceifydns restart\n"
 
 # Create mangle chain
-rclocal1="\/sbin\/iptables -t mangle -N Spaceify-mangle"
-rclocal2="\/sbin\/iptables -t mangle -A PREROUTING -j Spaceify-mangle"
-rclocal3="\/sbin\/iptables -t mangle -A Spaceify-mangle -i docker0 -j RETURN"
-rclocal4="\/sbin\/iptables -t mangle -A Spaceify-mangle -j MARK --set-mark 99"
-rclocal5="\/sbin\/iptables -t nat -A PREROUTING -m mark --mark 99 -p tcp --dport 80 -j DNAT --to-destination 10\.0\.0\.1"
-rclocal6="\/sbin\/iptables -t nat -A PREROUTING -m mark --mark 99 -p tcp --dport 443 -j DNAT --to-destination 10\.0\.0\.1"
-rclocal7="\/sbin\/iptables -t filter -A FORWARD -m mark --mark 99 -j DROP"
+#rclocal1="\/sbin\/iptables -t mangle -N Spaceify-mangle"
+#rclocal2="\/sbin\/iptables -t mangle -A PREROUTING -j Spaceify-mangle"
+#rclocal3="\/sbin\/iptables -t mangle -A Spaceify-mangle -i docker0 -j RETURN"
+#rclocal4="\/sbin\/iptables -t mangle -A Spaceify-mangle -j MARK --set-mark 99"
+#rclocal5="\/sbin\/iptables -t nat -A PREROUTING -m mark --mark 99 -p tcp --dport 80 -j DNAT --to-destination 10\.0\.0\.1"
+#rclocal6="\/sbin\/iptables -t nat -A PREROUTING -m mark --mark 99 -p tcp --dport 443 -j DNAT --to-destination 10\.0\.0\.1"
+#rclocal7="\/sbin\/iptables -t filter -A FORWARD -m mark --mark 99 -j DROP"
 
-mangle_chain="$rclocal1\n$rclocal2\n$rclocal3\n$rclocal4\n$rclocal5\n$rclocal6\n$rclocal7\n"
+#mangle_chain="$rclocal1\n$rclocal2\n$rclocal3\n$rclocal4\n$rclocal5\n$rclocal6\n$rclocal7\n"
+mangle_chain=""
 
 # Create HTTP filter chain, NAT chain and redirect chain
 rclocal1="\/sbin\/iptables -t nat -N Spaceify-HTTP-Nat-Redir"
@@ -253,13 +254,13 @@ iptables -t nat -F Spaceify-HTTPS-Nat-Redir > /dev/null 2>&1 || true
 iptables -t nat -X Spaceify-HTTPS-Nat-Redir > /dev/null 2>&1 || true
 
 # Mangle chain
-iptables -t mangle -N Spaceify-mangle
-iptables -t mangle -A PREROUTING -j Spaceify-mangle
-iptables -t mangle -A Spaceify-mangle -i docker0 -j RETURN
-iptables -t mangle -A Spaceify-mangle -j MARK --set-mark 99
-iptables -t nat -A PREROUTING -m mark --mark 99 -p tcp --dport 80 -j DNAT --to-destination 10.0.0.1
-iptables -t nat -A PREROUTING -m mark --mark 99 -p tcp --dport 443 -j DNAT --to-destination 10.0.0.1
-iptables -t filter -A FORWARD -m mark --mark 99 -j DROP
+#iptables -t mangle -N Spaceify-mangle
+#iptables -t mangle -A PREROUTING -j Spaceify-mangle
+#iptables -t mangle -A Spaceify-mangle -i docker0 -j RETURN
+#iptables -t mangle -A Spaceify-mangle -j MARK --set-mark 99
+#iptables -t nat -A PREROUTING -m mark --mark 99 -p tcp --dport 80 -j DNAT --to-destination 10.0.0.1
+#iptables -t nat -A PREROUTING -m mark --mark 99 -p tcp --dport 443 -j DNAT --to-destination 10.0.0.1
+#iptables -t filter -A FORWARD -m mark --mark 99 -j DROP
 
 # HTTP filter chain, NAT chain and redirect chain
 iptables -t nat -N Spaceify-HTTP-Nat-Redir

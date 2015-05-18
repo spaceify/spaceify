@@ -1,3 +1,6 @@
+0.2.1  Alpha Centauri (developer-pre-alpha)
+    * Splash screen functionality removed.
+
 0.2.0  Alpha Centauri (developer-pre-alpha)
     * Spaceify's DHCP server replaced with isc-dhcp-server.
 

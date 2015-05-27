@@ -47,9 +47,13 @@ sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d
 
 #sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/monit/monitrc
 
-# ----- /etc/dhcp/dhcpd.conf -----#
+# ----- /etc/udhcpd.conf, /etc/default/udhcpd -----#
 
-sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d" /etc/dhcp/dhcpd.conf
+rm /etc/udhcpd.conf > /dev/null 2>&1 || true
+rm /etc/default/udhcpd > /dev/null 2>&1 || true
+
+mv /etc/udhcpd.conf.original /etc/udhcpd.conf > /dev/null 2>&1 || true
+mv /etc/default/udhcpd.original /etc/default/udhcpd > /dev/null 2>&1 || true
 
 ###########################
 # REMOVE SPACEIFY'S FILES #

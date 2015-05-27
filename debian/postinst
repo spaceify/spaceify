@@ -70,10 +70,6 @@ printf "$docker_conf" > /etc/default/docker
 # Remove spaceify's previous iptables entries
 sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/rc.local
 
-# Get external DNS servers IP address
-get_dns="\/var\/lib\/spaceify\/data\/scripts\/get_dns.sh\n"
-get_dns="${get_dns}service spaceifydns restart\n"
-
 # Create mangle chain
 #rclocal1="\/sbin\/iptables -t mangle -N Spaceify-mangle"
 #rclocal2="\/sbin\/iptables -t mangle -A PREROUTING -j Spaceify-mangle"
@@ -111,7 +107,7 @@ rclocal7="\/sbin\/iptables -t nat -A Spaceify-HTTPS-Nat-Masq -o "${eth}" -j MASQ
 https_chain="$rclocal1\n$rclocal2\n$rclocal3\n$rclocal4\n$rclocal5\n$rclocal6\n$rclocal7\n"
 
 # Append spaceify specific lines in rc.local before "exit 0"
-sed -i "s/^exit.*/$start_spaceify\n$get_dns\n$mangle_chain\n$http_chain\n$https_chain$end_spaceify\nexit 0/" /etc/rc.local
+sed -i "s/^exit.*/$start_spaceify\n$mangle_chain\n$http_chain\n$https_chain$end_spaceify\nexit 0/" /etc/rc.local
 
 #----- /etc/sysctl.conf - enable forwarding (for nat) -----#
 
@@ -166,56 +162,26 @@ core_port="2497"
 #sed -i "s/%1/${core_port}/" /var/lib/spaceify/monit/spaceify.conf							# change the port to monitor to configuration
 sed -i "s/%1/${core_port}/" /etc/monit/conf.d/spaceify.conf
 
-# ----- /etc/dhcp/dhcpd.conf -----#
+# ----- /etc/udhcpd.conf, /etc/default/udhcpd -----#
 
-dhcpd=$(</etc/dhcp/dhcpd.conf)
-dhcpd=$( echo "$dhcpd" | sed "s/${comm_out_spaceify}//g" )									# remove spaceify's previous comments
-dhcpd=$( echo "$dhcpd" | sed "/${start_spaceify}/,/${end_spaceify}/d" )						# remove spaceify's previous entries
+mv /etc/udhcpd.conf /etc/udhcpd.conf.original > /dev/null 2>&1 || true						# store existing configuration
+mv /etc/default/udhcpd /etc/default/udhcpd.original > /dev/null 2>&1 || true
 
-dhcpd=$( echo "$dhcpd" | sed "s/.*domain-name.*/${comm_out_spaceify}&/" )
-dhcpd=$( echo "$dhcpd" | sed "s/.*-lease-.*/${comm_out_spaceify}&/" )
-dhcpd=$( echo "$dhcpd" | sed "s/.*log-facility.*/${comm_out_spaceify}&/" )
+dhcpd="start 10.0.0.2\n"
+dhcpd="${dhcpd}end 10.0.0.254\n"
+dhcpd="${dhcpd}interface ${wlan}\n"
+dhcpd="${dhcpd}opt dns 10.0.0.1 10.0.0.1\n"
+dhcpd="${dhcpd}option dns 10.0.0.1\n"
+dhcpd="${dhcpd}opt router 10.0.0.1\n"
+dhcpd="${dhcpd}option subnet 255.255.255.0\n"
+dhcpd="${dhcpd}option lease 7200\n"
+dhcpd="${dhcpd}option domain spaceify.net\n"
+dhcpd="${dhcpd}opt broadcast 10.0.0.255\n\n"
+printf "$dhcpd" > /etc/udhcpd.conf
 
-dhcpd="${dhcpd}\n${start_spaceify}\n"
-
-dhcpd="${dhcpd}default-lease-time 600;\n"
-dhcpd="${dhcpd}max-lease-time 7200;\n"
-dhcpd="${dhcpd}option subnet-mask 255.255.255.0;\n"
-dhcpd="${dhcpd}option broadcast-address 10.0.0.255;\n"
-dhcpd="${dhcpd}option routers 10.0.0.1;\n"
-dhcpd="${dhcpd}option domain-name-servers 10.0.0.1, 10.0.0.1, 10.0.0.1;\n"
-dhcpd="${dhcpd}option domain-name \"edge.spaceify.net\";\n\n"
-
-dhcpd="${dhcpd}subnet 10.0.0.0 netmask 255.255.255.0 {\n"
-dhcpd="${dhcpd}range 10.0.0.2 10.0.0.254;\n"
-dhcpd="${dhcpd}}\n\n"
-
-dhcpd="${dhcpd}on commit {\n"
-dhcpd="${dhcpd}  set ClientIP = binary-to-ascii(10, 8, \".\", leased-address);\n"
-dhcpd="${dhcpd}  set ClientMac = binary-to-ascii(16, 8, \":\", substring(hardware, 1, 6));\n"
-dhcpd="${dhcpd}  execute(\"node /var/lib/spaceify/code/dhcpdlog\", \"commit\", ClientIP, ClientMac, host-decl-name);\n"
-dhcpd="${dhcpd}}\n\n"
-
-dhcpd="${dhcpd}on release {\n"
-dhcpd="${dhcpd}  set ClientIP = binary-to-ascii(10, 8, \".\", leased-address);\n"
-dhcpd="${dhcpd}  set ClientMac = binary-to-ascii(16, 8, \":\", substring(hardware, 1, 6));\n"
-dhcpd="${dhcpd}  execute(\"node /var/lib/spaceify/code/dhcpdlog\", \"release\", ClientIP, ClientMac, host-decl-name);\n"
-dhcpd="${dhcpd}}\n\n"
-
-dhcpd="${dhcpd}on expiry {\n"
-dhcpd="${dhcpd}  set ClientIP = binary-to-ascii(10, 8, \".\", leased-address);\n"
-dhcpd="${dhcpd}  set ClientMac = binary-to-ascii(16, 8, \":\", substring(hardware, 1, 6));\n"
-dhcpd="${dhcpd}  execute(\"node /var/lib/spaceify/code/dhcpdlog\", \"expiry\", ClientIP, ClientMac, host-decl-name);\n"
-dhcpd="${dhcpd}}\n"
-
-dhcpd="${dhcpd}${end_spaceify}"
-
-printf "$dhcpd" > /etc/dhcp/dhcpd.conf
-
-#######################################
-# GET EXTERNAL DNS SERVERS IP ADDRESS #
-#######################################
-/var/lib/spaceify/data/scripts/get_dns.sh
+dhcpd="DHCPD_ENABLED=\"yes\"\n"
+dhcpd="${dhcpd}DHCPD_OPTS=\"-S\"\n\n"
+printf "$dhcpd" > /etc/default/udhcpd
 
 ####################
 # EXECUTE COMMANDS #
@@ -487,6 +453,8 @@ admin_password_hash=$(echo -n "${admin_password}${admin_salt}" | openssl dgst -s
 sqlite3 /var/lib/spaceify/data/db/spaceify.db "INSERT OR REPLACE INTO user (edge_id, edge_password, admin_password_hash, admin_salt)  VALUES('${uuid}', '${edge_password}', '${admin_password_hash}', '${admin_salt}');"
 
 #----- Start services -----#
+
+service udhcpd restart
 
 if [[ -z $(service network-manager status |& grep running) ]]; then
 	printf "\nNetworking not restarted, please do it manually\n"

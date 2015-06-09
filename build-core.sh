@@ -16,7 +16,7 @@ vs=$(echo $versions | awk -F : '{print $2}')
 echo "Creating directories..."
 dst="/tmp/build/spaceify-${vs}"
 
-rm -r $dst > /dev/null 2>&1 || true
+rm -r /tmp/build/ > /dev/null 2>&1 || true
 
 mkdir -p $dst
 mkdir "${dst}/code/"

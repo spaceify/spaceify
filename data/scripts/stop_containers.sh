@@ -11,7 +11,7 @@ imageids=(${sq//$'\n'/ })
 # Stop and remove containers that are started by Spaceify Core
 for cid in "${containerids[@]}"
 do
-    image_id=$(docker inspect --format='{{.Image}}' ${cid})
+    image_id=$(docker inspect --format='{{.Image}}' ${cid} > /dev/null 2>&1 || true)
 
     isSpaceifys=false
     for iid in "${imageids[@]}"; do
@@ -22,7 +22,7 @@ do
     done
 
     if [ "$isSpaceifys" = true ]; then
-        docker stop -t=0 $cid
-        docker rm $cid
+        docker stop -t=0 $cid > /dev/null 2>&1 || true
+        docker rm $cid > /dev/null 2>&1 || true
     fi
 done

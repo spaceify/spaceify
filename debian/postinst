@@ -183,6 +183,17 @@ dhcpd="DHCPD_ENABLED=\"yes\"\n"
 dhcpd="${dhcpd}DHCPD_OPTS=\"-S\"\n\n"
 printf "$dhcpd" > /etc/default/udhcpd
 
+# ----- /etc/init/spaceify.conf, /etc/init/spaceifydns.conf, /etc/init/spaceifyipt.conf,-----#
+
+sed -i "s/interface1/${eth}/g" /etc/init/spaceify.conf
+sed -i "s/interface2/${wlan}/g" /etc/init/spaceify.conf
+
+sed -i "s/interface1/${eth}/g" /etc/init/spaceifydns.conf
+sed -i "s/interface2/${wlan}/g" /etc/init/spaceifydns.conf
+
+sed -i "s/interface1/${eth}/g" /etc/init/spaceifyipt.conf
+sed -i "s/interface2/${wlan}/g" /etc/init/spaceifyipt.conf
+
 ####################
 # EXECUTE COMMANDS #
 ####################

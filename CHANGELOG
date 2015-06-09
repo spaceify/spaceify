@@ -1,3 +1,7 @@
+0.2.4  Alpha Centauri (developer-pre-alpha)
+    * Changed upstart scripts to wait for interfaces selected on Spaceify installation.
+    * Fixed errors in stop_containers.sh script - service spaceify stop -command no longer display "Job failed while stopping" error message.
+
 0.2.3  Alpha Centauri (developer-pre-alpha)
     * Changed DHCP server to udhcpd.
 

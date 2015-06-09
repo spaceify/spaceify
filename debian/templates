@@ -17,7 +17,7 @@ Description: Select the network adapter that the Spaceify clients will connect t
 
 Template: spaceify/wlan_ap
 Type: select
-Default: Internal
+Default: External
 Choices: External, Internal
 Description: Is the network adapter the Spaceify clients will connect to an internal WLAN adapter or a wired adapter connected to an external wireless access point.
 

@@ -20,7 +20,7 @@ if [ "$vs" = "$vsp" ]; then
 else
 	echo "Version ${vs} added to the debian/changelog"
 
-	vsdate=$( date +"%a, %d %b %Y %H:%M:%S %z" )
+	vsdate=$( LANG=EN_US date +"%a, %d %b %Y %H:%M:%S %z" )
 
 	vss="spaceify (${vs}) unstable; urgency=low\n\n  * Release ${vs} ${ts}\n\n -- Spaceify Inc. <admin@spaceify.net>  ${vsdate}\n\n"
 

@@ -1,43 +1,28 @@
 #!/bin/bash
 
-# Source debconf/confmodule
-. /usr/share/debconf/confmodule
-
 #############
 # CONSTANTS #
 #############
-start_spaceify="# Added by spaceify"
-end_spaceify="# Added by spaceify ends"
-comm_out_spaceify="# Commented out by spaceify: "
+start_spaceify="# Added by Spaceify"
+end_spaceify="# Added by Spaceify ends"
+comm_out_spaceify="# Commented out by Spaceify: "
 
-############################
-# DEBCONF - GET SELECTIONS #
-############################
-db_get spaceify/ethernet
-eth="$RET"
+#######################
+# DEBCONF - GET INPUT #
+#######################
+. /var/lib/spaceify/data/scripts/input.sh
 
-db_get spaceify/wlan
-wlan="$RET"
-
-db_get spaceify/wlan_ap
-intext="$RET"
-if [[ "$intext" == "Internal" ]]; then
-	intext=1
-else
-	intext=0
-fi
-
-db_get spaceify/admin_password
-admin_password="$RET"
-db_unregister spaceify/admin_password || true
+eth=$(</var/lib/spaceify/data/interfaces/ethernet)
+wlan=$(</var/lib/spaceify/data/interfaces/wlan)
+is_internal=$(</var/lib/spaceify/data/interfaces/is_internal)
 
 ################################
 # MODIFY CONFIGURATION SCRIPTS #
 ################################
 
-#----- /etc/network/interfaces - give ip to wlan0 (or what adapter names user selected) -----#
+# ----- /etc/network/interfaces - give ip to wlan0 (or what adapter names user selected) ----- #
 
-sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d" /etc/network/interfaces	# remove spaceify's previous comments/entries
+sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d" /etc/network/interfaces > /dev/null 2>&1 || true	# remove Spaceify's previous comments/entries
 
 sed -i "/${wlan}/,/^$/s/^/${comm_out_spaceify}&/g" /etc/network/interfaces					# comment out existing wlan (range: first line with string $wlan until empty line)
 
@@ -50,9 +35,9 @@ wlan_conf=$( echo "${wlan_conf}netmask 255.255.255.0\n" )
 wlan_conf=$( echo "${wlan_conf}${end_spaceify}" )
 printf "$wlan_conf" > /etc/network/interfaces
 
-#----- /etc/default/docker -----#
+# ----- /etc/default/docker ----- #
 
-sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/default/docker > /dev/null 2>&1 || true	# remove spaceify's previous entries
+sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/default/docker > /dev/null 2>&1 || true	# remove Spaceify's previous entries
 
 if [ -s /etc/default/docker ]; then
 	docker_conf=$(</etc/default/docker)
@@ -65,9 +50,9 @@ docker_conf=$( echo "${docker_conf}DOCKER_OPTS=\"--dns 10.0.0.1\"\n" )
 docker_conf=$( echo "${docker_conf}${end_spaceify}" )
 printf "$docker_conf" > /etc/default/docker
 
-#----- /etc/rc.local -----#
+# ----- /etc/rc.local ----- #
 
-# Remove spaceify's previous iptables entries
+	# Remove Spaceify's previous iptables entries
 sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/rc.local
 
 # Create mangle chain
@@ -82,7 +67,7 @@ sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/rc.local
 #mangle_chain="$rclocal1\n$rclocal2\n$rclocal3\n$rclocal4\n$rclocal5\n$rclocal6\n$rclocal7\n"
 mangle_chain=""
 
-# Create HTTP filter chain, NAT chain and redirect chain
+	# -- Create HTTP filter chain, NAT chain and redirect chain --#
 rclocal1="\/sbin\/iptables -t nat -N Spaceify-HTTP-Nat-Redir"
 rclocal2="\/sbin\/iptables -t nat -A PREROUTING -j Spaceify-HTTP-Nat-Redir"
 rclocal3="\/sbin\/iptables -t nat -A Spaceify-HTTP-Nat-Redir -d 10\.0\.0\.1\/32 -j ACCEPT"
@@ -94,7 +79,7 @@ rclocal7="\/sbin\/iptables -t nat -A Spaceify-HTTP-Nat-Masq -o "${eth}" -j MASQU
 
 http_chain="$rclocal1\n$rclocal2\n$rclocal3\n$rclocal4\n$rclocal5\n$rclocal6\n$rclocal7\n"
 
-# Create HTTPS filter chain, NAT chain and redirect chain
+	# -- Create HTTPS filter chain, NAT chain and redirect chain --#
 rclocal1="\/sbin\/iptables -t nat -N Spaceify-HTTPS-Nat-Redir"
 rclocal2="\/sbin\/iptables -t nat -A PREROUTING -j Spaceify-HTTPS-Nat-Redir"
 rclocal3="\/sbin\/iptables -t nat -A Spaceify-HTTPS-Nat-Redir -d 10\.0\.0\.1\/32 -j ACCEPT"
@@ -106,21 +91,21 @@ rclocal7="\/sbin\/iptables -t nat -A Spaceify-HTTPS-Nat-Masq -o "${eth}" -j MASQ
 
 https_chain="$rclocal1\n$rclocal2\n$rclocal3\n$rclocal4\n$rclocal5\n$rclocal6\n$rclocal7\n"
 
-# Append spaceify specific lines in rc.local before "exit 0"
+	# -- Append spaceify specific lines in rc.local before "exit 0" --#
 sed -i "s/^exit.*/$start_spaceify\n$mangle_chain\n$http_chain\n$https_chain$end_spaceify\nexit 0/" /etc/rc.local
 
-#----- /etc/sysctl.conf - enable forwarding (for nat) -----#
+# ----- /etc/sysctl.conf - enable forwarding (for nat) ----- #
 
 sysctl=$(</etc/sysctl.conf)
-sysctl=$( echo "$sysctl" | sed "s/${comm_out_spaceify}//g" )								# remove spaceify's previous comments
-sysctl=$( echo "$sysctl" | sed "/${start_spaceify}/,/${end_spaceify}/d" )					# remove spaceify's previous entries
+sysctl=$( echo "$sysctl" | sed "s/${comm_out_spaceify}//g" )								# remove Spaceify's previous comments
+sysctl=$( echo "$sysctl" | sed "/${start_spaceify}/,/${end_spaceify}/d" )					# remove Spaceify's previous entries
 sysctl=$( echo "$sysctl" | sed "s/.*net.ipv4.ip_forward.*=.*/${comm_out_spaceify}&/" )		# comment out original entry
-sysctl=$( echo "${sysctl}\n\n${start_spaceify}\nnet.ipv4.ip_forward=1\n${end_spaceify}" )	# append new value
+sysctl=$( echo "${sysctl}\n\n${start_spaceify}\nnet.ipv4.ip_forward=1\n${end_spaceify}" > /dev/null 2>&1 || true )	# append new value
 printf "$sysctl" > /etc/sysctl.conf
 
-#----- /etc/hostapd/hostapd_spaceify-ap.conf and /etc/default/hostapd - configure/enable AP -----#
+# ----- /etc/hostapd/hostapd_spaceify-ap.conf and /etc/default/hostapd - configure/enable AP ----- #
 
-if [ "$intext" -eq 1 ]; then																# configure
+if [ "$is_internal" -eq "1" ]; then															# configure
 	hostap=$( echo "$start_spaceify\n" )
 	hostap=$( echo "${hostap}interface=${wlan}\n" )
 	hostap=$( echo "${hostap}driver=nl80211\n" )
@@ -130,8 +115,8 @@ if [ "$intext" -eq 1 ]; then																# configure
 	printf "$hostap" > /etc/hostapd/hostapd_spaceify.conf
 
 	dhostapd=$(</etc/default/hostapd)
-	dhostapd=$( echo "$dhostapd" | sed "s/${comm_out_spaceify}//g" )						# remove spaceify's previous comments
-	dhostapd=$( echo "$dhostapd" | sed "/${start_spaceify}/,/${end_spaceify}/d" )			# remove spaceify's previous entries
+	dhostapd=$( echo "$dhostapd" | sed "s/${comm_out_spaceify}//g" )						# remove Spaceify's previous comments
+	dhostapd=$( echo "$dhostapd" | sed "/${start_spaceify}/,/${end_spaceify}/d" )			# remove Spaceify's previous entries
 	dhostapd=$( echo "$dhostapd" | sed "s/.*DAEMON_CONF.*=.*/${comm_out_spaceify}&/" )		# comment out original entry
 	dhostapd=$( echo "${dhostapd}\n\n${start_spaceify}\nDAEMON_CONF=/etc/hostapd/hostapd_spaceify.conf\n${end_spaceify}" )	# append new value
 	printf "$dhostapd" > /etc/default/hostapd
@@ -140,17 +125,17 @@ else																						# comment configuration if hostpad is installed and it
 	hpd=$( echo "$hpd" | sed -n '/installed/{p;q;}' )
 	if [[ "$hpd" != "" ]]; then
 		service hostapd stop																# stop hostapd
-		sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d" /etc/default/hostapd	# restore previous configuration
+		sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d" /etc/default/hostapd > /dev/null 2>&1 || true	# restore previous configuration
 	fi
 fi
 
-#----- /etc/init/spaceify.conf -----#
+# ----- /etc/init/spaceify.conf ----- #
 
 sed -i "s/CHANGEADAPTER/${eth}/" /etc/init/spaceify.conf
 
-#----- /etc/monit/monitrc -----#
+# ----- /etc/monit/monitrc ----- #
 
-#sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/monit/monitrc							# remove spaceify's previous entries
+#sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/monit/monitrc							# remove Spaceify's previous entries
 
 #monit=$(</etc/monit/monitrc)
 #monit=$( echo "${monit}\n\n${start_spaceify}\n" )											# append new configuration
@@ -162,7 +147,7 @@ core_port="2497"
 #sed -i "s/%1/${core_port}/" /var/lib/spaceify/monit/spaceify.conf							# change the port to monitor to configuration
 sed -i "s/%1/${core_port}/" /etc/monit/conf.d/spaceify.conf
 
-# ----- /etc/udhcpd.conf, /etc/default/udhcpd -----#
+# ----- /etc/udhcpd.conf, /etc/default/udhcpd ----- #
 
 mv /etc/udhcpd.conf /etc/udhcpd.conf.original > /dev/null 2>&1 || true						# store existing configuration
 mv /etc/default/udhcpd /etc/default/udhcpd.original > /dev/null 2>&1 || true
@@ -183,7 +168,7 @@ dhcpd="DHCPD_ENABLED=\"yes\"\n"
 dhcpd="${dhcpd}DHCPD_OPTS=\"-S\"\n\n"
 printf "$dhcpd" > /etc/default/udhcpd
 
-# ----- /etc/init/spaceify.conf, /etc/init/spaceifydns.conf, /etc/init/spaceifyipt.conf,-----#
+# ----- /etc/init/spaceify.conf, /etc/init/spaceifydns.conf, /etc/init/spaceifyipt.conf ----- #
 
 sed -i "s/interface1/${eth}/g" /etc/init/spaceify.conf
 sed -i "s/interface2/${wlan}/g" /etc/init/spaceify.conf
@@ -198,15 +183,83 @@ sed -i "s/interface2/${wlan}/g" /etc/init/spaceifyipt.conf
 # EXECUTE COMMANDS #
 ####################
 
-#----- Symbolic links for Spaceify's services  -----#
+# ----- Symbolic links for Spaceify's services ----- #
 ln -s /etc/init/spaceify.conf /etc/init.d/spaceify > /dev/null 2>&1 || true
 ln -s /etc/init/spaceifydns.conf /etc/init.d/spaceifydns > /dev/null 2>&1 || true
 ln -s /etc/init/spaceifyipt.conf /etc/init.d/spaceifyipt > /dev/null 2>&1 || true
 
-#----- Spaceify's DNS server must be on -----#
+# ----- Spaceify's DNS server must be on and other DNS mechanisms off ----- #
+	# -- remove Spaceify's previous entries -- #
+if [ -f /etc/NetworkManager/NetworkManager.conf ]; then
+	sed -i -e "s/${comm_out_spaceify}//g" /etc/NetworkManager/NetworkManager.conf > /dev/null 2>&1 || true
+fi
+
+if [ -f /etc/dhcp/dhclient.conf ]; then
+	sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d" /etc/dhcp/dhclient.conf > /dev/null 2>&1 || true
+fi
+
+sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d" /etc/resolvconf/resolv.conf.d/base > /dev/null 2>&1 || true
+
+	# -- disable dnsmasq -- #
+if [ -f /etc/NetworkManager/NetworkManager.conf ]; then
+	netm=$( sed -i -e "/dns/ s/^/${comm_out_spaceify}/" /etc/NetworkManager/NetworkManager.conf )
+fi
+
+	# -- keep localhost -- #
+if [ -f /etc/dhcp/dhclient.conf ]; then
+	hdh=$(grep "prepend domain-name-servers" /etc/dhcp/dhclient.conf)
+
+	if [ -n "$hdh" ]; then
+		dhcl=$( sed -e "/prepend domain-name-servers/ s/^/${comm_out_spaceify}/" /etc/dhcp/dhclient.conf )
+		dhcl=$( echo "$dhcl" | sed "/prepend domain-name-servers/a ${start_spaceify}\nprepend domain-name-servers 127.0.0.1;\n${end_spaceify}" )
+	else
+		dhcl=$(< /etc/dhcp/dhclient.conf)
+		dhcl="${dhcl}\n${start_spaceify}\nprepend domain-name-servers 127.0.0.1;\n${end_spaceify}"
+	fi
+
+	printf "$dhcl" > /etc/dhcp/dhclient.conf
+fi
+
+	# -- direct to localhost -- #
+base=$( sed -e "s/^/${comm_out_spaceify}/" /etc/resolvconf/resolv.conf.d/base )
+base="${base}\n${start_spaceify}\nnameserver 127.0.0.1\n${end_spaceify}"
+printf "$base" > /etc/resolvconf/resolv.conf.d/base
+
+	# -- try to apply the changes -- #
+if [[ -n $(service network-manager status |& grep unrecognized) ]]; then
+	resolvconf -u
+elif [[ -n $(service network-manager status |& grep running) ]]; then
+	service network-manager restart
+fi
+
+	# -- start the Spaceify DNS server -- #
 service spaceifydns restart > /dev/null 2>&1 || true
 
-#----- Add custom iptables chains for Spaceify -----#
+	# -- interface must be up -- #
+x=240
+echo "Waiting for maximum of $x seconds for the network interface $eth to come up."
+ping -c 1 -W 1 8.8.8.8  > /dev/null 2>&1
+while [ $? -ne 0 ]; do
+	let x-=1
+	printf "%d %s %4s\r" $x "seconds remaining." ""
+
+	if [ $x -eq 0 ]; then
+		break
+	fi
+
+	sleep 1
+	ping -c 1 8.8.8.8 > /dev/null 2>&1
+done
+
+if [[ $x -eq 0 ]]; then
+	. /var/lib/spaceify/data/scripts/cleanup_installation.sh
+	printf "\nFailed to get the interface up. Run 'apt-get --purge remove Spaceify' to remove incomplete installation. Exiting the installation.\n\n"
+	exit 1
+else
+	printf "\nThe interface is up. Continuing the installation.\n\n"
+fi
+
+# ----- Add custom iptables chains for Spaceify ----- #
 
 # To avoid duplicates delete existing rules
 iptables -t mangle -D PREROUTING -j Spaceify-mangle > /dev/null 2>&1 || true
@@ -259,11 +312,11 @@ iptables -t nat -N Spaceify-HTTPS-Nat-Masq
 iptables -t nat -A POSTROUTING -j Spaceify-HTTPS-Nat-Masq
 iptables -t nat -A Spaceify-HTTPS-Nat-Masq -o "${eth}" -j MASQUERADE 
 
-#----- Enable IP forwarding -----#
+# ----- Enable IP forwarding ----- #
 
 echo 1 > /proc/sys/net/ipv4/ip_forward
 
-#----- Create Spaceify's databases -----#
+# ----- Create Spaceify's databases ----- #
 
 mkdir /var/lib/spaceify/data/db/ > /dev/null 2>&1 || true									# create directory for the databases
 cd /var/lib/spaceify/data/db
@@ -275,14 +328,14 @@ if [ ! -e $dbs ]; then																		# create a new database
 	sqlite3 $dbs < /var/lib/spaceify/data/db/create.sql
 fi
 
-#  Set release name and version and data version
+	# -- Set release name and version and data version --#
 versions=$(< /var/lib/spaceify/versions)
 release_version=$(echo $versions | awk -F : '{print $2}')
 release_name=$(echo $versions | awk -F : '{print $3}')
 db_version=$(echo $versions | awk -F : '{print $7}')
 sqlite3 $dbs "UPDATE settings SET release_name='${release_name}', release_version='${release_version}', db_version='${db_version}';"
 
-#----- Certificates and keys -----#
+# ----- Certificates and keys ----- #
 
 # Copy certificates and keys to Spaceify's folders from Squid's folders
 mkdir /var/lib/spaceify/code/www/ > /dev/null 2>&1 || true
@@ -291,7 +344,7 @@ cp /etc/squid3/certs/spaceifyCA/spaceify.crt /var/lib/spaceify/code/www/ > /dev/
 cp /etc/squid3/certs/server.crt /var/lib/spaceify/data/tls/ > /dev/null 2>&1 || true
 cp /etc/squid3/certs/server.key /var/lib/spaceify/data/tls/ > /dev/null 2>&1 || true
 
-#----- File permissions etc. -----#
+# ----- File permissions etc. ----- #
 
 mkdir -p /var/lib/spaceify/data/dhcp-data > /dev/null 2>&1 || true							# dhcp server directories/files
 chmod -R 0664 /var/lib/spaceify/data/dhcp-data > /dev/null 2>&1 || true
@@ -309,7 +362,7 @@ chmod 0755 /usr/bin/spm  > /dev/null 2>&1 || true											# Spaceify Packet Ma
 
 chmod 0755 /var/lib/spaceify/data/scripts/stop_containers.sh > /dev/null 2>&1 || true		# a script to stop and remove running containers
 
-#----- Update node.js to the latest stable release and install the required node.js modules (versions are defined in package.json) -----#
+# ----- Update node.js to the latest stable release and install the required node.js modules (versions are defined in package.json) ----- #
 # npm cache clear -f
 # npm install -g n
 # n stable
@@ -318,7 +371,7 @@ npm install -g node-gyp
 cd /var/lib/spaceify/code
 npm install
 
-#----- Create and initialize Docker image -----#
+# ----- Create and initialize Docker image ----- #
 work_path="/tmp/docimg/"
 installed_file="/var/lib/spaceify/data/docker/installed_version"
 
@@ -328,7 +381,7 @@ if [ -z "$in" ]; then in=0; fi
 il=0																						# Has the local computer some version of the image build/imported
 if [ -s "$installed_file" ]; then il=$(< "$installed_file"); fi
 
-ubun=$( echo $(docker images) | sed -n '/spaceifyubuntu/{p;q;}' )							# Is there really an build/imported image existing in the local computer
+ubun=$( echo $(docker images) | sed -n '/spaceifyubuntu/{p;q;}' )	# Is there really an build/imported image existing in the local computer
 [ -z "$ubun" ] && su=0 || su=1
 
 typeset -i in
@@ -395,9 +448,9 @@ else
 	printf "$in" > "$installed_file"
 fi
 
-#----- Create user names and passwords for edge and admin -----#
+# ----- Create user names and passwords for edge and admin ----- #
 
-# Is edge already registered? Try to find previous edge_id.uuid file.
+	# -- Is edge already registered? Try to find previous edge_id.uuid file --#
 euuid=""
 if [ -e /var/lib/spaceify/data/db/edge_id.uuid ]; then
 	euuid=$(</var/lib/spaceify/data/db/edge_id.uuid)
@@ -405,7 +458,7 @@ elif [ -e /tmp/edge_id.uuid ]; then
 	euuid=$(</tmp/edge_id.uuid)
 fi
 
-# Parse file content if edge_id.uuid was found
+	# -- Parse file content if edge_id.uuid was found --#
 uuid=""
 edge_password=""
 if [[ "$euuid" != "" ]]; then
@@ -417,7 +470,7 @@ if [[ "$euuid" != "" ]]; then
 	edge_password="${auuid[1]}"
 fi
 
-# If uuid exists, edge is already registered. Dont't register it again!!!
+	# -- If uuid exists, edge is already registered. Dont't register it again!!! --#
 if [[ "$uuid" == "" ]]; then
 	# try five times to register a new edge_id
 	cnt=1
@@ -439,7 +492,7 @@ if [[ "$uuid" == "" ]]; then
 
 			printf "\nEdge registered successfully with edge id ${uuid}.\nFile edge_id.uuid can be found here:\n"
 			printf "/var/lib/spaceify/data/db\n"
-			printf "Store this file in a secure location for future use. If the file is placed to /tmp prior to reinstalling spaceify\n"
+			printf "Store this file in a secure location for future use. If the file is placed to /tmp prior to reinstalling Spaceify\n"
 			printf "the new installation will reuse the id and previous registration.\n\n"
 
 			break;
@@ -458,12 +511,10 @@ else
 	printf "\nThe file edge_id.uuid was found containing edge id ${uuid}.\nPrevious edge registration is valid.\n\n"
 fi
 
-# Update the created/restored edge_id and password AND admin password to the database.
-admin_salt=$(openssl rand -hex 64)
-admin_password_hash=$(echo -n "${admin_password}${admin_salt}" | openssl dgst -sha512 -hex | awk '{print $2}')
-sqlite3 /var/lib/spaceify/data/db/spaceify.db "INSERT OR REPLACE INTO user (edge_id, edge_password, admin_password_hash, admin_salt)  VALUES('${uuid}', '${edge_password}', '${admin_password_hash}', '${admin_salt}');"
+	# -- Update the created/restored edge_id and password to the database -- #
+sqlite3 /var/lib/spaceify/data/db/spaceify.db "INSERT OR REPLACE INTO user (edge_id, edge_password)  VALUES('${uuid}', '${edge_password}');"
 
-#----- Start services -----#
+# ----- Start services ----- #
 
 #service udhcpd restart
 
@@ -475,7 +526,7 @@ else
 	ifconfig ${wlan} 10.0.0.1 netmask 255.255.255.0 up
 fi
 
-if [ "$intext" -eq 1 ]; then
+if [ "$is_internal" -eq "1" ]; then
 	service hostapd restart > /dev/null 2>&1 || true
 fi
 

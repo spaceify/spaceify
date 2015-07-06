@@ -1,9 +1,7 @@
 #!/bin/bash
 # Get DNS server IP address for Spaceify's DNS server, 30.4.2015 Spaceify Inc.
 
-. /usr/share/debconf/confmodule
-db_get spaceify/ethernet
-eth="$RET"
+eth=$(</var/lib/spaceify/data/interfaces/ethernet)
 
 lease=""																					# Get the leases for the user selected network adapter connected to the internet
 find="option domain-name-servers "

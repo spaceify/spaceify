@@ -2,13 +2,15 @@
 
 # Build Spaceify debian package
 
+printf "\n\nBuilding Spaceify debian package\n\n"
+
 ############
 # VERSIONS #
 ############
 versions=$(< versions)
 vs=$(echo $versions | awk -F : '{print $2}')
 
-./version-updater.sh
+./data/scripts/version_updater.sh
 
 ###############
 # DIRECTORIES #

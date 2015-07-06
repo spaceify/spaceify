@@ -10,7 +10,7 @@ printf "\n\nPushing changes as a new tagged version to GitHub\n\n"
 versions=$(< versions)
 vs=$(echo $versions | awk -F : '{print $2}')
 
-. /data/scripts/version_updater.sh
+./data/scripts/version_updater.sh
 
 ##########
 # GitHub #

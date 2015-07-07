@@ -10,12 +10,12 @@ comm_out_spaceify="# Commented out by Spaceify: "
 ############
 # DATABASE #
 ############
-./var/lib/spaceify/data/scripts/database.sh
+. /var/lib/spaceify/data/scripts/database.sh
 
 #######################
 # DEBCONF - GET INPUT #
 #######################
-./var/lib/spaceify/data/scripts/input.sh
+. /var/lib/spaceify/data/scripts/input.sh
 
 eth=$(</var/lib/spaceify/data/interfaces/ethernet)
 wlan=$(</var/lib/spaceify/data/interfaces/wlan)
@@ -254,7 +254,7 @@ while [ $? -ne 0 ]; do
 done
 
 if [[ $x -eq 0 ]]; then
-	. /var/lib/spaceify/data/scripts/cleanup_installation.sh
+	. /var/lib/spaceify/data/scripts/cleanup_installation.sh "remove"
 	printf "\nFailed to get the interface up. Run 'apt-get --purge remove Spaceify' to remove incomplete installation. Exiting the installation.\n\n"
 	exit 1
 else

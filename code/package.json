@@ -36,7 +36,6 @@
     "kiwi": "0.2.2",
     "mkdirp": "0.3.5",
     "mmmagic": "0.3.13",
-    "netmask": "^1.0.5",
     "read": "1.0.5",
     "request": "2.27.0",
     "socket.io": "0.9.16",

@@ -79,6 +79,8 @@ if [[ -n $(service network-manager status |& grep unrecognized) ]]; then					# t
 	resolvconf -u
 elif [[ -n $(service network-manager status |& grep running) ]]; then
 	service network-manager restart
+
+	resolvconf -u
 fi
 
 if [ "$1" = "remove" ]; then																# clean up

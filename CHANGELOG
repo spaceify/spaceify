@@ -1,5 +1,6 @@
 0.2.5  Alpha Centauri (developer-pre-alpha)
     * Fixed the problem causing DNS not to work because of the differences between desktop and server versions of Ubuntu.
+    * Supports now Docker versions up to 1.7.0.
 
 0.2.4  Alpha Centauri (developer-pre-alpha)
     * Changed upstart scripts to wait for interfaces selected on Spaceify installation.

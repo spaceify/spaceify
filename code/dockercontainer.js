@@ -78,7 +78,7 @@ self.startContainer = fibrous( function(portCount, imageNameOrId, volumes, binds
 			"Dns": [Config.EDGE_IP, null],
 			"Image": imageNameOrId,
 			"Volumes": (volumes ? volumes : {}),
-			"VolumesFrom": "",
+			//"VolumesFrom": "",
 			"ExposedPorts": exposed
 			//"PortSpecs": PortSpecs
       	};
@@ -101,7 +101,7 @@ self.startContainer = fibrous( function(portCount, imageNameOrId, volumes, binds
 		inspectedData = container.sync.inspect(); }
 	catch(err) {
 		throw Utility.error(Language.E_CONTAINER_INSPECT_FAILED.p("DockerContainer::startContainer"), err); }
-	containerId = inspectedData.ID;
+	containerId = (inspectedData.ID ? inspectedData.ID : inspectedData.Id);
 	containerIp = inspectedData.NetworkSettings.IPAddress;
 	logger.info("containerId: " + containerId + ", containerIp: " + containerIp);
 
@@ -144,7 +144,9 @@ self.installApplication = fibrous( function(appobj)
 		ics += " && " + icommands[i];
 
 	dockerHelper.sync.executeCommand("export NODE_PATH=" + Config.API_NODE_MODULES_DIRECTORY + ics + " && echo icfinished", "icfinished");
-	return container.sync.commit({"repo": appobj.getUniqueName()});						// Create a new image (difference) for each application by committing the currently running container
+
+	// Create a new image (difference) for each application by committing the currently running container
+	return container.sync.commit({"repo": appobj.getUniqueName(), "container": self.getContainerId()});
 	});
 
 self.runApplication = fibrous( function(appobj)

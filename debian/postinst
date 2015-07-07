@@ -7,10 +7,15 @@ start_spaceify="# Added by Spaceify"
 end_spaceify="# Added by Spaceify ends"
 comm_out_spaceify="# Commented out by Spaceify: "
 
+############
+# DATABASE #
+############
+./var/lib/spaceify/data/scripts/database.sh
+
 #######################
 # DEBCONF - GET INPUT #
 #######################
-. /var/lib/spaceify/data/scripts/input.sh
+./var/lib/spaceify/data/scripts/input.sh
 
 eth=$(</var/lib/spaceify/data/interfaces/ethernet)
 wlan=$(</var/lib/spaceify/data/interfaces/wlan)
@@ -67,7 +72,7 @@ sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/rc.local
 #mangle_chain="$rclocal1\n$rclocal2\n$rclocal3\n$rclocal4\n$rclocal5\n$rclocal6\n$rclocal7\n"
 mangle_chain=""
 
-	# -- Create HTTP filter chain, NAT chain and redirect chain --#
+	# -- create HTTP filter chain, NAT chain and redirect chain --#
 rclocal1="\/sbin\/iptables -t nat -N Spaceify-HTTP-Nat-Redir"
 rclocal2="\/sbin\/iptables -t nat -A PREROUTING -j Spaceify-HTTP-Nat-Redir"
 rclocal3="\/sbin\/iptables -t nat -A Spaceify-HTTP-Nat-Redir -d 10\.0\.0\.1\/32 -j ACCEPT"
@@ -79,7 +84,7 @@ rclocal7="\/sbin\/iptables -t nat -A Spaceify-HTTP-Nat-Masq -o "${eth}" -j MASQU
 
 http_chain="$rclocal1\n$rclocal2\n$rclocal3\n$rclocal4\n$rclocal5\n$rclocal6\n$rclocal7\n"
 
-	# -- Create HTTPS filter chain, NAT chain and redirect chain --#
+	# -- create HTTPS filter chain, NAT chain and redirect chain --#
 rclocal1="\/sbin\/iptables -t nat -N Spaceify-HTTPS-Nat-Redir"
 rclocal2="\/sbin\/iptables -t nat -A PREROUTING -j Spaceify-HTTPS-Nat-Redir"
 rclocal3="\/sbin\/iptables -t nat -A Spaceify-HTTPS-Nat-Redir -d 10\.0\.0\.1\/32 -j ACCEPT"
@@ -91,7 +96,7 @@ rclocal7="\/sbin\/iptables -t nat -A Spaceify-HTTPS-Nat-Masq -o "${eth}" -j MASQ
 
 https_chain="$rclocal1\n$rclocal2\n$rclocal3\n$rclocal4\n$rclocal5\n$rclocal6\n$rclocal7\n"
 
-	# -- Append spaceify specific lines in rc.local before "exit 0" --#
+	# -- append spaceify specific lines in rc.local before "exit 0" --#
 sed -i "s/^exit.*/$start_spaceify\n$mangle_chain\n$http_chain\n$https_chain$end_spaceify\nexit 0/" /etc/rc.local
 
 # ----- /etc/sysctl.conf - enable forwarding (for nat) ----- #
@@ -232,12 +237,9 @@ elif [[ -n $(service network-manager status |& grep running) ]]; then
 	service network-manager restart
 fi
 
-	# -- start the Spaceify DNS server -- #
-service spaceifydns restart > /dev/null 2>&1 || true
-
 	# -- interface must be up -- #
-x=240
-printf "\nWaiting for maximum of $x seconds for the network interface $eth to come up."
+x=300
+printf "\nWaiting for maximum of $x seconds for the network interface $eth to come up.\n"
 ping -c 1 -W 1 8.8.8.8  > /dev/null 2>&1
 while [ $? -ne 0 ]; do
 	let x-=1
@@ -258,6 +260,9 @@ if [[ $x -eq 0 ]]; then
 else
 	printf "\nThe interface is up. Continuing the installation.\n\n"
 fi
+
+	# -- start the Spaceify DNS server -- #
+service spaceifydns restart > /dev/null 2>&1 || true
 
 # ----- Add custom iptables chains for Spaceify ----- #
 
@@ -315,25 +320,6 @@ iptables -t nat -A Spaceify-HTTPS-Nat-Masq -o "${eth}" -j MASQUERADE
 # ----- Enable IP forwarding ----- #
 
 echo 1 > /proc/sys/net/ipv4/ip_forward
-
-# ----- Create Spaceify's databases ----- #
-
-mkdir /var/lib/spaceify/data/db/ > /dev/null 2>&1 || true									# create directory for the databases
-cd /var/lib/spaceify/data/db
-
-dbs="/var/lib/spaceify/data/db/spaceify.db"
-
-if [ ! -e $dbs ]; then																		# create a new database
-	touch $dbs
-	sqlite3 $dbs < /var/lib/spaceify/data/db/create.sql
-fi
-
-	# -- Set release name and version and data version --#
-versions=$(< /var/lib/spaceify/versions)
-release_version=$(echo $versions | awk -F : '{print $2}')
-release_name=$(echo $versions | awk -F : '{print $3}')
-db_version=$(echo $versions | awk -F : '{print $7}')
-sqlite3 $dbs "UPDATE settings SET release_name='${release_name}', release_version='${release_version}', db_version='${db_version}';"
 
 # ----- Certificates and keys ----- #
 
@@ -450,7 +436,7 @@ fi
 
 # ----- Create user names and passwords for edge and admin ----- #
 
-	# -- Is edge already registered? Try to find previous edge_id.uuid file --#
+	# -- try to find previous registration (edge_id.uuid) --#
 euuid=""
 if [ -e /var/lib/spaceify/data/db/edge_id.uuid ]; then
 	euuid=$(</var/lib/spaceify/data/db/edge_id.uuid)
@@ -458,7 +444,7 @@ elif [ -e /tmp/edge_id.uuid ]; then
 	euuid=$(</tmp/edge_id.uuid)
 fi
 
-	# -- Parse file content if edge_id.uuid was found --#
+	# -- parse file content if edge_id.uuid was found --#
 uuid=""
 edge_password=""
 if [[ "$euuid" != "" ]]; then
@@ -470,7 +456,7 @@ if [[ "$euuid" != "" ]]; then
 	edge_password="${auuid[1]}"
 fi
 
-	# -- If uuid exists, edge is already registered. Dont't register it again!!! --#
+	# -- if uuid exists edge is already registered. Don't register it again!!! --#
 if [[ "$uuid" == "" ]]; then
 	# try five times to register a new edge_id
 	cnt=1
@@ -511,7 +497,7 @@ else
 	printf "\nThe file edge_id.uuid was found containing edge id ${uuid}.\nPrevious edge registration is valid.\n\n"
 fi
 
-	# -- Update the created/restored edge_id and password to the database -- #
+	# -- update the created/restored edge_id and password to the database -- #
 sqlite3 /var/lib/spaceify/data/db/spaceify.db "INSERT OR REPLACE INTO user (edge_id, edge_password)  VALUES('${uuid}', '${edge_password}');"
 
 # ----- Start services ----- #

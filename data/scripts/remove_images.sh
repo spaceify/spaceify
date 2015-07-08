@@ -1,6 +1,13 @@
 #!/bin/bash -e
 # Remove all Docker images created by Spaceify, 30.6.2015 Spaceify Inc.
 
+# Docker must be installed. If it is not installed than try to remove Docker's directory.
+docker > /dev/null 2>&1
+if [[ $? -ne 0 ]]; then
+	rm -r /var/lib/docker/ > /dev/null 2>&1
+	exit 0
+fi
+
 # Get Docker images
 images=$(docker images -a -q --no-trunc=true)
 images=(${images//$'\n'/ })

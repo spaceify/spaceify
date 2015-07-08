@@ -1,6 +1,13 @@
 #!/bin/bash -e
 # Stop and remove all Spaceify's containers, 15.7.2013 Spaceify Inc.
 
+# Docker must be installed. If it is not installed than try to remove Docker's directory.
+docker > /dev/null 2>&1
+if [[ $? -ne 0 ]]; then
+	rm -r /var/lib/docker/ > /dev/null 2>&1
+	exit 0
+fi
+
 # Get running Docker containers and image ids of installed applications
 ps=$(docker ps -a -q --no-trunc=true)
 containerids=(${ps//$'\n'/ })

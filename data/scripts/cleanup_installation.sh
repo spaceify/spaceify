@@ -83,7 +83,7 @@ elif [[ -n $(service network-manager status |& grep running) ]]; then
 	resolvconf -u
 fi
 
-if [ "$1" = "remove" ]; then																# clean up
+if [ "$1" = "remove" ] || [ "$1" = "purge" ]; then											# clean up
 	rm /etc/init/spaceify.conf > /dev/null 2>&1 || true
 	rm /etc/init/spaceifydns.conf > /dev/null 2>&1 || true
 	rm /etc/init/spaceifyipt.conf > /dev/null 2>&1 || true
@@ -96,9 +96,9 @@ if [ "$1" = "remove" ]; then																# clean up
 	rm -r /var/lib/spaceify/dev/iptpiper > /dev/null 2>&1 || true
 	rm -r /var/lib/spaceify/dev/iptpipew > /dev/null 2>&1 || true
 
-	. /var/lib/spaceify/data/scripts/remove_images.sh										# Stop and remove all containers and images
+	. /var/lib/spaceify/data/scripts/remove_images.sh > /dev/null 2>&1 || true				# Stop and remove all containers and images
 
-	printf "\n\nSpaceify's data stored in directory /var/lib/spaceify/data is not removed. Remove it by hand if necessary.\n\n"
+	rm -r /var/lib/spaceify > /dev/null 2>&1 || true
 fi
 
 ##########################################

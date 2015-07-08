@@ -134,10 +134,6 @@ else																						# comment configuration if hostpad is installed and it
 	fi
 fi
 
-# ----- /etc/init/spaceify.conf ----- #
-
-sed -i "s/CHANGEADAPTER/${eth}/" /etc/init/spaceify.conf
-
 # ----- /etc/monit/monitrc ----- #
 
 #sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/monit/monitrc							# remove Spaceify's previous entries
@@ -174,6 +170,11 @@ dhcpd="${dhcpd}DHCPD_OPTS=\"-S\"\n\n"
 printf "$dhcpd" > /etc/default/udhcpd
 
 # ----- /etc/init/spaceify.conf, /etc/init/spaceifydns.conf, /etc/init/spaceifyipt.conf ----- #
+cp /var/lib/spaceify/data/upstart/* /etc/init/ > /dev/null 2>&1 || true						# Copy upstart scripts to /etc/init/
+
+ln -s /etc/init/spaceify.conf /etc/init.d/spaceify > /dev/null 2>&1 || true					# Create symbolic links for Spaceify's services
+ln -s /etc/init/spaceifydns.conf /etc/init.d/spaceifydns > /dev/null 2>&1 || true
+ln -s /etc/init/spaceifyipt.conf /etc/init.d/spaceifyipt > /dev/null 2>&1 || true
 
 sed -i "s/interface1/${eth}/g" /etc/init/spaceify.conf
 sed -i "s/interface2/${wlan}/g" /etc/init/spaceify.conf
@@ -187,11 +188,6 @@ sed -i "s/interface2/${wlan}/g" /etc/init/spaceifyipt.conf
 ####################
 # EXECUTE COMMANDS #
 ####################
-
-# ----- Symbolic links for Spaceify's services ----- #
-ln -s /etc/init/spaceify.conf /etc/init.d/spaceify > /dev/null 2>&1 || true
-ln -s /etc/init/spaceifydns.conf /etc/init.d/spaceifydns > /dev/null 2>&1 || true
-ln -s /etc/init/spaceifyipt.conf /etc/init.d/spaceifyipt > /dev/null 2>&1 || true
 
 # ----- Spaceify's DNS server must be on and other DNS mechanisms off ----- #
 	# -- remove Spaceify's previous entries -- #
@@ -348,7 +344,8 @@ chown - R root:root /var/lib/spaceify/data/dev > /dev/null 2>&1 || true
 
 chmod 0755 /usr/bin/spm  > /dev/null 2>&1 || true											# Spaceify Packet Manager script
 
-chmod 0755 /var/lib/spaceify/data/scripts/stop_containers.sh > /dev/null 2>&1 || true		# a script to stop and remove running containers
+chmod 0755 /var/lib/spaceify/data/scripts/remove_containers.sh > /dev/null 2>&1 || true		# a script to stop and remove running containers and images
+chmod 0755 /var/lib/spaceify/data/scripts/remove_images.sh > /dev/null 2>&1 || true
 
 # ----- Update node.js to the latest stable release and install the required node.js modules (versions are defined in package.json) ----- #
 # npm cache clear -f

@@ -1,5 +1,5 @@
 #!/bin/bash
 
 #if [ -e /var/lib/spaceify/data/scripts/cleanup_installation.sh ]; then
-#. /var/lib/spaceify/data/scripts/cleanup_installation.sh $1
+. /var/lib/spaceify/data/scripts/cleanup_installation.sh $1
 #fi

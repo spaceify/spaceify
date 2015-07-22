@@ -131,7 +131,7 @@ var run = fibrous( function(application)
 		volumes[Config.API_PATH] = {};
 
 		var binds = [Config.SPACELETS_PATH + application.getUniqueDirectory() + Config.VOLUME_DIRECTORY + ":" + Config.VOLUME_PATH + ":rw",
-					 Config.SPACEIFY_CODE_PATH + ":" + Config.API_PATH + ":r"];
+					 Config.SPACEIFY_CODE_PATH + ":" + Config.API_PATH + ":ro"];
 
 		var dockerContainer = new DockerContainer();
 		application.setDockerContainer(dockerContainer);

@@ -20,7 +20,7 @@ var callSequence = 1;
 var callbacks = new Object();
 var rpcMethods = new Object();
 
-var isNodeJs = typeof exports !== "undefined";
+var isNodeJs = (typeof exports !== "undefined" ? true : false);
 
 if(isNodeJs)
 	{

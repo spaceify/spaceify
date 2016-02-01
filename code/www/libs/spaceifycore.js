@@ -8,7 +8,7 @@ function SpaceifyCore()
 {
 var self = this;
 
-var isNodeJS = typeof exports !== "undefined";
+var isNodeJS = (typeof exports !== "undefined" ? true : false);
 
 if(isNodeJS)
 	{

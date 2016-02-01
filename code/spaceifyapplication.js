@@ -97,14 +97,16 @@ self.start = function(app, options)
 					}
 				}
 
-			app.start();
+			if(app.start)
+				app.start();
 
 				// APPLICATION INITIALIALIZED SUCCESSFULLY -- -- -- -- -- -- -- -- -- -- //
 			console.log(config.CLIENT_APPLICATION_INITIALIZED);
 			}
 		catch(err)
 			{
-			app.fail();
+			if(app.fail)
+				app.fail();
 
 			initFail.sync(err);
 			}
@@ -169,7 +171,7 @@ self.setDisconnectionListenersRequired = function(listener, service_name)
 	spaceifyService.getRequiredServiceSecure(service_name).setDisconnectionListener(listener);
 	}
 
-	// PROVIDED (= SERVICE) -- -- -- -- -- -- -- -- -- -- //
+	// PROVIDED (= SERVICE) -- -- -- -- -- -- -- -- -- -- //	
 self.getProvidedService = function(service_name)
 	{
 	return spaceifyService.getProvidedService(service_name);

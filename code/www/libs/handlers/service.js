@@ -1,7 +1,7 @@
 /**
  * Service by Spaceify Inc. 24.1.2016
  *
- * As single service object. Used for both provided and required services. For Spaceifys internal user.
+ * A single service object. Used for both provided and required services. For Spaceifys internal user.
  *
  * @class Service
  */
@@ -10,7 +10,7 @@ function Service(parent)
 {
 var self = this;
 
-var isNodeJS = typeof exports !== "undefined";
+var isNodeJS = (typeof exports !== "undefined" ? true : false);
 
 if(isNodeJS)
 	{

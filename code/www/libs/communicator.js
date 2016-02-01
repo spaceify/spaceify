@@ -12,7 +12,7 @@ var self = this;
 
 var id = 0;
 
-var isNodeJS = typeof exports !== "undefined";
+var isNodeJS = (typeof exports !== "undefined" ? true : false);
 
 if(isNodeJS)
 	{

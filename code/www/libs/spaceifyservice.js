@@ -18,7 +18,7 @@ var requireds = {};
 var provided = {};									// <= Servers
 var provideds = {};
 
-var isNodeJS = typeof exports !== "undefined";
+var isNodeJS = (typeof exports !== "undefined" ? true : false);
 
 if(isNodeJS)
 	{

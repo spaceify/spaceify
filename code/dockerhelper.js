@@ -7,8 +7,8 @@
 var fs = require("fs");
 var net = require("net");
 var logger = require("./logger");
-var Utility = require("./utility");
-var Language = require("./language");
+var utility = require("./utility");
+var language = require("./language");
 
 function DockerHelper()
 {
@@ -23,13 +23,13 @@ self.init = function(container, callback)
 		container.attach({stream: true, stdout: true, stderr: true}, function(err, stream)
 			{
 			if(err)
-				throw Utility.ferror(Language.E_ATTACH_CONTAINER_OUTPUT.p("DockerHelper::init"), {":err": err.toString()});
+				throw utility.ferror(language.E_ATTACH_CONTAINER_OUTPUT.p("DockerHelper::init"), {":err": err.toString()});
 
 			standardOutput = stream;
 			container.attach({stream: true, stdin: true}, function(err, stream)
 				{
 				if(err)
-					throw Utility.ferror(Language.E_ATTACH_CONTAINER_INPUT.p("DockerHelper::init"), {":err": err.toString()});
+					throw utility.ferror(language.E_ATTACH_CONTAINER_INPUT.p("DockerHelper::init"), {":err": err.toString()});
 
 				standardInput = stream;
 				callback(err, null);
@@ -38,7 +38,7 @@ self.init = function(container, callback)
 		}
 	catch(err)
 		{
-		callback(Utility.error(err), null);
+		callback(utility.error(err), null);
 		}
 	}
 
@@ -47,37 +47,40 @@ self.getStreams = function()
 	return {in: standardInput, out: standardOutput };
 	}
 
-self.executeCommand = function(command, waitedString, callback)
+self.executeCommand = function(command, waitedStrings, callback)
 	{
-	logger.info(Utility.replace(Language.EXECUTE_COMMAND, {":command": command}));
+	logger.info(utility.replace(language.EXECUTE_COMMAND, {":command": command}));
 
 	if(callback)															// only wait for data if callback is given                        
-		self.waitForOutput(waitedString, callback);
+		self.waitForOutput(waitedStrings, callback);
 
 	var write = standardInput.write(command + "\n", "utf8", function(err, data)
 		{
 		if(err)
-			Utility.ferror(Language.E_GENERAL_ERROR.p("DockerHelper::executeCommand"), {":err": err.toString()});
+			utility.ferror(language.E_GENERAL_ERROR.p("DockerHelper::executeCommand"), {":err": err.toString()});
 		});
 	}
 
-self.waitForOutput = function(waitedString, callback)
+self.waitForOutput = function(waitedStrings, callback)
 	{
 	var buf = "";
 	standardOutput.removeAllListeners("data");
 	standardOutput.on("data", function(data)
 		{
 		logger.info(data.toString());
-		if(!waitedString)
+		if(!waitedStrings)
 			callback(null, buf);
 
 		buf += data;
-		if(buf.lastIndexOf(waitedString) != -1 || (buf.length > 0 && waitedString == "*"))
+		for(var i=0; i<waitedStrings.length; i++)
 			{
-			logger.info(Utility.replace(Language.EXECUTE_COMMAND_RECEIVED, {":code": waitedString}));
-			
-			standardOutput.removeAllListeners("data");
-			callback(null, buf);
+			if(buf.lastIndexOf(waitedStrings[i]) != -1 || (buf.length > 0 && waitedStrings[i] == "*"))
+				{
+				logger.info(utility.replace(language.EXECUTE_COMMAND_RECEIVED, {":code": waitedStrings[i]}));
+
+				standardOutput.removeAllListeners("data");
+				callback(null, [buf, waitedStrings[i]]);
+				}
 			}
 		});
 	}

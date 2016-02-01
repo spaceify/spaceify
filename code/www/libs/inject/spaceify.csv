@@ -1,0 +1,54 @@
+# libs/spaceifyinitialize.js injects the files Spaceify needs to web pages based on this list.
+#
+# Lines must have six tokens and undefined tokens are defined with hyphen (-)!
+# Format: type url path mime parameter class
+# Separator: tabulator
+# Line ending: (Unix style) line feed \n
+#
+# type
+# Possible types are javascript, css, json and text.
+#
+# url
+# A relative or absolute url to a web server for javascript and css type.
+#
+# path
+# For json and text a path to a file on the local filesystem.
+#
+# mime
+# MIME type of the file
+#
+# parameter
+# Parameter to use in the injector.
+# json: variable where result from JSON.parse(...) is assigned to. The variable is appended with window. and prepended with = by the injector.
+#       e.g. window.sconfig = JSON.parse(...);
+# css: media type
+
+# 3rd party
+#javascript	js/jquery-1.11.1.min.js	-	application/javascript	-
+javascript	js/engine.io.js	-	application/javascript	-
+javascript	js/jsmart.js	-	application/javascript	-
+javascript	js/jsmart_plugins.js	-	application/javascript	-
+
+# Spaceify
+# text	url 	path	application/plain	-
+json	libs/config.json	/var/lib/spaceify/code/www/libs/config.json	application/json	sconfig
+javascript	libs/logger.js	-	application/javascript	-
+javascript	libs/communicator.js	-	application/javascript	-
+javascript	libs/engineiorpcconnection.js	-	application/javascript	-
+javascript	libs/websocketrpcconnection.js	-	application/javascript	-
+javascript	libs/websocketconnection.js	-	application/javascript	-
+javascript	libs/spaceifyapplicationmanager.js	-	application/javascript	-
+javascript	libs/spaceifyasync.js	-	application/javascript	-
+javascript	libs/spaceifycache.js	-	application/javascript	-
+javascript	libs/spaceifyconfig.js	-	application/javascript	-
+javascript	libs/spaceifycore.js	-	application/javascript	-
+javascript	libs/spaceifymessages.js	-	application/javascript	-
+javascript	libs/spaceifynet.js	-	application/javascript	-
+javascript	libs/spaceifynetwork.js	-	application/javascript	-
+javascript	libs/spaceifyrequest.js	-	application/javascript	-
+javascript	libs/spaceifyservice.js	-	application/javascript	-
+javascript	libs/spaceifyutility.js	-	application/javascript	-
+javascript	libs/spacelet.js	-	application/javascript	-
+javascript	libs/handlers/rpc.js	-	application/javascript	-
+javascript	libs/handlers/service.js	-	application/javascript	-
+css	css/spaceify.css	-	text/css	all

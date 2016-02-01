@@ -1,3 +1,5 @@
+THIS DOCUMENT IS PARTLY DEPRECATED!
+
 Procedure for 32-bit systems.
 -----------------------------
 

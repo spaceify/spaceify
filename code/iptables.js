@@ -8,8 +8,8 @@
 var fs = require("fs");
 var fibrous = require("fibrous");
 var PubSub = require("./pubsub");
-var Config = require("./config")();
-var Utility = require("./utility");
+var config = require("./config")();
+var utility = require("./utility");
 
 function Iptables()
 {
@@ -17,7 +17,7 @@ var self = this;
 
 var pubSub = new PubSub();
 
-var SPLASH_ADD_MAC = "-t mangle -I Spaceify-mangle 1 -m mac --mac-source :mac -j RETURN";
+var SPLASH_ADD_MAC = "-t mangle -I Spaceify-mangle 1 -m mac --mac-source :mac -j RETURN";		// NOTICE! Add to the top of the rules.
 var SPLASH_REM_MAC = "-t mangle -D Spaceify-mangle -m mac --mac-source :mac -j RETURN";
 var SPLASH_CHK_MAC = "-t mangle -C Spaceify-mangle -m mac --mac-source :mac -j RETURN";
 
@@ -28,8 +28,8 @@ var write = function(rule, callback)
 	try {
 		var buf = "";
 		var called = 0;
-		var ws = fs.createWriteStream(Config.IPTABLES_PIPEW);
-		var rs = fs.createReadStream(Config.IPTABLES_PIPER, { autoClose: false });
+		var ws = fs.createWriteStream(config.IPTABLES_PIPEW);
+		var rs = fs.createReadStream(config.IPTABLES_PIPER, { autoClose: false });
 
 		var ready = function(err)
 			{
@@ -59,19 +59,19 @@ var write = function(rule, callback)
 self.splashAddRule = fibrous( function(MAC)
 	{
 	MAC = formatMAC(MAC);
-	var splash = pubSub.value("splash", Config.IPTABLES_PATH) || {};
+	var splash = pubSub.value("splash", config.IPTABLES_PATH) || {};
 
-	if(!MAC.match(Config.MAC_REGX))
+	if(!isMAC(MAC))
 		return false;
 
 	try {																				// Add to the iptables rules and splash object
 		if(!self.splashHasRule(MAC))
-			write.sync(Utility.replace(SPLASH_ADD_MAC, {":mac": MAC}));
+			write.sync(utility.replace(SPLASH_ADD_MAC, {":mac": MAC}));
 
 		if(!splash[MAC])
 			{
 			splash[MAC] = {"ts": Date.now()};
-			pubSub.publish("splash", splash, Config.IPTABLES_PATH);
+			pubSub.publish("splash", splash, config.IPTABLES_PATH);
 			}
 		}
 	catch(err)
@@ -85,17 +85,17 @@ self.splashAddRule = fibrous( function(MAC)
 self.splashRemoveRule = fibrous( function(MAC)
 	{
 	MAC = formatMAC(MAC);
-	var splash = pubSub.value("splash", Config.IPTABLES_PATH) || {};
+	var splash = pubSub.value("splash", config.IPTABLES_PATH) || {};
 
-	if(!MAC.match(Config.MAC_REGX))
+	if(!isMAC(MAC))
 		return false;
 
 	try {																				// Remove from the iptables rules and splash object
 		if(self.splashHasRule(MAC))
-			write.sync(Utility.replace(SPLASH_REM_MAC, {":mac": MAC}));
+			write.sync(utility.replace(SPLASH_REM_MAC, {":mac": MAC}));
 
 		delete splash[MAC];
-		pubSub.publish("splash", splash, Config.IPTABLES_PATH);
+		pubSub.publish("splash", splash, config.IPTABLES_PATH);
 		}
 	catch(err)
 		{
@@ -108,7 +108,7 @@ self.splashRemoveRule = fibrous( function(MAC)
 self.splashHasRule = function(MAC)
 	{
 	try {
-		return write.sync(Utility.replace(SPLASH_CHK_MAC, {":mac": formatMAC(MAC)})); }
+		return write.sync(utility.replace(SPLASH_CHK_MAC, {":mac": formatMAC(MAC)})); }
 	catch(err) {
 		}
 
@@ -117,7 +117,7 @@ self.splashHasRule = function(MAC)
 
 self.splashRestoreRules = fibrous( function()
 	{ // Restores rules not existing in the iptables
-	var splash = pubSub.value("splash", Config.IPTABLES_PATH);
+	var splash = pubSub.value("splash", config.IPTABLES_PATH);
 
 	for(mac in splash)
 		self.sync.splashAddRule(mac);
@@ -125,7 +125,7 @@ self.splashRestoreRules = fibrous( function()
 
 self.splashRemoveRules = fibrous( function()
 	{
-	var splash = pubSub.value("splash", Config.IPTABLES_PATH);
+	var splash = pubSub.value("splash", config.IPTABLES_PATH);
 
 	for(mac in splash)
 		self.sync.splashRemoveRule(mac);
@@ -134,6 +134,11 @@ self.splashRemoveRules = fibrous( function()
 var formatMAC = function(MAC)
 	{
 	return MAC.toUpperCase();
+	}
+
+var isMAC = function(MAC)
+	{
+	return MAC.match(new RegExp(config.MAC_REGX, "i"));
 	}
 
 }

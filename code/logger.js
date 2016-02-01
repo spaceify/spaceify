@@ -4,9 +4,8 @@
  */
 
 var fs = require("fs");
-var Config = require("./config")();
-var Utility = require("./utility");
-var Language = require("./language");
+var config = require("./config")();
+var language = require("./language");
 
 function Logger()
 {
@@ -31,12 +30,12 @@ var labels = self.INFO | self.ERROR | self.WARN | self.FORCE;
 
 var levels = self.INFO | self.ERROR | self.WARN | self.FORCE;
 
-self.info = function(str, literal) { out(self.INFO, str, literal); }
-self.error = function(str, literal) { out(self.ERROR, str, literal);  }
-self.warn = function(str, literal) { out(self.WARN, str, literal); }
-self.force = function(str, literal) { out(self.FORCE, str, literal); }
+self.info = function(str, nolinefeed) { out(self.INFO, str, nolinefeed); }
+self.error = function(str, nolinefeed) { out(self.ERROR, str, nolinefeed);  }
+self.warn = function(str, nolinefeed) { out(self.WARN, str, nolinefeed); }
+self.force = function(str, nolinefeed) { out(self.FORCE, str, nolinefeed); }
 
-var out = function(level, str, literal)
+var out = function(level, str, nolinefeed)
 	{
 	if(typeof str == "undefined" || str == null)											// String doesn't have to provided, output nothing
 		str = "";
@@ -53,7 +52,7 @@ var out = function(level, str, literal)
 		fs.appendFileSync(FILE_NAME, label + str + "\n");
 
 	if((!silent_output && (levels & level)) || level == self.FORCE)
-		process.stdout.write(label + str + (literal ? "" : "\n"));
+		process.stdout.write(label + str + (nolinefeed ? "" : "\n"));
 	}
 
 self.setOptions = function(options)
@@ -80,6 +79,30 @@ self.setOptions = function(options)
 
 	if(options.levels)
 		levels = options.levels;
+	}
+
+self.printErrors = function(err, print_path, print_code, print_type)
+	{
+	var message = "";
+
+	if(err.messages)
+		{
+		for(var i=0; i<err.messages.length; i++)
+			{
+			var path = (err.paths[i] ? err.paths[i] + " - " : "");
+			var code = (err.codes[i] ? "(" + err.codes[i] + ") " : "");
+			message += (message != "" ? config.MESSAGE_SEPARATOR : "") + (print_path ? path : "") + (print_code ? code : "") + err.messages[i];
+			}
+		}
+	else if(err.message)
+		message = (err.code && print_code ? "(" + err.code + ") " : "") + err.message;
+
+	if(print_type == 0)
+		self.error(message);
+	else if(print_type == 1)
+		self.force(message);
+
+	return message;
 	}
 
 }

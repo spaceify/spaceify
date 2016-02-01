@@ -37,6 +37,7 @@ self.getPath = function()
 	{
 	return self.path;
 	}
+
 }
 
 module.exports = SpaceifyError;

@@ -13,16 +13,15 @@ var AdmZip = require("adm-zip");
 var fibrous = require("fibrous");
 var request = require("request");
 var spawn = require("child_process").spawn;
-var Language = require("./language");
-var Config = require("./config")();
+var language = require("./language");
+var config = require("./config")();
 var SpaceifyError = require("./spaceifyerror");
 
-function utility()
+function Utility()
 {
 var self = this;
 
-// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-// FILE  // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+	// FILE SYSTEM -- -- -- -- -- -- -- -- -- -- //
 self.loadRemoteFile = fibrous( function(fileUrl)
 	{
 	var result;
@@ -31,11 +30,11 @@ self.loadRemoteFile = fibrous( function(fileUrl)
 		}
 	catch(err)
 		{
-		throw self.error(Language.E_FAILED_TO_INITIATE_HTTP_GET.p("Utility::loadRemoteFile"), err);
+		throw self.error(language.E_FAILED_TO_INITIATE_HTTP_GET.p("Utility::loadRemoteFile"), err);
 		}
 
 	if(result.statusCode != 200)
-		throw self.ferror(Language.E_FAILED_TO_LOAD_REMOTE_FILE.p("Utility::loadRemoteFile"), {":file": fileUrl, ":code": result.statusCode});
+		throw self.ferror(language.E_FAILED_TO_LOAD_REMOTE_FILE.p("Utility::loadRemoteFile"), {":file": fileUrl, ":code": result.statusCode});
 
 	return result;
 	});
@@ -53,16 +52,16 @@ self.loadRemoteFileToLocalFile = fibrous( function(fileUrl, targetDir, targetFil
 	catch(err)
 		{
 		if(bThrows)
-			throw self.error(Language.E_LOAD_REMOTE_FILE_TO_LOCAL_FILE.p("Utility::loadRemoteFileToLocalFile"), err);
+			throw self.error(language.E_LOAD_REMOTE_FILE_TO_LOCAL_FILE.p("Utility::loadRemoteFileToLocalFile"), err);
 		}
 
 	return false;
 	});
 
-self.isLocal = fibrous( function(filepath, type)
+self.isLocal = fibrous( function(path, type)
 	{
 	try {
-		var stats = fs.sync.stat(filepath);
+		var stats = fs.sync.stat(path);
 		if(stats && type == "file" && stats.isFile())
 			return true;
 		else if(stats && type == "directory" && stats.isDirectory())
@@ -95,7 +94,7 @@ self.deleteDirectory = fibrous( function(source, bThrows)						// Recursively de
 	catch(err)
 		{
 		if(bThrows)
-			throw self.error(Language.E_DELETE_DIRECTORY.p("Utility::deleteDirectory"), err);
+			throw self.error(language.E_DELETE_DIRECTORY.p("Utility::deleteDirectory"), err);
 		}
 	});
 
@@ -134,7 +133,7 @@ self.copyDirectory = fibrous( function(source, target, bThrows)
 	catch(err)
 		{
 		if(bThrows)
-			throw self.error(Language.E_COPY_DIRECTORY.p("Utility::copyDirectory"), err);
+			throw self.error(language.E_COPY_DIRECTORY.p("Utility::copyDirectory"), err);
 		}
 	});
 
@@ -147,7 +146,7 @@ self.moveDirectory = fibrous( function(source, target, bThrows)
 	catch(err)
 		{
 		if(bThrows)
-			throw self.error(Language.E_MOVE_DIRECTORY.p("Utility::moveDirectory"), err);
+			throw self.error(language.E_MOVE_DIRECTORY.p("Utility::moveDirectory"), err);
 		}
 	});
 
@@ -161,7 +160,7 @@ self.deleteFile = fibrous( function(source, bThrows)
 	catch(err)
 		{
 		if(bThrows)
-			throw self.error(Language.E_DELETE_FILE.p("Utility::deleteFile"), err);
+			throw self.error(language.E_DELETE_FILE.p("Utility::deleteFile"), err);
 		}
 	});
 
@@ -180,7 +179,7 @@ self.copyFile = fibrous( function(sourceFile, targetFile, bThrows)
 	catch(err)
 		{
 		if(bThrows)
-			throw self.error(Language.E_COPY_FILE.p("Utility::copyFile"), err);
+			throw self.error(language.E_COPY_FILE.p("Utility::copyFile"), err);
 		}
 	});
 
@@ -193,7 +192,7 @@ self.moveFile = fibrous( function(sourceFile, targetFile, bThrows)
 	catch(err)
 		{
 		if(bThrows)
-			throw self.error(Language.E_MOVE_FILEE.p("Utility::moveFile"), err);
+			throw self.error(language.E_MOVE_FILEE.p("Utility::moveFile"), err);
 		}
 });
 
@@ -264,8 +263,7 @@ self.preparePath = function(directory)
 	return directory + (!directory.match(/^$/) && !directory.match(/\/$/) ? "/" : "");	// Not empty, doesn't end with /
 	}
 
-// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-// WWW / NETWORK  // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+	// WWW / NETWORK -- -- -- -- -- -- -- -- -- -- //
 self.postForm = fibrous( function(url, form)
 	{
 	var result;
@@ -274,11 +272,11 @@ self.postForm = fibrous( function(url, form)
 		}
 	catch(err)
 		{
-		throw self.error(Language.E_FAILED_TO_INITIATE_HTTP_POST.p("Utility::postForm"), err);
+		throw self.error(language.E_FAILED_TO_INITIATE_HTTP_POST.p("Utility::postForm"), err);
 		}
 
 	if(result.statusCode != 200)
-		throw self.ferror(Language.E_FAILED_TO_POST_FORM.p("Utility::postForm"), {":url": url, ":code": result.statusCode});
+		throw self.ferror(language.E_FAILED_TO_POST_FORM.p("Utility::postForm"), {":url": url, ":code": result.statusCode});
 
 	return result;
 	});
@@ -301,10 +299,10 @@ self.remakeGET = function(get, exclude, include)
 
 self.postPublish = function(package, username, password, release_name, callback)
 	{
-	require("./logger").force(Language.POSTING_PACKAGE);
+	require("./logger").force(language.POSTING_PACKAGE);
 
 	request({
-		url: Config.REGISTRY_PUBLISH_URL,
+		url: config.REGISTRY_PUBLISH_URL,
 		headers: { "content-type" : "multipart/form-data" },
 		method: "POST",
 		multipart:
@@ -313,7 +311,7 @@ self.postPublish = function(package, username, password, release_name, callback)
 				{ "Content-Disposition" : 'form-data; name="password"', body: password },
 				{ "Content-Disposition" : 'form-data; name="release"', body: release_name },
 				{
-				"Content-Disposition" : 'form-data; name="package"; filename="' + Config.PUBLISHZIP + '"',
+				"Content-Disposition" : 'form-data; name="package"; filename="' + config.PUBLISH_ZIP + '"',
 				"Content-Type" : "application/zip",
 				body: fs.readFileSync(package)
 				}
@@ -325,22 +323,31 @@ self.postPublish = function(package, username, password, release_name, callback)
 			});
 	}
 
-self.isIPInEdgeNetwork = function(ip)
-	{ // Is ip in edge network
-	var ddp = ip.split(".");
-	if(ddp.length != 4)
-		return false;
-	
-	ip = ((+ddp[0]) << 24) + ((+ddp[1]) << 16) + ((+ddp[2]) << 8) + (+ddp[3]);
-	return (ip & Config.EDGE_NETMASK.binary != Config.EDGE_NETWORK.binary ? false : true)
+self.postRegister = function(edge_uuid, edge_password, callback)
+	{
+	require("./logger").force(language.POSTING_REGISTRATION);
+
+	request({
+		url: config.EDGE_REGISTRATION_URL,
+		headers: { "content-type" : "multipart/form-data" },
+		method: "POST",
+		multipart:
+			[
+				{ "Content-Disposition" : 'form-data; name="eid"', body: edge_uuid },
+				{ "Content-Disposition" : 'form-data; name="epw"', body: edge_password }
+			]
+		},
+		function(err, result, body)
+			{
+			callback( (err ? err : null), (err ? null : (result.statusCode != 200 ? parseInt(result.statusCode) : body)) );
+			});
 	}
 
-// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-// ERRORS   // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-self.error = function(/* errors are in the last arguments!!! */)
+	// ERRORS -- -- -- -- -- -- -- -- -- -- //
+self.error = function()	// errors are in the arguments!!!
 	{
 	var path, paths = [];
-	var code, codes = [];
+	var code, ccode = "", codes = [];
 	var message = "", messages = [];
 	for(var i=0; i<arguments.length; i++)																// More than one error can be passed in the arguments
 		{
@@ -363,10 +370,13 @@ self.error = function(/* errors are in the last arguments!!! */)
 		{
 		code = (codes[i] ? "(" + codes[i] + ") " : "");
 
-		message += (message != "" ? ", " : "") + code + messages[i];
+		if(codes[i])
+			ccode += (ccode != "" ? config.CODE_SEPARATOR : "") + codes[i];
+
+		message += (message != "" ? config.MESSAGE_SEPARATOR : "") + code + messages[i];
 		}
 
-	return { codes: codes, paths: paths, messages: messages, message: message };
+	return { code: ccode, message: message, codes: codes, paths: paths, messages: messages };
 	}
 
 self.ferror = function(err, params)
@@ -376,45 +386,20 @@ self.ferror = function(err, params)
 	return self.error(err);
 	}
 
-self.printErrors = function(err)
-	{
-	var message = "";
-	if(err.messages)
-		{
-		for(var i=0; i<err.messages.length; i++)
-			{
-			var path = (err.paths[i] ? err.paths[i] + " - " : "");
-			var code = (err.codes[i] ? "(" + err.codes[i] + ") " : "");
-			message += (message != "" ? ", " : "") + path + code + err.messages[i];
-			}
-		}
-	else
-		message = (err.code ? "(" + err.code + ")" : "") + err.message;
-
-	require("./logger").error(message);
-	}
-
 self.makeError = function(code, message, path)
 	{
 	return new SpaceifyError({code: code, message: message, path: path});
 	}
 
-// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-// SERVICE  // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-self.makeServices = function(unique_name, services, ports, ip)
+self.errorFromObject = function(eobj)
 	{
-	var mservices = [];
-	for(var i=0; i<services.length; i++)
-		mservices.push({"unique_name": unique_name, "service_name": services[i].service_name, "service_type": services[i].service_type, "port": ports[i], "secure_port": ports[i + 1], "ip": ip, "registered": false});
+	if(typeof eobj == "string")
+		eobj = self.parseJSON(eobj);
 
-	mservices.push({"unique_name": unique_name, "service_name": Config.HTTP_SERVICE, "service_type": Config.HTTP_SERVICE, "port": ports[ports.length - 2], "ip": ip, "registered": true});
-	mservices.push({"unique_name": unique_name, "service_name": Config.HTTPS_SERVICE, "service_type": Config.HTTPS_SERVICE, "port": ports[ports.length - 1], "ip": ip, "registered": true});
-
-	return mservices;
+	return self.error(self.makeError(eobj.code, eobj.message, eobj.path));
 	}
 
-// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-// PARSE / FORMAT // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+	// PARSE / FORMAT -- -- -- -- -- -- -- -- -- -- //
 self.loadJSON = fibrous( function(file, bParse, bThrows)
 	{
 	var manifest = null;
@@ -428,7 +413,7 @@ self.loadJSON = fibrous( function(file, bParse, bThrows)
 		{
 		manifest = null;
 		if(bThrows)
-			throw self.error(Language.E_LOAD_JSON.p("Utility::loadJSON"), err);
+			throw self.error(language.E_LOAD_JSON.p("Utility::loadJSON"), err);
 		}
 
 	return manifest;
@@ -448,7 +433,7 @@ self.saveJSON = fibrous( function(file, json, bThrows)
 	catch(err)
 		{
 		if(bThrows)
-			throw self.error(Language.E_SAVE_JSON.p("Utility::saveJSON"), err);
+			throw self.error(language.E_SAVE_JSON.p("Utility::saveJSON"), err);
 		}
 
 	return success;
@@ -464,7 +449,7 @@ self.parseJSON = function(str, throws)
 	catch(err)
 		{
 		if(throws)
-			throw self.error(Language.E_JSON_PARSE_FAILED.p("Utility::parseJSON"), err);
+			throw self.error(language.E_JSON_PARSE_FAILED.p("Utility::parseJSON"), err);
 		}
 
 	return json;
@@ -488,8 +473,7 @@ self.replace = function(str, strs)
 	return str;
 	}
 
-// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-// OPERATING SYSTEM  // // // // // // // // // // // // // // // // // // // // // // // // // // //
+	// OPERATING SYSTEM -- -- -- -- -- -- -- -- -- -- //
 self.execute = function(command, args, options, spmMessage, callback)
 	{
 	var bExited = false;
@@ -537,15 +521,51 @@ self.execute = function(command, args, options, spmMessage, callback)
 		});
 	}
 
-// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-// STRING   // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+	// STRING -- -- -- -- -- -- -- -- -- -- //
 self.ucfirst = function(str)
 	{
 	return str.charAt(0).toUpperCase() + str.slice(1);
 	}
 
-// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-// DATE  // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+	// RANDOM -- -- -- -- -- -- -- -- -- -- //
+self.randomString = function(length, use_alpha)
+	{ // http://stackoverflow.com/questions/10726909/random-alpha-numeric-string-in-javascript
+	if(use_alpha)
+		chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	else
+		chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!£$#%&/(){}[]<>|§½=+?*,.;:-_";
+
+	var result = "";
+	for(var i = length; i > 0; --i)
+		result += chars[Math.round(Math.random() * (chars.length - 1))];
+
+	return result;
+	}
+
+self.bytesToHexString = function(bytes)
+	{
+	for(var hex = [], i = 0; i < bytes.length; i++)
+		{
+		hex.push((bytes[i] >>> 4).toString(16));
+		hex.push((bytes[i] & 0xF).toString(16));
+		}
+
+	return hex.join("");
+	}
+
+self.generateRandomConnectionId = function(connections)
+	{
+	while(true)
+		{
+		ret = Math.floor(Math.random() * 4294967296 - 1);
+		if(!connections.hasOwnProperty(ret))
+			break;
+		}
+
+	return ret;	
+	}
+
+	// DATE -- -- -- -- -- -- -- -- -- -- //
 self.getLocalDateTime = function()
 	{
 	var date;
@@ -560,8 +580,7 @@ self.getLocalDateTime = function()
 	return date;
 	}
 
-// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-// TYPES // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+	// TYPES -- -- -- -- -- -- -- -- -- -- //
 self.isObjectEmpty = function(obj)
 	{
 	return (typeof obj != "object" ? true : (Object.keys(obj).length == 0 ? true : false));
@@ -569,13 +588,41 @@ self.isObjectEmpty = function(obj)
 
 self.assoc = function(_array, _key, _value)
 	{ // Imitate associative arrays
-//console.log(_key in _array, _key, _value)
-console.log(_key in _array);
 	_key in _array ? _array[_key] = [_value] : _array[key].push(_value);
 
 	return _array;
 	}
 
+self.toBuffer = function(data)
+	{ // Make sure data is an instance of Buffer
+	if(data instanceof Buffer)
+		return data;
+	else if(data instanceof Array || data instanceof Object)
+		return new Buffer(JSON.stringify(data), "utf8");
+	else if(typeof data == "string")
+		return new Buffer(data, "utf8");
+	else
+		return new Buffer(data.toString(), "utf8");
+	}
+
+	// -- -- -- -- -- -- -- -- -- -- //
+self.extendClass = function(source, target)
+	{ // Extend the target object (class) with the methods from the source object
+	for(i in source)
+		{
+		if(typeof source[i] == "function")
+			target[i] = source[i];
+		}
+	}
+
+self.createServerObject = function(server_obj, user_obj)
+	{ // Appends named value from the user_obj to the server_obj
+	if(user_obj)				// e.g., {name: "service_name", value: "spaceify.org/spaceify/bigscreen"}
+		server_obj[user_obj.name] = user_obj.value;
+
+	return server_obj;
+	}
+
 }
 
-module.exports = new utility();
+module.exports = new Utility();

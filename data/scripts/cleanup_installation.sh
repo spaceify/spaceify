@@ -71,7 +71,9 @@ sed -i -e "s/${comm_out_spaceify}//g" -e "/${start_spaceify}/,/${end_spaceify}/d
 # REMOVE SPACEIFY'S FILES #
 ###########################
 
-service spaceify stop > /dev/null 2>&1 || true												# stop core first
+service spaceifyhttp stop > /dev/null 2>&1 || true											# stop core first
+service spaceifyappman stop > /dev/null 2>&1 || true
+service spaceify stop > /dev/null 2>&1 || true
 service spaceifyipt stop > /dev/null 2>&1 || true
 service spaceifydns stop > /dev/null 2>&1 || true
 
@@ -87,10 +89,14 @@ if [ "$1" = "remove" ] || [ "$1" = "purge" ]; then											# clean up
 	rm /etc/init/spaceify.conf > /dev/null 2>&1 || true
 	rm /etc/init/spaceifydns.conf > /dev/null 2>&1 || true
 	rm /etc/init/spaceifyipt.conf > /dev/null 2>&1 || true
+	rm /etc/init/spaceifyhttp.conf > /dev/null 2>&1 || true
+	rm /etc/init/spaceifyappman.conf > /dev/null 2>&1 || true
 
 	rm /etc/init.d/spaceify > /dev/null 2>&1 || true
 	rm /etc/init.d/spaceifydns > /dev/null 2>&1 || true
 	rm /etc/init.d/spaceifyipt > /dev/null 2>&1 || true
+	rm /etc/init.d/spaceifyhttp > /dev/null 2>&1 || true
+	rm /etc/init.d/spaceifyappman > /dev/null 2>&1 || true
 
 	rm -r /var/lib/spaceify/code > /dev/null 2>&1 || true
 	rm -r /var/lib/spaceify/dev/iptpiper > /dev/null 2>&1 || true
@@ -98,7 +104,12 @@ if [ "$1" = "remove" ] || [ "$1" = "purge" ]; then											# clean up
 
 	. /var/lib/spaceify/data/scripts/remove_images.sh > /dev/null 2>&1 || true				# Stop and remove all containers and images
 
-	rm -r /var/lib/spaceify > /dev/null 2>&1 || true
+	if [ "$1" = "remove" ]; then															# Spare data
+		cd /var/lib/spaceify
+		#shopt -s extglob
+		#rm -rf !(data)
+		find ! -name 'data' -type d -exec rm -f {} +
+	fi
 fi
 
 ##########################################

@@ -1,0 +1,59 @@
+{{extend parent}}
+{{block title}}${language.title}{{/block}}
+{{block head}}
+	<script>
+		function pageReady()
+			{
+			if(!${is_secure})
+				window.location.assign("${edge_url_https}admin/login.html");
+			else if(${is_logged_in})
+				window.location.assign("${edge_url_https}admin/");
+			else
+				{
+				$("#adminLoginContainer").show();
+				$("#password").val("").focus();
+				}
+			}
+
+		function onEnter(e)
+			{
+			e = e || window.event;
+			var keyCode = e.keyCode || e.which;
+
+			if(keyCode == 13)
+				this.form.submit();
+
+			return false;
+			}
+	</script>
+{{/block}}
+
+{{block body}}
+
+	<div class="adminLoginContainer" id="adminLoginContainer" style="display: none;">
+
+		<div class="adminLogo">
+			<span class="adminLogoHelper"></span>	
+			<img src="${edge_url_current}images/logo_text.png" class="adminLogoImage" width="291" height="100">
+		</div>
+
+		<div class="adminLoginTitle">
+			${language.admin_login}
+		</div>
+
+		<form action="${edge_url_https}admin/login.html" method="post">
+			<div class="adminInputContainer">
+				<input class="adminInput" style="width: 200px" type="password" name="password" id="password" placeholder="${language.password}" onkeydown="onEnter();"/>
+			</div>
+
+			<div class="adminInputContainer">
+				<button class="adminButton" name="action" value="login" type="submit">
+					${language.login}
+				</button>
+			</div>
+		</form>
+
+		<div class="breaker"></div>
+	</div>
+
+{{/block}}

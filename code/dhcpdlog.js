@@ -7,7 +7,7 @@
 
 var fibrous = require("fibrous");
 var PubSub = require("./pubsub");
-var Config = require("./config")();
+var config = require("./config")();
 
 function DHCPDLog()
 {
@@ -17,7 +17,7 @@ var pubSub = new PubSub();
 
 self.saveToFile = function(type, ip, mac_or_duid, hostname)
 	{
-	pubSub.open(Config.LEASES_PATH);
+	pubSub.open(config.LEASES_PATH);
 
 	var timestamp = Date.now();
 
@@ -37,7 +37,7 @@ self.saveToFile = function(type, ip, mac_or_duid, hostname)
 
 self.getDHCPLeaseByIP = function(ip)
 	{
-	var leases = pubSub.value("leases", Config.LEASES_PATH);
+	var leases = pubSub.value("leases", config.LEASES_PATH);
 	return (leases && leases[ip] ? leases[ip] : null);
 	}
 

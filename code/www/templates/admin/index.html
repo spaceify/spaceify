@@ -1,0 +1,348 @@
+{{extend parent}}
+{{block title}}${language.title}{{/block}}
+{{block head}}
+	<script>
+		var sam = null;
+		var config = null;
+
+{{# -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+	1.
+
+	Info about Kiwi; https://github.com/coolony/kiwi
+
+	--------------------------------------------------
+
+	ALWAYS CHECK is_secure AND is_logged_in VARIABLES BEFORE PROCEEDING.
+
+	If page is not secure, redirect back to the same page over a secure connection.
+	If admin is not logged in, redirect to log in page.
+	Else show the content on the screen
+
+	--------------------------------------------------
+
+	Security is implemented in cooperation with HTTP cookies sessions on the web server and
+	admin sessions on the core. These are never available on the client web pages.
+
+	Managing the security on the client web pages is based on the is_secure and is_logged_in Kiwi variables.
+	See from admin/index.js how the views can get the is_logged_in state and how they can pass it to the client web pages.
+	The same practice must be used in other views.
+	(See for reference how the login/logout is implemented on the admin/login.js view).
+
+	The is_secure variable is made available to templates automatically. Below are the other varibles that are available
+	to templates automatically.
+
+	host_protocol = protocol used on the current web page (http or https)
+	host_get = the query array passed
+	host_post = the posted parameters
+	host_ip = ip of the current web page;
+	edge_url_current = the url of the current web page (= host_protocol + "://" + config.EDGE_IP + "/")
+	edge_url_http = the http url of the edge (= "http://" + config.EDGE_IP + "/")
+	edge_url_https = the http url of the edge (= "https://" + config.EDGE_IP + "/")
+	is_secure = is page loaded over wecure connection (= true) or insecure connection (= false)
+	section = the section in the language file where the strings for a template are loded from, e.g., index, admin/index, admin/login
+	locale = locale of the language, e.g., fi_FI, fi_SE, en_US, ...
+	language = Kiwi template compatible language
+	language_smarty = Smarty template compatible language
+}}
+		function pageReady()
+			{
+			if(!${is_secure})
+				window.location.assign("${edge_url_https}admin/");
+			else if(!${is_logged_in})
+				window.location.assign("${edge_url_https}admin/login.html");
+			else
+				{
+				config = new SpaceifyConfig();
+
+				$("#adminTopContainer").show();
+
+				sam = new SpaceifyApplicationManager();
+				}
+			}
+
+		function getApplications()
+			{
+			jQuery("#adminContainerRight").empty();
+
+			// Define what types of applications are wanted in the response, [] equals all types. (config -> see www/libs/SpaceifyConfig.js and www/libs/config.json)
+			var types = [config.SPACELET, config.SANDBOXED/*, config.NATIVE*/];
+
+			sam.getApplications(types, function(err, applications)
+				{
+				var acr = $("#adminContainerRight");
+
+				printApps(acr, applications.spacelet, "SPACELETS", true);
+				printApps(acr, applications.sandboxed, "SANDBOXED APPLICATIONS", false);
+				});
+			}
+
+{{# -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+	2.
+	Examples of how to use the Application Manager API.
+	See libs/spaceifyapplicationmanager.js for more instructions.
+}}
+		function commandApplication(action, unique_name)
+			{
+			jQuery("#adminContainerRight").empty();
+			var unique_name = $("#unique_name").val();
+
+			if(action == "stop")
+				sam.stopApplication(unique_name, messages, null);	{{# replace null with function(err, data) {} to catch response }}
+			else if(action == "start")
+				sam.startApplication(unique_name, messages, null);
+			else if(action == "restart")
+				sam.restartApplication(unique_name, messages, null);
+			else if(action == "remove")
+				sam.removeApplication(unique_name, messages, null);
+			}
+
+		function installApplication()
+			{
+			jQuery("#adminContainerRight").empty();
+
+			sam.installApplication($("#package").val(), "", "", messages, null);
+			}
+
+		function messages(message)
+			{
+			var str = "";
+			if(message === config.MESSAGING_FAILED)						// For some reason setting up the messaging failed
+				str = "&lt;fail&gt; received, setting up the messaging failed. There will be no further messages from the Application Manager.";
+			else
+				str = message;
+
+			$("#adminContainerRight").append($("<div>" + str + "</div>"));
+			}
+
+		function printApps(acr, apps, title, is_spacelet)
+			{
+			if(apps.length == 0)
+				acr.append($("<div><h3>NO " + title + " INSTALLED</h3></div><br><br>"));
+				
+			for(var i=0; i<apps.length; i++)
+				{
+				acr.append($("<div><h3>" + title + "</h3></div><br><br>"));
+
+				var app = apps[i];
+
+				acr.append($("<div><b>" + app.name + "</b></div>"));
+				acr.append($("<div>unique_name: " + app.unique_name + "</div>"));
+				acr.append($("<div>version: " + app.version + "</div>"));
+				acr.append($("<div>type: " + app.type + "</div>"));
+				acr.append($("<div>category: " + app.category + "</div>"));
+				if(is_spacelet)
+					acr.append($("<div>shared: " + app.shared + "</div>"));
+				acr.append($("<div>start_command: " + app.start_command + "</div>"));
+				if(app.stop_command)
+					acr.append($("<div>stop_command: " + app.stop_command + "</div>"));
+				if(app.license)
+					acr.append($("<div>license: " + app.license + "</div>"));
+				if(app.creation_date)
+					acr.append($("<div>creation_date: " + app.creation_date + "</div>"));
+				if(app.implements)
+					acr.append($("<div>implements: " + app.implements + "</div>"));
+				if(app.repository)
+					acr.append($("<div>repository: " + app.repository + "</div>"));
+				if(app.web_url)
+					acr.append($("<div>web_url: " + app.web_url + "</div>"));
+				if(app.bugs)
+					acr.append($("<div>bugs: " + app.bugs + "</div>"));
+
+				acr.append($("<div>&nbsp;</div>"));
+
+				acr.append($("<div><u>Short Description</u></div>"));
+				acr.append($("<div>" + app.short_description + "</div><div>&nbsp;</div>"));
+
+				if(app.keywords)
+					{
+					acr.append($("<div><u>Keywords</u></div>"));
+					for(i=0; i<app.keywords.length; i++)
+						acr.append($("<div>" + app.keywords[i] + "</div>"));
+					acr.append($("<div>&nbsp;</div>"));
+					}
+
+				acr.append($("<div><u>Developer</u></div>"));
+				acr.append($("<div>name: " + app.developer.name + "</div>"));
+				if(app.developer.email)
+					acr.append($("<div>email: " + app.developer.email + "</div>"));
+				if(app.developer.url)
+					acr.append($("<div>url: " + app.developer.url + "</div>"));
+				acr.append($("<div>&nbsp;</div>"));
+
+				if(app.contributors)
+					{
+					acr.append($("<div><u>Contributors</u></div>"));
+
+					for(i=0; i<app.contributors.length; i++)
+						{
+						acr.append($("<div>name: " + app.contributors[i].name + "</div>"));
+						if(app.contributors[i].email)
+							acr.append($("<div>email: " + app.contributors[i].email + "</div>"));
+						if(app.contributors[i].url)
+							acr.append($("<div>url: " + app.contributors[i].url + "</div>"));
+						acr.append($("<div>&nbsp;</div>"));
+						}
+					}
+
+				if(app.images)
+					{
+					acr.append($("<div><u>Images</u></div>"));
+
+					for(i=0; i<app.images.length; i++)
+						{
+						if(app.images[i].directory)
+							acr.append($("<div>directory: " + app.images[i].directory + "</div>"));
+						acr.append($("<div>file: " + app.images[i].file + "</div>"));
+						if(app.images[i].title)
+							acr.append($("<div>title: " + app.images[i].title + "</div>"));
+						acr.append($("<div>&nbsp;</div>"));
+						}
+					}
+
+				if(app.docker_image)
+					acr.append($("<div>docker_image: yes</div><div>&nbsp;</div>"));
+
+				if(app.install_commands)
+					{
+					acr.append($("<div><u>Install Commands</u></div>"));
+
+					for(i=0; i<app.install_commands.length; i++)
+						acr.append($("<div>" + app.install_commands[i] + "</div><div>&nbsp;</div>"));
+					}
+
+				if(is_spacelet)
+					{
+					acr.append($("<div><u>Origins</u></div>"));
+					for(i=0; i<app.origins.length; i++)
+						acr.append($("<div>" + app.origins[i] + "</div>"));
+					acr.append($("<div>&nbsp;</div>"));
+					}
+
+				if(is_spacelet)
+					{
+					acr.append($("<div><u>Inject Hostnames</u></div>"));
+					for(i=0; i<app.inject_hostnames.length; i++)
+						acr.append($("<div>" + app.inject_hostnames[i] + "</div>"));
+					acr.append($("<div>&nbsp;</div>"));
+					}
+
+				if(is_spacelet)
+					{
+					acr.append($("<div><u>Inject Identifier</u></div>"));
+					acr.append($("<div>" + app.inject_identifier + "</div><div>&nbsp;</div>"));
+					}
+
+				if(is_spacelet)
+					{
+					acr.append($("<div><u>Inject Files</u></div>"));
+					for(i=0; i<app.inject_files.length; i++)
+						{
+						if(app.inject_files[i].directory)
+							acr.append($("<div>directory: " + app.inject_files[i].directory + "</div>"));
+						acr.append($("<div>file: " + app.inject_files[i].file + "</div>"));
+						acr.append($("<div>type: " + app.inject_files[i].type + "</div>"));
+						acr.append($("<div>&nbsp;</div>"));
+						}
+					}
+
+				if(app.provides_services)
+					{
+					acr.append($("<div><u>Provides Services</u></div>"));
+
+					for(i=0; i<app.provides_services.length; i++)
+						{
+						acr.append($("<div>service_name: " + app.provides_services[i].service_name + "</div>"));
+						acr.append($("<div>service_type: " + app.provides_services[i].service_type + "</div><div>&nbsp;</div>"));
+						}
+					}
+
+				if(app.requires_services)
+					{
+					acr.append($("<div><u>Requires Services</u></div>"));
+
+					for(i=0; i<app.requires_services.length; i++)
+						{
+						acr.append($("<div>service_name: " + app.requires_services[i].service_name + "</div>"));
+						acr.append($("<div>service_type: " + app.requires_services[i].service_type + "</div>"));
+						acr.append($("<div>suggested_application: " + app.requires_services[i].suggested_application + "</div><div>&nbsp;</div>"));
+						}
+					}
+				}
+			}
+	</script>
+{{/block}}
+
+{{block body}}
+{{# -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+	3.
+	Style your own container, buttons etc. or use the available styles.
+	Use spaceify.css to save your styles to ADMIN section (see www/css/spaceify.css).
+
+	Control the initial visibility of the top container because spaceify.css is loaded 
+	dynamically and the styles are not available until they are loaded.
+
+	Check that page is secure and admin is logged in before rendering the page.
+}}
+{{if is_secure & is_logged_in}}
+	<div class="adminTopContainer" id="adminTopContainer" style="display: none;">
+
+		<div class="adminContainer half" id="adminContainerLeft">
+
+			<form action="${edge_url_https}admin/login.html" method="post">		{{# POST the log out to the log in page!!!}}
+				<button class="adminButton normal" name="action" value="logout" type="submit">
+					${language.logout}
+				</button>
+			</form>
+
+			<hr>
+			<h3>Application Manager Commands</h3>
+			
+			<button class="adminButton normal" name="action" onclick="getApplications();">
+				getApplications
+			</button>
+
+			<br><hr>
+			<p>Unique name of an application</p>
+			<input type="text" value="spaceify/bigscreen", id="unique_name" class="adminInput">
+
+			<br><br>
+			<button class="adminButton normal" name="action" onclick="commandApplication('stop');">
+				stopApplication
+			</button>
+
+			<br><br>
+			<button class="adminButton normal" name="action" onclick="commandApplication('start');">
+				startApplication
+			</button>
+
+			<br><br>
+			<button class="adminButton normal" name="action" onclick="commandApplication('restart');">
+				restartApplication
+			</button>
+
+			<br><br>
+			<button class="adminButton normal" name="action" onclick="commandApplication('remove');">
+				removeApplication
+			</button>
+
+			<br><hr>
+			<p>Unique name in the Spaceify registry (e.g. spaceify/bigscreen)</p>
+			<p>Package URL (e.g. spaceify.org/downloads/bigscreen.zip)</p>
+			<p>GitHub URL (e.g. https://github.com/jovepsala/pictureviewer.git)</p>
+			<input type="text" value="spaceify/bigscreen", id="package" class="adminInput wider">
+
+			<br><br>
+			<button class="adminButton normal" name="action" onclick="installApplication();">
+				installApplication
+			</button>
+
+			<p class="breaker">&nbsp;</p>
+		</div>
+
+		<div class="adminContainer half" id="adminContainerRight">
+		</div>
+
+	</div>
+{{/if}}
+
+{{/block}}

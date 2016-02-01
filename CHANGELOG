@@ -1,3 +1,7 @@
+0.3.0  Alpha Centauri (developer-pre-alpha)
+    * Major rewrite of the Web and Application API. Existing applications need to make necessary changes to be compatible with this version. The revised documentation for creating applications can be found from URL http://spaceify.org.
+    * Several changes to core archtecture.
+
 0.2.6  Alpha Centauri (developer-pre-alpha)
     * Changes in Docker prevented to start applications.
 

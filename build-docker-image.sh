@@ -2,7 +2,7 @@
 # Builds a new spceifyubuntu Docker image
 # Spaceify Inc. 21.4.2015
 
-cd docker
+cd data/docker
 
 printf "\n\nCreating a new spaceifyubuntu image. The image is uploaded to spaceify.org after its creation.\n"
 printf "The existing spaceifyubuntu image on local machine is not updated.\n"
@@ -32,7 +32,7 @@ if [[ $? -eq 0 ]]; then
 else
 	echo "Failed to copy the image to $username@spaceify.org:/home/$username."
 
-	printf $(expr $image_version - 1) > image_version												# Restore version number
+	printf $(expr $image_version - 1) > image_version											# Restore version number
 fi
 
 docker rm $ID  > /dev/null 2>&1 || true															# Cleanup

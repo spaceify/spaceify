@@ -1,7 +1,8 @@
 #!/bin/bash
 # Spaceify Inc. 6.7.2015
+#
 # Process input gathered during install process. Debconf was locked in postinst and spawned scripts 
-# were not allowed to use it. This phase was therefore separated to its own scripts.
+# were not allowed to use it. This phase was therefore separated to its own script.
 
 # ----- Get input: source debconf/confmodule ----- #
 . /usr/share/debconf/confmodule

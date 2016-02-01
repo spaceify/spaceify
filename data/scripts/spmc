@@ -11,6 +11,7 @@ _default ()																		# For displaying default possibilities
 
 _spm ()
 {
+	#compopt -o default;
 	local cur																	# Pointer to current completion word.
 	COMPREPLY=()																# Array variable storing the possible completions.
 	cur=${COMP_WORDS[COMP_CWORD]}
@@ -21,11 +22,11 @@ _spm ()
 		case "$cur" in
 			i*) COMPREPLY=( $( compgen -W 'install' $cur ) ) ;;
 			p*) COMPREPLY=( $( compgen -W 'publish' $cur ) ) ;;
-			r*) COMPREPLY=( $( compgen -W 'remove restart' $cur ) ) ;;
+			r*) COMPREPLY=( $( compgen -W 'remove restart register' $cur ) ) ;;
 			s*) COMPREPLY=( $( compgen -W 'source start stop' $cur ) ) ;;
 			l*) COMPREPLY=( $( compgen -W 'list' $cur ) ) ;;
 			h*) COMPREPLY=( $( compgen -W 'help' $cur ) ) ;;
-			 *) _default "install publish remove restart source start stop list help" ;;
+			 *) _default "install publish remove restart register source start stop list help" ;;
 		esac
 	else																		# Complete options for commands
 		command=${COMP_WORDS[1]}
@@ -47,12 +48,17 @@ _spm ()
 			;;
 			help)
 				case "$cur" in
-					v*) COMPREPLY=( $( compgen -W 'verbose' $cur ) ) ;;
-					 *) _default "verbose" ;;
+					i*) COMPREPLY=( $( compgen -W 'install' $cur ) ) ;;
+					p*) COMPREPLY=( $( compgen -W 'publish' $cur ) ) ;;
+					s*) COMPREPLY=( $( compgen -W 'source start stop' $cur ) ) ;;
+					r*) COMPREPLY=( $( compgen -W 'remove restart register' $cur ) ) ;;
+					l*) COMPREPLY=( $( compgen -W 'list' $cur ) ) ;;
+					 *) _default "install publish source start stop remove restart register list" ;;
 				esac
 			;;
 		esac
 	fi
 }
 
-complete -F _spm -o filenames -o dirnames spm
+#complete -F _spm -o filenames -o dirnames spm
+complete -o default -F _spm -o filenames -o dirnames spm

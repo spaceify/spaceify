@@ -24,7 +24,6 @@ mkdir -p $dst
 mkdir "${dst}/code/"
 mkdir "${dst}/data/"
 mkdir "${dst}/debian/"
-mkdir "${dst}/docker/"
 mkdir "${dst}/monit/"
 mkdir "${dst}/upstart/"
 
@@ -35,7 +34,6 @@ echo "Copying files..."
 cp -r code/* "${dst}/code/"
 cp -r data/* "${dst}/data/"
 cp -r debian/* "${dst}/debian/"
-cp docker/Dockerfile "${dst}/docker/"
 cp -r monit/* "${dst}/monit/"
 cp -r upstart/* "${dst}/upstart/"
 
@@ -56,4 +54,4 @@ dpkg-buildpackage -i.svn -us -uc
 
 cd -
 
-echo "Packages are in /tmp/build"
+printf "\nPackages build and are in directory /tmp/build\n"

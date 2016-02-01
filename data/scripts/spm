@@ -6,4 +6,9 @@ for arg in "$@"; do
 	args="$args $arg"
 done
 
-node /var/lib/spaceify/code/spm.js $args
+cwd=$(pwd)
+args="$cwd $args"
+
+cd /var/lib/spaceify/code/
+node spm.js $args
+

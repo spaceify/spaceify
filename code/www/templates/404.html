@@ -1,12 +1,9 @@
-<!DOCTYPE html>
-<html>
-<head>
-	<title>${kiwiLanguage.title}</title>
-</head>
+{{extend parent}}
+{{block title}}${language.title}{{/block}}
+{{block head}}
+	<title>${language.title}</title>
+{{/block}}
 
-<body>
-	${kiwiLanguage.body}
-</body>
-
-</html>
-
+{{block body}}
+	${language.body}
+{{/block}}

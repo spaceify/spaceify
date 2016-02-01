@@ -18,7 +18,7 @@ if [[ ! -p $pipew ]]; then
 fi
 
 if [[ ! -p $piper ]]; then
-        mkfifo $piper
+	mkfifo $piper
 fi
 
 while true

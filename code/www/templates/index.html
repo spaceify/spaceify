@@ -1,21 +1,24 @@
 {{extend parent}}
-{{block title}}${kiwiLanguage.title}{{/block}}
+{{block title}}${language.title}{{/block}}
 {{block head}}
 	<script>
 		function pageReady()
 			{
-			$SC.isAdminLoggedIn(function(err, data)
-				{
-				if(err || !data)
-					$SU.deleteCookie(SESSION_ID_COOKIE);
+			var core = new SpaceifyCore();
 
-				spaceify.showAdminLogInOut(!data ? "in" : "out");
+			new SpaceifyAsync().waterFall(
+				[{owner: core, method: spaceifyNet.showAdminTile, params: [function(){}], type: "async"},
 
-				spaceify.showInstalledApplications();												// Show all the installed applications in categories
-				});
+				{owner: core, method: spaceifyNet.showUserUtilities, params: [function(){}], type: "async"},
 
-			var dtags = [{ id: "imgLogo", context: document, src: "images/logo.png" }];
-			$SR.loadResources(dtags, -1, function() {});
+				{owner: core, method: spaceifyNet.showInstalledApplications, params: [function(){}], type: "async"}],
+
+				function()												/* finally */
+					{
+					
+					});
+
+			// ToDo: Open connection to the core so that this page can monitor and get notifications of what is happening.
 			}
 
 		window.addEventListener("resize", function()
@@ -26,36 +29,50 @@
 
 {{block body}}
 
+	<div class="edgeMain">
+
+		<iframe id="certiframe" src="" class="edgeCertIframe" scrolling="no" frameborder="0"></iframe>
+
 {{if splash}}
 
-	<img id="imgLogo" alt="Spaceify">
-	<br>
-	
-	${kiwiLanguage.splash_welcome}
-	<br><br>
+		<img src="images/logo.png" id="imgLogo" alt="Spaceify">
+		<br>
 
-	${kiwiLanguage.splash_info}
-	<br><br>
-	
-	<div class="actions" id="actions"></div>
-	<button type="button" id="accept" class="button default" onclick="spaceify.setSplashAccepted();" style="width: 200px; height: 35px;">${kiwiLanguage.splash_accept_action}</button>
-	<button type="button" id="certificate" class="button default" onclick="spaceify.loadCertificate();" style="width: 200px; height: 35px;">${kiwiLanguage.splash_certificate_action}</button>
-	<iframe id="certiframe" src="" class="edgeCertIframe" scrolling="no" frameborder="0"></iframe>
+		${language.splash_welcome}
+		<br><br>
+
+		${language.splash_info}
+		<br><br>
+
+		<div class="actions" id="actions"></div>
+		<button type="button" id="accept" class="button default" onclick="spaceifyNet.setSplashAccepted();" style="width: 200px; height: 35px;">${language.splash_accept_action}</button>
+		<button type="button" id="certificate" class="button default" onclick="spaceifyNet.loadCertificate();" style="width: 200px; height: 35px;">${language.splash_certificate_action}</button>
 
 {{else}}
 
-	<div class="tiles" id="spacelets"></div>
-	<div style="clear: both"></div>
+		<h4 class="edge_h4 hidden" id="spacelets_header">${language.spacelets}</h4>
+		<div class="tiles" id="spacelet"></div>
+		<div class="breaker"></div>
 
-	<div class="tiles" id="sandboxed_applications"></div>
-	<div style="clear: both"></div>
+		<h4 class="edge_h4 hidden" id="sandboxed_header">${language.sandboxed}</h4>
+		<div class="tiles" id="sandboxed"></div>
+		<div class="breaker"></div>
 
-	<div class="tiles" id="native_applications"></div>
-	<div style="clear: both"></div>
+		<h4 class="edge_h4 hidden" id="native_header">${language.native}</h4>
+		<div class="tiles" id="native"></div>
+		<div class="breaker"></div>
 
-	<div class="tiles" style="display: block" id="admin_tools">
-		<h4>${kiwiLanguage.admin_tools}</h4>
-		<div id="adminLogIn"></div>
+		<div class="tiles" style="display: block" id="user_utilities">
+			<h4 class="edge_h4">${language.user_utilities}</h4>
+			<div id="userInstallCertificate"></div>
+		</div>
+		<div class="breaker"></div>
+
+		<div class="tiles" style="display: block" id="admin_utilities">
+			<h4 class="edge_h4">${language.admin_utilities}</h4>
+			<div id="adminLogIn"></div>
+		</div>
+		<div class="breaker"></div>
 	</div>
 
 {{/if}}

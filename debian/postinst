@@ -72,7 +72,7 @@ sed -i "/${start_spaceify}/,/${end_spaceify}/d" /etc/rc.local
 #mangle_chain="$rclocal1\n$rclocal2\n$rclocal3\n$rclocal4\n$rclocal5\n$rclocal6\n$rclocal7\n"
 mangle_chain=""
 
-	# -- create HTTP filter chain, NAT chain and redirect chain --#
+	# -- create HTTP filter chain, NAT chain and redirect chain -- #
 rclocal1="\/sbin\/iptables -t nat -N Spaceify-HTTP-Nat-Redir"
 rclocal2="\/sbin\/iptables -t nat -A PREROUTING -j Spaceify-HTTP-Nat-Redir"
 rclocal3="\/sbin\/iptables -t nat -A Spaceify-HTTP-Nat-Redir -d 10\.0\.0\.1\/32 -j ACCEPT"
@@ -84,7 +84,7 @@ rclocal7="\/sbin\/iptables -t nat -A Spaceify-HTTP-Nat-Masq -o "${eth}" -j MASQU
 
 http_chain="$rclocal1\n$rclocal2\n$rclocal3\n$rclocal4\n$rclocal5\n$rclocal6\n$rclocal7\n"
 
-	# -- create HTTPS filter chain, NAT chain and redirect chain --#
+	# -- create HTTPS filter chain, NAT chain and redirect chain -- #
 rclocal1="\/sbin\/iptables -t nat -N Spaceify-HTTPS-Nat-Redir"
 rclocal2="\/sbin\/iptables -t nat -A PREROUTING -j Spaceify-HTTPS-Nat-Redir"
 rclocal3="\/sbin\/iptables -t nat -A Spaceify-HTTPS-Nat-Redir -d 10\.0\.0\.1\/32 -j ACCEPT"
@@ -96,7 +96,7 @@ rclocal7="\/sbin\/iptables -t nat -A Spaceify-HTTPS-Nat-Masq -o "${eth}" -j MASQ
 
 https_chain="$rclocal1\n$rclocal2\n$rclocal3\n$rclocal4\n$rclocal5\n$rclocal6\n$rclocal7\n"
 
-	# -- append spaceify specific lines in rc.local before "exit 0" --#
+	# -- append spaceify specific lines in rc.local before "exit 0" -- #
 sed -i "s/^exit.*/$start_spaceify\n$mangle_chain\n$http_chain\n$https_chain$end_spaceify\nexit 0/" /etc/rc.local
 
 # ----- /etc/sysctl.conf - enable forwarding (for nat) ----- #
@@ -175,15 +175,11 @@ cp /var/lib/spaceify/data/upstart/* /etc/init/ > /dev/null 2>&1 || true						# C
 ln -s /etc/init/spaceify.conf /etc/init.d/spaceify > /dev/null 2>&1 || true					# Create symbolic links for Spaceify's services
 ln -s /etc/init/spaceifydns.conf /etc/init.d/spaceifydns > /dev/null 2>&1 || true
 ln -s /etc/init/spaceifyipt.conf /etc/init.d/spaceifyipt > /dev/null 2>&1 || true
+ln -s /etc/init/spaceifyhttp.conf /etc/init.d/spaceifyhttp > /dev/null 2>&1 || true
+ln -s /etc/init/spaceifyappman.conf /etc/init.d/spaceifyappman > /dev/null 2>&1 || true
 
-sed -i "s/interface1/${eth}/g" /etc/init/spaceify.conf
-sed -i "s/interface2/${wlan}/g" /etc/init/spaceify.conf
-
-sed -i "s/interface1/${eth}/g" /etc/init/spaceifydns.conf
+sed -i "s/interface1/${eth}/g" /etc/init/spaceifydns.conf									# Replace the real network interface names to the dns service script
 sed -i "s/interface2/${wlan}/g" /etc/init/spaceifydns.conf
-
-sed -i "s/interface1/${eth}/g" /etc/init/spaceifyipt.conf
-sed -i "s/interface2/${wlan}/g" /etc/init/spaceifyipt.conf
 
 ####################
 # EXECUTE COMMANDS #
@@ -238,7 +234,7 @@ fi
 	# -- interface must be up -- #
 x=300
 printf "\nWaiting for maximum of $x seconds for the network interface $eth to come up.\n"
-ping -c 1 -W 1 8.8.8.8  > /dev/null 2>&1
+ping -c 1 -W 1 8.8.8.8 > /dev/null 2>&1
 while [ $? -ne 0 ]; do
 	let x-=1
 	printf "%d %s %4s\r" $x "seconds remaining." ""
@@ -253,7 +249,7 @@ done
 
 if [[ $x -eq 0 ]]; then
 	. /var/lib/spaceify/data/scripts/cleanup_installation.sh "remove"
-	printf "\nFailed to get the interface up. Run 'apt-get --purge remove Spaceify' to remove incomplete installation. Exiting the installation.\n\n"
+	printf "\nAborting the installation because getting the interface up failed. Run 'apt-get --purge remove Spaceify' to remove incomplete installation.\n\n"
 	exit 1
 else
 	printf "\nThe interface is up. Continuing the installation.\n\n"
@@ -342,7 +338,7 @@ mkdir -p /var/lib/spaceify/data/dev > /dev/null 2>&1 || true								# FIFO for i
 chmod -R 0700 /var/lib/spaceify/data/dev > /dev/null 2>&1 || true
 chown - R root:root /var/lib/spaceify/data/dev > /dev/null 2>&1 || true
 
-chmod 0755 /usr/bin/spm  > /dev/null 2>&1 || true											# Spaceify Packet Manager script
+chmod 0755 /usr/bin/spm > /dev/null 2>&1 || true											# Spaceify Packet Manager script
 
 chmod 0755 /var/lib/spaceify/data/scripts/remove_containers.sh > /dev/null 2>&1 || true		# a script to stop and remove running containers and images
 chmod 0755 /var/lib/spaceify/data/scripts/remove_images.sh > /dev/null 2>&1 || true
@@ -357,14 +353,14 @@ cd /var/lib/spaceify/code
 npm install
 
 # ----- Create and initialize Docker image ----- #
-work_path="/tmp/docimg/"
-installed_file="/var/lib/spaceify/data/docker/installed_version"
+image_reinstalled=0
+installed_version="/var/lib/spaceify/data/docker/installed_version"
 
 in=$(wget -qO- http://spaceify.org/downloads/image_version)									# Has the spaceify.org some version of the image available
 if [ -z "$in" ]; then in=0; fi
 
 il=0																						# Has the local computer some version of the image build/imported
-if [ -s "$installed_file" ]; then il=$(< "$installed_file"); fi
+if [ -s "$installed_version" ]; then il=$(< "$installed_version"); fi
 
 ubun=$( echo $(docker images) | sed -n '/spaceifyubuntu/{p;q;}' )	# Is there really an build/imported image existing in the local computer
 [ -z "$ubun" ] && su=0 || su=1
@@ -372,139 +368,106 @@ ubun=$( echo $(docker images) | sed -n '/spaceifyubuntu/{p;q;}' )	# Is there rea
 typeset -i in
 typeset -i il
 
-packages=()																					# Get the installed application packages
-FILES=/var/lib/spaceify/data/installed/*
-for f in $FILES; do
-	if [[ "$f" != "/var/lib/spaceify/data/installed/*" ]] && [[ "$f" != "/var/lib/spaceify/data/installed/readme.txt" ]]; then
-		packages+=("$f")
-	fi
-done
-plen=${#packages[@]}
-
-reinst=0
-
 if (($su == 0 && $il == 0 && $in == 0)) || (($su == 0 && $il != 0 && $in == 0)); then
 	# 1 --- Build : No existing image build/installed and image doesn't exist in spaceify.org
 	cd /var/lib/spaceify/data/docker
-	printf "\nBuilding a new Docker image...\n"
+	printf "\nBuilding a new spaceifyubuntu Docker image...\n"
 	docker build --no-cache --rm -t spaceifyubuntu . > /dev/null 2>&1 || true
 
-	reinst=1
+	image_reinstalled=1
 elif (($su == 0 && $il == 0 && $in != 0)) || (($su == 0 && $il != 0 && $in != 0)) || (($su != 0 && $il == 0 && $in != 0)) || (($su != 0 && $il != 0 && $in != 0 && $il != $in)); then
 	# 2 ---Import : No existing image build/installed and image exists in spaceify.org
 	# 3 ---Import + clean : Image exists but versions can't be compared OR image exists and versions can be compared
 
 	docker rmi spaceifyubuntu > /dev/null 2>&1 || true
 
-	printf "\nDownloading the latest Docker image...\n"
+	printf "\nDownloading the latest spaceifyubuntu Docker image...\n"
 	curl -o ~/spaceifyubuntu.tgz http://spaceify.org/downloads/spaceifyubuntu.tgz
 
 	if [ -s ~/spaceifyubuntu.tgz ]; then
-		printf "\nImporting the Docker image...\n"
+		printf "\nImporting the spaceifyubuntu Docker image...\n"
 		cat ~/spaceifyubuntu.tgz | sudo docker import - spaceifyubuntu > /dev/null
 		rm ~/spaceifyubuntu.tgz > /dev/null 2>&1 || true
 
-		reinst=1
+		image_reinstalled=1
 	fi
 elif (($su != 0 && $il == 0 && $in == 0)) || (($su != 0 && $il != 0 && $in == 0)); then
-	# 4 ---No operation : Image exists and spaceify.org doesn't have image
+	# 4 ---No operation : Image exists and spaceify.org doesn't have the image
 	:
 fi
 
 ubun=$( echo $(docker images) | sed -n '/spaceifyubuntu/{p;q;}' )
 if [ -z "$ubun" ]; then
-	printf "\nAborting installation because the required spaceifyubuntu Docker image doesn't exist.\n"
+	. /var/lib/spaceify/data/scripts/cleanup_installation.sh "remove"
+	printf "\nAborting installation because the required spaceifyubuntu Docker image doesn't exist.\nRun 'apt-get --purge remove Spaceify' to remove incomplete installation.\n\n"
 	exit 1
 else
-	if [[ $plen != 0 && $reinst != 0 ]]; then												# Reinstall applications if there were installed applications and a new image was created
-		printf "\nReinstalling existing applications...\n"
-
-		mkdir -p $work_path > /dev/null 2>&1 || true
-
-		for (( i=0; i<${plen}; i++ )); do
-			file=${packages[$i]##*/}
-			cp "${packages[$i]}" "$work_path"
-			spm install "$work_path$file"
-		done
-
-		rm -r $work_path > /dev/null 2>&1 || true
-	fi
-
-	printf "$in" > "$installed_file"
+	printf "$in" > "$installed_version"														# Update the version file
 fi
 
 # ----- Create user names and passwords for edge and admin ----- #
 
-	# -- try to find previous registration (edge_id.uuid) --#
-euuid=""
+	# -- try to find previous registration (edge_id.uuid) -- #
+edge_uuid=""
+edge_password=""
 if [ -e /var/lib/spaceify/data/db/edge_id.uuid ]; then
-	euuid=$(</var/lib/spaceify/data/db/edge_id.uuid)
+	edge_uuid=$(</var/lib/spaceify/data/db/edge_id.uuid)
 elif [ -e /tmp/edge_id.uuid ]; then
-	euuid=$(</tmp/edge_id.uuid)
+	edge_uuid=$(</tmp/edge_id.uuid)
 fi
 
-	# -- parse file content if edge_id.uuid was found --#
-uuid=""
-edge_password=""
-if [[ "$euuid" != "" ]]; then
+	# -- parse file content if edge_id.uuid was found -- #	
+
+if [[ "$edge_uuid" != "" ]]; then
 	OIFS="$IFS"
-	IFS="," read -ra auuid <<< "$euuid"
+	IFS="," read -ra auuid <<< "$edge_uuid"
 	IFS="$OIFS"
 
-	uuid="${auuid[0]}"
+	edge_uuid="${auuid[0]}"
 	edge_password="${auuid[1]}"
 fi
 
-	# -- if uuid exists edge is already registered. Don't register it again!!! --#
-if [[ "$uuid" == "" ]]; then
+	# -- Try to register this edge computer only if it's not already registered -- #
+registration_result=""
+registration_attempt=1
+
+if [[ "$edge_uuid" == "" ]]; then
+	printf "\nTrying to register this edge computer to spaceify.net."
+
 	# try five times to register a new edge_id
-	cnt=1
-	while [ $cnt -lt 6 ]; do
-		printf "\nTrying to register edge: attempt ${cnt} of 5...\n"
+	while [ $registration_attempt -lt 6 ]; do
+		printf "\nAttempt ${registration_attempt} of 5\n"
 
 		data1=$(openssl rand -hex 4)
 		data2=$(openssl rand -hex 2)
 		data3=$(openssl rand -hex 2)
 		data4i=$(openssl rand -hex 2)
 		data4r=$(openssl rand -hex 6)
-		uuid="${data1}-${data2}-${data3}-${data4i}-${data4r}"
+		edge_uuid="${data1}-${data2}-${data3}-${data4i}-${data4r}"
 
 		edge_password=$(openssl rand -hex 16)
-
-		result=$(curl -d "eid=${uuid}&epw=${edge_password}" --location "http://spaceify.net/edge_register.php")
-		if [[ "$result" == "" ]]; then
-			echo "${uuid},${edge_password}" > /var/lib/spaceify/data/db/edge_id.uuid
-
-			printf "\nEdge registered successfully with edge id ${uuid}.\nFile edge_id.uuid can be found here:\n"
-			printf "/var/lib/spaceify/data/db\n"
-			printf "Store this file in a secure location for future use. If the file is placed to /tmp prior to reinstalling Spaceify\n"
-			printf "the new installation will reuse the id and previous registration.\n\n"
-
+																				# ToDo: https://spaceify.net/edge_register.php (see also config.js)
+		registration_result=$(curl -d "eid=${edge_uuid}&epw=${edge_password}" --location "http://spaceify.net/edge_register.php")
+		if [[ "$registration_result" == "" ]]; then
+			echo "${edge_uuid},${edge_password}" > /var/lib/spaceify/data/db/edge_id.uuid
 			break;
 		else
-			printf "\nRegistration failed: ${result}\n"
+			printf "\nRegistration result: ${registration_result}\n"
 		fi
 
-		let cnt=cnt+1
+		let registration_attempt=registration_attempt+1
 	done
-
-	if [ $cnt -eq 6 ]; then
-		printf "\nFailed to register edge. The installation is aborted.\n\n"
-		exit 255
-	fi
-else
-	printf "\nThe file edge_id.uuid was found containing edge id ${uuid}.\nPrevious edge registration is valid.\n\n"
 fi
 
 	# -- update the created/restored edge_id and password to the database -- #
-sqlite3 /var/lib/spaceify/data/db/spaceify.db "INSERT OR REPLACE INTO user (edge_id, edge_password)  VALUES('${uuid}', '${edge_password}');"
+sqlite3 /var/lib/spaceify/data/db/spaceify.db "INSERT OR REPLACE INTO user (edge_id, edge_password)  VALUES('${edge_uuid}', '${edge_password}');"
 
 # ----- Start services ----- #
 
 #service udhcpd restart
 
 if [[ -z $(service network-manager status |& grep running) ]]; then
-	printf "\nNetworking not restarted, please do it manually\n"
+	printf "\nNetworking is not restarted, please do it manually\n"
 
 	resolvconf -u
 else
@@ -523,8 +486,76 @@ fi
 service spaceifydns restart > /dev/null 2>&1 || true
 service spaceifyipt restart > /dev/null 2>&1 || true
 service spaceify restart > /dev/null 2>&1 || true
+service spaceifyappman restart > /dev/null 2>&1 || true
+service spaceifyhttp restart > /dev/null 2>&1 || true
 
 service monit restart > /dev/null 2>&1 || true
 
+# ----- Install packages if new image was created ----- #
+
+if [[ $image_reinstalled != 0 ]]; then
+
+	work_path="/tmp/docimg/"
+
+	packages=()																					# Get the installed application packages
+	FILES=/var/lib/spaceify/data/installed/*
+	for f in $FILES; do
+		if [[ "$f" != "/var/lib/spaceify/data/installed/*" ]] && [[ "$f" != "/var/lib/spaceify/data/installed/readme.txt" ]]; then
+			packages+=("$f")
+		fi
+	done
+	packages_count=${#packages[@]}
+
+	if [[ $packages_count != 0 ]]; then
+		printf "\n\nReinstalling existing applications because the spaceifyubuntu Docker image is changed.\n"
+		sleep 5
+
+		mkdir -p $work_path > /dev/null 2>&1 || true
+
+		for (( i=0; i<${packages_count}; i++ )); do
+			let app=i+1
+			str=""
+			printf "\n\e[4mReinstalling application ${app} of ${packages_count}\e[0m\n\n"
+
+			file=${packages[$i]##*/}
+			cp "${packages[$i]}" "$work_path"
+			spm install "$work_path$file"
+		done
+
+		rm -r $work_path > /dev/null 2>&1 || true
+	fi
+
+fi
+
+# ----- Information about the installation ----- #
+
+	# -- Check registration status -- #
+if [ $registration_attempt -eq 6 ]; then
+
+	printf "\n\nRegistering this edge computer failed: ${registration_result}. The registration is required for some operations of the Spaceify core and it is highly recommended to finish the registration. Try to finish the registration manually by running command: spm register\n\n"
+
+elif [ $registration_attempt -gt 1 ] && [ $registration_attempt -lt 6 ]; then
+
+	printf "\n\nThis edge computer was registered successfully with the edge id ${edge_uuid}.\n"
+	printf "The registration file edge_id.uuid can be found here: /var/lib/spaceify/data/db\n"
+	printf "Store this file in a secure location for future use.\n"
+	printf "If the file is placed to /tmp directory prior to reinstalling Spaceify the previous registration is used. Notice: do not use the same edge id in multiple edge computers.\n"
+	printf "When updating Spaceify the existing registration is used and no involvement from the users part is required.\n\n"
+
+else
+
+	printf "\n\nExisting registration file, containing edge id ${edge_uuid}, was found and is used to identify this edge computer.\n\n"
+
+fi
+
+	# -- Installed -- #
+versions=$(< /var/lib/spaceify/versions)													# Get the current version string
+vs=$(echo $versions | awk -F : '{print $2}')
+
+printf "\n\nSpaceify version $vs is now installed.\n"
+
 # Script is found here after installation, if testing is required (eg. finding where the script fails): /var/lib/dpkg/info/spaceify.postinst
 # After changing the script run dpkg-reconfigure spaceify
+
+
+

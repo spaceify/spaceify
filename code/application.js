@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * Manifest, 2015 Spaceify Inc.
+ * Application, 2015 Spaceify Inc.
  * 
- * @class Manifest
+ * @class Application
  */
 
-var Utility = require("./utility");
-var Config = require("./config")();
+var utility = require("./utility");
+var config = require("./config")();
 
 function Application(manifest)
 {
@@ -17,6 +17,7 @@ var docker_image_id = "";
 
 var running = false;
 var initialized = false;
+var initializationError = "";
 var ordinal = -1;
 
 var services = [];
@@ -70,7 +71,7 @@ self.getUniqueDirectory = function()
 self.getProvidesServicesCount = function()
 	{
 	var srvc = manifest.provides_services ? manifest.provides_services : null;
-	return srvc != null ? srvc.length : 0;
+	return srvc ? srvc.length : 0;
 	}
 
 self.getProvidesServices = function()
@@ -81,7 +82,7 @@ self.getProvidesServices = function()
 self.getRequiresServicesCount = function()
 	{
 	var srvc = manifest.requires_services ? manifest.requires_services : null;
-	return srvc != null ? srvc.length : 0;
+	return srvc ? srvc.length : 0;
 	}
 
 self.getRequiresServices = function()
@@ -98,14 +99,14 @@ self.getInstallCommands = function()
 self.getInstallationPath = function()
 	{
 	var path = "";
-	if(self.getType() == Config.SPACELET)
-		path = Config.SPACELETS_PATH;
-	else if(self.getType() == Config.SANDBOXED)
-		path = Config.SANDBOXED_PATH;
-	else if(self.getType() == Config.NATIVE)
-		path = Config.NATIVE_PATH;
+	if(self.getType() == config.SPACELET)
+		path = config.SPACELETS_PATH;
+	else if(self.getType() == config.SANDBOXED)
+		path = config.SANDBOXED_PATH;
+	else if(self.getType() == config.NATIVE)
+		path = config.NATIVE_PATH;
 
-	return path + manifest.unique_directory + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY;
+	return path + manifest.unique_directory + config.VOLUME_DIRECTORY + config.APPLICATION_DIRECTORY;
 	}
 
 self.setDockerContainer = function(container)
@@ -138,14 +139,31 @@ self.isRunning = function()
 	return running;
 	}
 
-self.makeServices = function(ports, ip)
+self.implementsWebServer = function()
 	{
-	services = Utility.makeServices(self.getUniqueName(), self.getProvidesServices(), ports, ip);
+	return (manifest.implements && manifest.implements.indexOf(config.WEB_SERVER) != -1 ? true : false);
+	}
+
+self.makeServices = function(ports, ip)
+	{ // Run time services with their ports and IPs attached to the provided services
+	services = [];
+	var pservices = self.getProvidesServices();
+
+	for(var i=0; i<pservices.length; i++)
+		services.push({unique_name: manifest.unique_name, service_name: pservices[i].service_name, service_type: pservices[i].service_type, port: ports[i], secure_port: ports[i + 1], ip: ip, registered: false, type: self.getType()});
+
+	services.push({unique_name: manifest.unique_name, service_name: config.HTTP_SERVICE, service_type: config.HTTP_SERVICE, port: ports[ports.length - 2], ip: ip, registered: true, type: self.getType()});
+	services.push({unique_name: manifest.unique_name, service_name: config.HTTPS_SERVICE, service_type: config.HTTPS_SERVICE, port: ports[ports.length - 1], ip: ip, registered: true, type: self.getType()});
 	}
 
 self.getServices = function()
 	{
 	return services;
+	}
+
+self.getServicesCount = function()
+	{
+	return services.length;
 	}
 
 self.getService = function(service_name, unique_name)
@@ -158,8 +176,10 @@ self.getService = function(service_name, unique_name)
 		var un = services[s].unique_name;
 		var sn = services[s].service_name;
 
-		if((!unique_name && service_name == sn && service_name != Config.HTTP_SERVICE && service_name != Config.HTTP_SERVICE) ||
-			(unique_name && unique_name == un && service_name == sn))
+		// First condition = all applications have http and https services and they can be requested only by defining unique name. Otherwise return the requested service.
+		// Second condition = only this rule can return http and https services. otherwise this rule is nonrelevant, because service names are unique among appliciations.
+		if( (!unique_name && service_name == sn && service_name != config.HTTP_SERVICE && service_name != config.HTTP_SERVICE) ||
+			(unique_name && unique_name == un && service_name == sn) )
 			{
 			services[s].is_running = self.isRunning();
 			return services[s];
@@ -171,7 +191,7 @@ self.getService = function(service_name, unique_name)
 
 self.registerService = function(service_name, state)
 	{
-	for(s in services)
+	for(var s=0; s<services.length; s++)
 		{
 		if(services[s].service_name == service_name)
 			{
@@ -183,14 +203,20 @@ self.registerService = function(service_name, state)
 	return null;														// returns services when successfully registered/unregistered, null if no such service
 	}
 
-self.setInitialized = function(status)
+self.setInitialized = function(status, error)
 	{
 	initialized = status;
+	initializationError = error;
 	}
 
 self.isInitialized = function()
 	{
 	return initialized;
+	}
+
+self.getInitializationError = function()
+	{
+	return initializationError;
 	}
 
 self.setOrdinal = function(ordinal_)
@@ -206,38 +232,50 @@ self.getOrdinal = function()
 // UTILITY FUNCTIONS FOR APPLICATIONS
 self.find = function(applications, _param, _find)
 	{
-	var gp = null;
-	var unique_name = (typeof _param == "string" ? _param.toLowerCase() : _param);
+	var gp = null, unique_name;
 
 	for(var i in applications)
 		{
-		var unique_name = applications[i].getUniqueName();
+		unique_name = applications[i].getUniqueName();
 
 		if(_param == "path" && _find == unique_name)
 			return applications[i].getInstallationPath();
-		else if(_param == "unique_name" && _find == unique_name)
+
+		else if(_param == "application" && _find == unique_name)
 			return applications[i];
+
 		else if(_param == "manifest" && _find == unique_name)
 			return applications[i].getManifest();
-		else if(_param == "services" && _find == unique_name)
-			return applications[i].getServices();
+
+		else if(_param == "is_running" && _find == unique_name)
+			return applications[i].isRunning();
+
+		else if(_param == "implements_web_server"  && _find == unique_name)
+			return applications[i].implementsWebServer();
+
+		else if(_param == "type" && _find == unique_name)
+			return applications[i].getType();
+
 		else if(_param == "service")
 			{
 			if((gp = applications[i].getService(_find.service_name, _find.unique_name)))
 				return gp;
 			}
-		else if(_param == "remote_address")
+
+		else if(_param == "container_ip")
 			{
 			var dc = applications[i].getDockerContainer();
-			if(dc != null && dc.getIpAddress() == _find)
+			if(dc && dc.getIpAddress() == _find)
 				return applications[i];
 			}
+
 		else if(_param == "streams")
 			{
 			var dc = applications[i].getDockerContainer();
-			if(dc != null && dc.getContainerId() == _find)
+			if(dc && dc.getContainerId() == _find)
 				return dc.getStreams();
 			}
+
 		}
 
 	return null;

@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 /**
- * WebServer, 29.11.2013 Spaceify Inc.
+ * Web Server, 29.11.2013 Spaceify Inc.
  * 
  * @class WebServer
  */
 
 var fs = require("fs");
 var url = require("url");
+var crypto = require("crypto");
 var kiwi = require("kiwi");
 var http = require("http");
 var https = require("https");
@@ -14,11 +15,10 @@ var qs = require("querystring");
 var fibrous = require("fibrous");
 var logger = require("./logger");
 var reload = require("./reload");
-var Config = require("./config")();
-var Utility = require("./utility");
-var Language = require("./language");
+var config = require("./config")();
+var utility = require("./utility");
+var language = require("./language");
 var contentTypes = require("./contenttypes");
-var ValidateApplication = require("./validateapplication");
 
 function WebServer()
 {
@@ -27,37 +27,46 @@ var self = this;
 var options = {};
 var webServer = null;
 
+var serverUpListener = null;
+var serverDownListener = null;
+var externalRequestListener = null;
+
+var sessions = {};
+var SESSIONTOKEN = "sessiontoken";
+
 self.connect = function(opts, callback)
 	{
 	options.hostname = opts.hostname || "";
 	options.port = opts.port || 80;
-	options.is_secure = opts.is_secure || false;
-	options.key = opts.key || Config.SPACEIFY_TLS_PATH + Config.SERVER_KEY;
-	options.crt = opts.crt || Config.SPACEIFY_TLS_PATH + Config.SERVER_CRT;
-	options.ca_crt = opts.ca_crt || Config.SPACEIFY_WWW_PATH + Config.SPACEIFY_CRT;
-	options.core = opts.core || null;
 
-	options.index_file = opts.index_file || Config.INDEX_FILE;
-	options.www_path = opts.www_path || Config.SPACEIFY_WWW_PATH;
+	options.is_secure = opts.is_secure || false;
+	options.key = opts.key || config.SPACEIFY_TLS_PATH + config.SERVER_KEY;
+	options.crt = opts.crt || config.SPACEIFY_TLS_PATH + config.SERVER_CRT;
+	options.ca_crt = opts.ca_crt || config.SPACEIFY_WWW_PATH + config.SPACEIFY_CRT;
+
+	options.index_file = opts.index_file || config.INDEX_FILE;
+	options.www_path = opts.www_path || config.SPACEIFY_WWW_PATH;
 	options.kiwi_used = opts.kiwi_used || false;
 
-	options.templates = opts.templates || Config.TEMPLATES_PATH;
-	options.languages = opts.languages || Config.LANGUAGES_PATH;
+	options.locale = options.locale || config.DEFAULT_LOCALE;
+	options.template_path = opts.template_path || config.TEMPLATES_PATH;
+	options.language_path = opts.language_path || config.LANGUAGES_PATH;
 
 	options.owner = opts.owner || "-";
-	options.protocol = (!options.is_secure ? "http" : "https");
-	options.server_name = opts.server_name || Config.SERVER_NAME;
+	options.server_name = opts.server_name || config.SERVER_NAME;
 
-	options.engineiojs = opts.spaceifyclientjs = "";
-	if(opts.spaceifyClient)
-		{
-		options.engineiojs = fs.readFileSync(options.www_path + Config.ENGINEIOJS, {"encoding": "utf8"});
-		options.spaceifyclientjs = fs.readFileSync(options.www_path + "/" + Config.SPACEIFYCLIENTJS, {"encoding": "utf8"});
-		}
+	options.protocol = (!options.is_secure ? "http" : "https");
+
+	options.carbage_collect_interval = (opts.carbage_collect_interval || 600) * 1000;	// Execute carbage collection every ten minutes
+	options.session_delete_interval = (opts.session_delete_interval || 3600) * 1000;	// Session expires after one hour of inactivity
 
 	// -- --
 
-	logger.info(Utility.replace(Language.WEBSERVER_CONNECTING, {":owner": options.owner, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port}));
+	options.carbage_interval_id = setInterval(carbageCollection, options.carbage_collect_interval);
+
+	// -- --
+
+	logger.info(utility.replace(language.WEBSERVER_CONNECTING, {":owner": options.owner, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port}));
 
 	// -- --
 	if(!options.is_secure)												// Start a http server
@@ -85,25 +94,52 @@ self.connect = function(opts, callback)
 
 	webServer.listen(options.port, options.hostname, 511, function()
 		{
+		if(serverUpListener)
+			serverUpListener({is_secure: options.is_secure});
+
 		callback(null, true);
 		});
 
 	webServer.on("error", function(err)
 		{
-		callback(Utility.ferror(Language.E_WEBSERVER_FAILED_START.p("WebServer()::connect"), {hostname: options.hostname, port: options.port, err: err.toString()}), null);
+		if(serverDownListener)
+			serverDownListener({is_secure: options.is_secure});
+
+		callback(utility.ferror(language.E_WEBSERVER_FATAL_ERROR.p("WebServer()::connect"), {":hostname": options.hostname, ":port": options.port, ":err": err.toString()}), null);
+		});
+
+	webServer.on("close", function()
+		{
+		if(serverDownListener)
+			serverDownListener({is_secure: options.is_secure});
 		});
 	};
 
-self.close = fibrous( function()
+self.close = function()
 	{
 	if(webServer != null)
 		{
-		logger.info(Utility.replace(Language.WEBSERVER_CLOSING, {":owner": options.owner, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port}));
+		logger.info(utility.replace(language.WEBSERVER_CLOSING, {":owner": options.owner, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port}));
 		
 		webServer.close();
 		webServer = null;
 		}
-	});
+	}
+
+self.setServerUpListener = function(listener)
+	{
+	serverUpListener = (typeof listener == "function" ? listener : null);
+	}
+
+self.setServerDownListener = function(listener)
+	{
+	serverDownListener = (typeof listener == "function" ? listener : null);
+	}
+
+self.setExternalRequestListener = function(listener)
+	{
+	externalRequestListener = (typeof listener == "function" ? listener : null);
+	}
 
 // // // // // // // // // // // // // // // // // // // // // // // // //
 var getWebPage = function(request, response, body)
@@ -118,60 +154,22 @@ var getWebPage = function(request, response, body)
 		purl.pathname = purl.pathname.replace(/^\//, "");
 	
 	// Try to load a page - from templates or from www
-	fibrous.run(function()
+	fibrous.run( function()
 		{
 		var ok = false;
 
 		try {
-			if(options.core && options.core.find && purl.query.service)										// redirection request to applications internal web server
-				{
-				var _find = options.core.find("service", {unique_name: purl.query.service, service_name: (!options.is_secure ? Config.HTTP_SERVICE : Config.HTTPS_SERVICE)});
-				if(_find != null)
-					{
-					var getobj = purl.query, gets = "";														// Preserve get
-					delete getobj.service
-					for(i in getobj)
-						gets += (gets == "" ? "?" : "&") + i + "=" + getobj[i];
+			if(externalRequestListener)
+			{
+				var rs = externalRequestListener.sync(request, body, options.is_secure, options.protocol);
 
-					location = options.protocol + "://" + request.headers["host"] + ":" + _find.obj.port + "/" + gets;
-					content = Utility.replace(Language.E_MOVED_FOUND.message, {":location": location, ":server_name": options.server_name, ":hostname": options.hostname, ":port": options.port});
-					ok = write(content, "html", response, 302, location);
-					}
-				}
-
-			if(purl.query.app && purl.query.type)															// load files from <type>/<unique_name>/volume/application/www directory
-				{
-				var type_path = "";
-				var validator = new ValidateApplication();
-				var base_path = validator.makeUniqueDirectory(purl.query.app) + Config.VOLUME_DIRECTORY + Config.APPLICATION_DIRECTORY + Config.WWW_DIRECTORY;
-
-				if(purl.query.type == Config.SPACELET)
-					type_path = Config.SPACELETS_PATH;
-				else if(purl.query.type == Config.SANDBOXED)
-					type_path = Config.SANDBOXED_PATH;
-				else if(purl.query.type == Config.NATIVE)
-					type_path = Config.NATIVE_PATH;
-				else if(purl.query.type == Config.ANY)
-					{
-					try {
-						type_path = Config.SPACELETS_PATH;
-						if(Utility.sync.isLocal(type_path + base_path + purl.pathname, "file"))
-							throw true;
-
-						type_path = Config.SANDBOXED_PATH;
-						if(Utility.sync.isLocal(type_path + base_path + purl.pathname, "file"))
-							throw true;
-
-						type_path = Config.NATIVE_PATH;
-						if(Utility.sync.isLocal(type_path + base_path + purl.pathname, "file"))
-							throw true;
-						}
-					catch(err) 
-						{}
-					}
-
-				ok = load.sync(type_path + base_path, purl.pathname, request, response, body);
-				}
+				if(rs.type == "kiwi")
+					ok = kiwiRender.sync(rs.pathname, rs.query, request, response, body, rs.responseCode);
+				else if(rs.type == "load")
+					ok = load.sync(rs.www_path, rs.pathname, request, response, body, rs.responseCode);
+				else if(rs.type == "write")
+					ok = write.sync(rs.content, rs.contentType, request, response, rs.responseCode, rs.location, []);
+			}
 
 			if(!ok)																							// kiwi templates
 				ok = kiwiRender.sync(purl.pathname, purl.query, request, response, body);
@@ -179,11 +177,11 @@ var getWebPage = function(request, response, body)
 			if(!ok)																							// kiwi templates + index file
 				ok = kiwiRender.sync(purl.pathname + addSlash + options.index_file, purl.query, request, response, body);
 
-			if(addSlash == "/" && Utility.sync.isLocal(options.www_path + purl.pathname, "directory"))		// redirect browser permanently to pathname + /
+			if(addSlash == "/" && utility.sync.isLocal(options.www_path + purl.pathname, "directory"))		// redirect browser permanently to pathname + /
 				{
 				location = options.protocol + "://" + request.headers["host"] + "/" + purl.pathname + "/";
-				content = Utility.replace(Language.E_MOVED_PERMANENTLY.message, {":location": location, ":server_name": options.server_name, ":hostname": options.hostname, ":port": options.port});
-				ok = write(content, "html", response, 301, location);
+				content = utility.replace(language.E_MOVED_PERMANENTLY.message, {":location": location, ":server_name": options.server_name, ":hostname": options.hostname, ":port": options.port});
+				ok = write(content, "html", request, response, 301, location, []);
 				}
 
 			if(!ok)																							// www
@@ -201,10 +199,10 @@ var getWebPage = function(request, response, body)
 		catch(err)
 			{
 			if(err == 500)
-				content = Utility.replace(Language.E_INTERNAL_SERVER_ERROR.message, {":server_name": options.server_name, ":hostname": options.hostname, ":port": options.port});
-			write(content, "html", response, err, location);
+				content = utility.replace(language.E_INTERNAL_SERVER_ERROR.message, {":server_name": options.server_name, ":hostname": options.hostname, ":port": options.port});
+			write(content, "html", request, response, err, location, []);
 			}
-		}, function(err) { } );
+		}, function(err, data) { } );
 	}
 
 var kiwiRender = fibrous(function(pathname, query, request, response, body, responseCode)
@@ -213,66 +211,91 @@ var kiwiRender = fibrous(function(pathname, query, request, response, body, resp
 		if(!options.kiwi_used)
 			throw false;
 
+		// Get base name from the url - remove the content type
 		pathname = checkURL("", pathname);
 
-		// Get base name from the url - remove the content type
 		var basename = pathname.replace(/\.[^.]*$/, "");
 		basename = basename.replace(/^\//, "");
 		basename = basename.toLowerCase();
 
-		// Parse POST from body to object
+		// Parse POST parameters as object
 		var post = parsePost(request, body);
 
-		// Get a language file for the template - default is en_US
-		var language = "en_US"; // ToDo: get from sqlite3!!!
-		if(query && query.lang)
-			language = query.lang;
-		else if(post.lang)
-			language = post.lang;
+		// Get a language file for the template - default is language defined in the options.locale
+		var locale = options.locale;
 
-		var layout_file = "layout.tpl";
-		var template_file = basename + ".html";
-		var view_file = basename + "_v.js";
-		var language_file = language + ".js";
-		var configuration_file =  "configuration.js";
+		if(query && query.loc)
+			locale = query.loc;
+		else if(post.loc)
+			locale = post.loc;
 
 		// Get the actual layout, template, view and language files
-		if(	!Utility.sync.isLocal(options.templates + template_file, "file") ||
-			!Utility.sync.isLocal(options.templates + view_file, "file") ||
-			!Utility.sync.isLocal(options.languages + language_file, "file"))
+		var layout_file = options.template_path + "layout.tpl";
+		var template_file = options.template_path + basename + ".html";
+		var view_file = options.template_path + basename + ".js";
+		var language_file = options.language_path + locale + ".json";
+
+		if(	!utility.sync.isLocal(template_file, "file") ||
+			!utility.sync.isLocal(view_file, "file") ||
+			!utility.sync.isLocal(language_file, "file"))
 			throw false;
 
-		var layout = fs.sync.readFile(options.templates + layout_file, {"encoding": "utf8"});
-		var template = fs.sync.readFile(options.templates + template_file, {"encoding": "utf8"});
-		var view = reload.require(options.templates + view_file);
-		var language = reload.require(options.languages + language_file);
-		var configuration = reload.require(options.templates + configuration_file);
+		var layout = fs.sync.readFile(layout_file, {"encoding": "utf8"});
+		var template = fs.sync.readFile(template_file, {"encoding": "utf8"});
+		var languageo = fs.sync.readFile(language_file, {"encoding": "utf8"});
+
+		var view = reload.require(view_file);
+		var language_utility = reload.require(options.language_path + "languageutility.js");
+
+		// KiWi templates have sessions
+		var headers = setSession(request, []);
 
 		// Apply data and render
 		var parent = new kiwi.Template(layout);
 		var kiwit = new kiwi.Template(template);
-		var ip = request.connection.remoteAddress;
-		language = language.make(basename);
-		configuration = configuration.make();
 
-		var data = view.getData(ip, request.url, query, post, language, basename, configuration);
-		data.parent = parent;
-		data.engineiojs = options.engineiojs;
-		data.spaceifyclientjs = options.spaceifyclientjs;
-		data.protocol = options.protocol;
-		data.section = basename;
-		data.get = query;
-		data.post = post;
+		var url = request.url;
+		var ip = request.connection.remoteAddress;		// Proxy? -> request.headers["x-forwarded-for"]
+		languageo = language_utility.make(basename, languageo);
+
+		var user_data = null, session = null, sessiontoken = parseCookie(request, SESSIONTOKEN);
+		if(sessiontoken)
+			session = getSession(sessiontoken);
+		if(session)
+			user_data = session.user_data;
+/*if(session)
+{
+console.log("UDB: ", user_data);
+console.log("ST: ", sessiontoken);
+console.log("SE: ", session);
+console.log("UDA: ", session.user_data, "\n\n");
+}*/
+		var data = view.sync.getData(ip, url, query, post, user_data, options.is_secure, languageo);
+		data.parent = parent;									// Template
+		data.host_protocol = options.protocol;					// Host
+		data.host_get = query;
+		data.host_post = post;
+		data.host_ip = ip;
+		data.edge_url_current = options.protocol + "://" + config.EDGE_IP + "/";
+		data.edge_url_http = "http://" + config.EDGE_IP + "/";
+		data.edge_url_https = "https://" + config.EDGE_IP + "/";
+		data.is_secure = options.is_secure;
+		data.section = languageo.section;						//  Language
+		data.locale = languageo.locale;
+		data.language = languageo.language;
+		data.language_smarty = languageo.language_smarty;
+		if(sessiontoken && data.user_data)						// Update sessions user data
+			updateSession(sessiontoken, data.user_data);
 
 		var rendered = kiwit.sync.render(data);
 
-		write(rendered.toString(), "html", response, responseCode);
+		write(rendered.toString(), "html", request, response, responseCode, "", headers);
 
 		return true;
 		}
 	catch(err)
 		{
-//console.log("RENDER ERROR:", err.toString());
+if(err != false) console.log("RENDER ERROR:", err.toString());
 		return false;
 		}
 	});
@@ -282,7 +305,7 @@ var load = fibrous(function(www_path, pathname, request, response, body, respons
 	try {
 		www_file = checkURL(www_path, pathname);
 
-		if(!Utility.sync.isLocal(www_file, "file"))									// Test is the file in the www folder
+		if(!utility.sync.isLocal(www_file, "file"))									// Test is the file in the www folder
 			throw false;
 
 		var file = fs.sync.readFile(www_path + pathname);
@@ -290,7 +313,7 @@ var load = fibrous(function(www_path, pathname, request, response, body, respons
 		var i = pathname.lastIndexOf(".");
 		var contentType = pathname.substr(i + 1, pathname.length - i - 1);
 
-		write(file, contentType, response, responseCode);
+		write(file, contentType, request, response, responseCode, "", []);
 
 		return true;
 		}
@@ -300,18 +323,18 @@ var load = fibrous(function(www_path, pathname, request, response, body, respons
 		}
 	});
 
-var write = function(content, contentType, response, responseCode, location)
+var write = function(content, contentType, request, response, responseCode, location, headers)
 	{
-	var headers = {};
 	var now = new Date();
-	headers["Content-Type"] = (contentTypes[contentType] ? contentTypes[contentType] : "text/plain"/*application/octet-stream*/) + "; charset=utf-8";
-	headers["Accept-Ranges"] = "bytes";
-	headers["Content-Length"] = content.length;
-	headers["Server"] = options.server_name;
-	headers["Date"] = now.toUTCString();
-	headers["Access-Control-Allow-Origin"] = "*";
+	headers.push(["Content-Type", (contentTypes[contentType] ? contentTypes[contentType] : "text/plain"/*application/octet-stream*/) + "; charset=utf-8"]);
+	headers.push(["Accept-Ranges", "bytes"]);
+	headers.push(["Content-Length", content.length]);
+	headers.push(["Server", options.server_name]);
+	headers.push(["Date", now.toUTCString()]);
+	headers.push(["Access-Control-Allow-Origin", "*"]);//request.headers.origin ? request.headers.origin : "*";//request.headers.host;
+	//headers.push(["X-Frame-Options", "SAMEORIGIN"]);
 	if(responseCode == 301 || responseCode == 302)
-		headers["Location"] = location;
+		headers.push(["Location", location]);
 
 	response.writeHead(responseCode || 200, headers);
 	response.end(content);
@@ -320,8 +343,27 @@ var write = function(content, contentType, response, responseCode, location)
 	}
 
 var parsePost = function(request, body)
-	{
-	return (request.method.toLowerCase() == "post" && request.headers["content-type"].toLowerCase() == "application/x-www-form-urlencoded" ? qs.parse(body) : {});
+	{ // Simple parsing of POST body
+	var post = {};
+
+	try
+		{
+		if(!request.headers["content-type"])
+			throw "";
+
+		var content_type = request.headers["content-type"].toLowerCase();
+		if(request.method.toLowerCase() != "post")
+			throw "";
+
+		if(content_type.indexOf("application/x-www-form-urlencoded") != -1)
+			post = qs.parse(body);
+		else if(content_type.indexOf("application/json") != -1)
+			post = JSON.parse(body);
+		}
+	catch(err)
+		{}
+
+	return post;
 	}
 
 var checkURL = function(www_path, pathname)
@@ -339,6 +381,103 @@ var checkURL = function(www_path, pathname)
 
 	return www_path;
 	}
+
+	// SERVER SIDE SESSIONS - IMPLEMENTED USING HTTP COOKIES -- -- -- -- -- -- -- -- -- -- //
+var setSession = function(request, headers)
+	{
+	var session = null, sessiontoken = parseCookie(request, SESSIONTOKEN);
+	if(sessiontoken)
+		session = getSession(sessiontoken);
+
+	if(!session)														// Create a session if it doesn't exist yet
+		headers = createSession(headers, "/", request.connection.remoteAddress, request);
+	else																// Update an existing session
+		headers = refreshSession(headers, sessiontoken, request);
+
+	return headers;
+	}
+
+var createSession = function(headers, Path, Domain, request)
+	{
+	shasum = crypto.createHash("sha512");
+	var result = utility.bytesToHexString(crypto.randomBytes(16));
+	shasum.update(result);
+	var sessiontoken = shasum.digest("hex").toString();
+
+	var session = SESSIONTOKEN + "=" + sessiontoken + "; HttpOnly";
+	if(options.is_secure)
+		session += "; Secure";
+	if(Path)
+		session += "; Path=" + Path;
+	if(Domain)
+		session += "; Domain=" + Domain;
+	headers.push(["Set-Cookie", session]);
+
+	sessions[sessiontoken] = { timestamp: Date.now(), user_data: {} };
+//console.log("CREATE SESSION:\n", (options.is_secure ? "HTTPS " : "HTTP"), request.url, request.connection.remoteAddress, "\n", session, "\n\n");
+	return headers;
+	}
+
+var refreshSession = function(headers, sessiontoken, request)
+	{ // Refresh session and send sessiontoken back to the web browser
+	if(sessions.hasOwnProperty(sessiontoken))
+		{
+		sessions[sessiontoken].timestamp = Date.now();
+		headers.push([SESSIONTOKEN, sessiontoken]);
+		}
+//console.log("REFRESH SESSION:\n", (options.is_secure ? "HTTPS " : "HTTP"), request.url, request.connection.remoteAddress, "\n", sessiontoken, "\n\n");
+	return headers;
+	}
+
+var getSession = function(sessiontoken)
+	{
+	return (sessions.hasOwnProperty(sessiontoken) ? sessions[sessiontoken] : null);
+	}
+
+var updateSession = function(sessiontoken, user_data)
+	{ // Updates user_data and refreshes the session
+	if(sessions.hasOwnProperty(sessiontoken))
+		{
+		sessions[sessiontoken].user_data = user_data;
+		sessions[sessiontoken].timestamp = Date.now();
+		}
+	}
+
+var parseCookie = function(request, search)
+	{
+	var namevalues, namevalue, nam, val;
+
+	namevalues = (!search ? [] : null);									// Return an array of name-value pairs or a value
+
+	var cookies = (request.headers.cookie || request.headers.Cookie || "").split(";");
+	for(var i=0; i<cookies.length; i++)
+		{
+		var namevalue = cookies[i].split("=");
+		if(namevalue.length == 2)
+			{
+			nam = namevalue[0].trim();
+			val = namevalue[1].trim();
+
+			if(!search)														// Get them all
+				namevalues.push({name: nam, value: val});
+			else if(search == nam) {										// Search for a specific name-value pair
+				namevalues = val; break; }
+			}
+		}
+
+	return namevalues;													// Empty if no cookies found / null if search fails
+	}
+
+	// CARBAGE COLLECTION -- -- -- -- -- -- -- -- -- -- //
+var carbageCollection = function()
+	{
+	for(token in sessions)														// Remove expired sessions
+		{
+		if(Date.now() - sessions[token].timestamp >= options.session_delete_interval)
+			delete sessions[token];
+		}
+	}
+
 }
 
 module.exports = WebServer;

@@ -4,33 +4,24 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=100%, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
 	<meta name="product" content="Spaceify Edge">
-	<meta name="description" content="Spaceify Edge">
-	<meta name="author" content="Spaceify Team">
+	<meta name="description" content="Spaceify main layout">
+	<meta name="author" content="Spaceify Inc.">
 
-	<script type="text/javascript">																			{{# static engine.io.js and spaceifyclient.js }}
-		${engineiojs|raw}
-	</script>
-	<script type="text/javascript">
-		${spaceifyclientjs|raw}
-	</script>
+	<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgo=">			{{# Favicon not required }}
+
+	<script src="${edge_url_current}js/jquery-1.11.3.min.js"></script>
+	<script src="${edge_url_current}libs/spaceifyinitialize.js"></script>
 
 	<script>
-		window.addEventListener("load", function()
+		window.addEventListener("spaceifyReady", function()
 			{
-			var head = document.getElementsByTagName("head")[0] || document.documentElement;
-			var dtags = [{ createtag: "link", context: head, href: "css/spaceify.css", type: "text/css", rel: "stylesheet", media: "screen" },
-						 { createtag: "script", context: head, src: "js/jquery-1.11.1.min.js", type: "text/javascript" },
-						 { createtag: "script", context: head,  src: "js/jsmart.js", type: "text/javascript" },
-						 { createtag: "script", context: head, src: "js/jsmart_plugins.js", type: "text/javascript" },
-						 { createtag: "script", context: head, src: "js/spaceify.js", type: "text/javascript" },
-						 { id: "imgLoading", context: document, src: "images/ajax-loader.gif" }];
-			$SR.loadResources(dtags, -1, function()
-				{
-				spaceify.setConfig('${language}', '${smartyLanguage}', '${smartyConfiguration}', '${section}', '${protocol}');
+			window["spaceifyNet"] = new SpaceifyNet();
+			window["spaceifyCache"] = new SpaceifyCache();
 
-				if(typeof pageReady == "function")																// Does the child template define pageReady?
-					pageReady();
-				});
+			spaceifyNet.initialize('${section}', '${locale}', '${language_smarty}', '${host_protocol}');
+
+			if(typeof pageReady == "function")												{{# Call pageReady if child template has implemented it. }}
+				pageReady();
 			});
 	</script>
 
@@ -38,25 +29,23 @@
 
 	<title>{{block title}}Spaceify{{/block}}</title>
 </head>
-<body>
+<body class="edgeBody" id="edgeBody">
 
-	<div class="edgeContent" id="mainContent">
-		{{block body}}{{/block}}
+	{{block body}}{{/block}}
 
-		<div class="edgeLoading" style="display:none;" id="loading">														{{# Loading... div  }}
+	<div class="edgeCommon" id="edgeCommon">
+		<div class="edgeLoading" style="display:none;" id="loading">						{{# Loading... div  }}
 			<div class="edgeLoadingContent">
-				<img id="imgLoading">${kiwiLanguage.loading}&nbsp;&nbsp;
+				<img src="${edge_url_current}images/ajax-loader.gif" id="imgLoading">${language.loading}&nbsp;&nbsp;
 			</div>
 		</div>
 
-		<div class="edgeAlert" id="alert">																					{{# Alert div }}
+		<div class="edgeAlert" id="alert">													{{# Alert div }}
 		</div>
 
-		<div class="edgeBackGroundPopUp" id="popUpBG">																		{{# Pop up background div }}
+		<div class="edgeBackGroundPopUp" id="popUpBG">										{{# Pop up background div }}
 		</div>
-
-		<iframe class="edgeOptionsFrame" id="edgeOptionsFrame" frameborder="0" marginheight="0" src="about:blank"></iframe>	{{# Options iframe }}
-
 	</div>
+
 </body>
 </html>

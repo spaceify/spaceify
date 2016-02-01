@@ -1,0 +1,10 @@
+service spaceifyappman stop > /dev/null 2>&1
+service spaceifyhttp stop > /dev/null 2>&1
+service spaceify stop > /dev/null 2>&1
+printf "" > /var/log/spaceify.log
+printf "" > /var/log/spaceifyhttp.log
+printf "" > /var/log/spaceifyappman.log
+service spaceify start > /dev/null 2>&1
+service spaceifyappman start > /dev/null 2>&1
+service spaceifyhttp start > /dev/null 2>&1
+

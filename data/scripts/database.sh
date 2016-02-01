@@ -20,3 +20,5 @@ release_version=$(echo $versions | awk -F : '{print $2}')
 release_name=$(echo $versions | awk -F : '{print $3}')
 db_version=$(echo $versions | awk -F : '{print $7}')
 sqlite3 $dbs "UPDATE settings SET release_name='${release_name}', release_version='${release_version}', db_version='${db_version}';"
+
+chmod 0764 data/db/spaceify.db > /dev/null 2>&1 || true										# spm must be able to write to the database

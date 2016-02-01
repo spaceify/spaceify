@@ -1,17 +1,27 @@
 /* COMMON STYLE FOR ALL EDGE PAGES */
 body {
-	margin: 5px;
-	padding: 0;
-	font-family: 'Segoe UI Light_', 'Open Sans Light', Verdana, Arial, Helvetica, sans-serif;
-}
-
-h1, h2, h3, h4, h5, h6 {
 	margin: 0;
 	padding: 0;
 }
 
-.edgeContent {
-	margin: 10px 10px 10px 10px;
+.edgeBody {
+	margin: 0;
+	padding: 0;
+	font-family: 'Segoe UI Light_', 'Open Sans Light', Verdana, Arial, Helvetica, sans-serif;
+}
+
+.edgeMain {
+	padding: 0;
+	margin: 10px 15px;
+}
+
+.edge_h1, .edge_h2, .edge_h3, .edge_h4, .edge_h5, .edge_h6 {
+	margin: 0;
+	padding: 0;
+}
+
+.edge_h4.hidden {
+	display: none;
 }
 
 a.edgeHome:link, a.edgeHome:visited, a.edgeHome:hover, a.edgeHome:active {
@@ -19,6 +29,11 @@ a.edgeHome:link, a.edgeHome:visited, a.edgeHome:hover, a.edgeHome:active {
 	margin-top: -15px;
 	font-weight: bold;
 	display: inline-block;
+}
+
+a.edgeTileLink:link, a.edgeTileLink:visited, a.edgeTileLink:hover, a.edgeTileLink:active {
+	color: #000;
+	display: block;
 }
 
 .edgeTiles {
@@ -57,7 +72,7 @@ a.edgeHome:link, a.edgeHome:visited, a.edgeHome:hover, a.edgeHome:active {
 	text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.3);
 }
 
-.edgeTileInfoTitle {
+.edgeTitle {
 	clear: both;
 	float: left;
 	margin: 0;
@@ -67,19 +82,25 @@ a.edgeHome:link, a.edgeHome:visited, a.edgeHome:hover, a.edgeHome:active {
 	font-size: 80%;
 	font-weight: bold;
 }
-.edgeTileInfoTitle.spacer {
+.edgeTitle.spacer {
 	height: 20px;
 }
+.edgeTitle.text {
+	overflow: initial;
+	white-space: initial;
+	font-weight: normal;
+}
+.edgeTitle.text.bold {
+	font-weight: bold;
+	font-size: 100%;
+}
 
-.edgeTileInfoItem {
+.edgeItem {
 	clear: both;
 	float: left;
 	margin: 0;
 	padding: 0;
 	font-size: 90%;
-}
-.edgeTileInfoTitle.spacer {
-	height: 20px;
 }
 
 .edgeLoading {
@@ -132,65 +153,136 @@ a.edgeHome:link, a.edgeHome:visited, a.edgeHome:hover, a.edgeHome:active {
 	width: 100%;
 }
 
-.edgeOptionsFrame {
-	z-index: 3;
-	position: fixed;
-	top: 0px;
-	left: 0px;
-	margin: 0;
-	padding: 0;
-	width: 100%;
-	height: 100%;
-	display: block;
-	box-sizing: border-box;
-	background-color: #FFF;
-	visibility: hidden;
-}
-
-.edgeInput {
-	margin: 0;
-	padding: 0;
-	height: 28px;
-	line-height: 28px;
-	box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	-webkit-box-sizing: border-box;
-	vertical-align: middle;
-}
-.edgeInput.spacer {
-	visibility: hidden;
-}
-
 .edgeCertIframe {
 	width: 0px;
 	height: 0px;
 	margin: 0;
 	padding: 0;
-	visibility: hidden;
+	display: none;
 	overflow: hidden;
 }
 
-a.edgeButtonLink:link, a.edgeButtonLink:visited, a.edgeButtonLink:hover, a.edgeButtonLink:active {
-	color: #000;
-	float: left;
-	display: block;
+	/* ADMIN -- -- -- -- -- -- -- -- -- -- */
+/* Log In */
+.adminLoginContainer {
+	width: 400px;
+	height: auto;
+	padding: 1em 0 1em 0;
+	margin: 1em 33% 1em 33%;
+	border: 1px solid #ddd;
+	text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.3);
 }
 
-.edgeButton {
-	float: left;
-	height: 28px;
-	line-height: 24px;
-	margin: 4px 4px 0px 0px;
-	padding: 0px 10px 0px 10px;
+.adminInput {
+	margin: 0;
+	padding: 0;
+	height: 52px;
+	line-height: 48px;
+	font-size: 115%;
 	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+}
+.adminInput.wider {
+	width: 100%;
+}
+
+.adminInputContainer {
+	width: 100%;
+	height: 100%;
+	margin: 0 100px 1em 100px;
+}
+.adminInputContainer.zero
+{
+	margin: 0;	
+}
+
+.adminButton {
+	cursor: pointer;
+	float: left;
+	width: 200px;
+	height: 52px;
+	line-height: 48px;
+	font-size: 115%;
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
 	border-radius: 2px;
 	text-align: center;
-	/*font-weight: bold;*/
-	background-color: #84D3FF;
-	border: 1px solid #8080FF;
+	background-color: #5FC3B4;
+	border: 1px solid #A0A0A0;
 	box-shadow: inset 1px 1px 2px #ddd8dc;
 }
-.edgeButton:hover {
-	background-color: #eee;
+.adminButton.normal
+{
+	clear: both;
+	float: none;
+	margin: 0px;
+}
+.adminButton:hover {
+	background-color: #6FD3C4;
+}
+
+.adminLoginTitle {
+	text-align: center;
+	margin: 0 100px 1em 100px;
+	font-size: 110%;
+	font-weight: bold;
+}
+
+.adminLogo {
+	width: 291px;
+	height: 100px;
+	white-space: nowrap;
+	text-align: center;
+	margin: 0 0 1em 50px;
+}
+
+.adminLogoHelper {
+	display: inline-block;
+	height: 100%;
+	vertical-align: middle;
+}
+
+.adminLogoImage {
+	vertical-align: middle;
+	max-width: 291px;
+	max-height: 100px;
+}
+
+/* Common containers for all admin pages */
+.adminContainer {
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+border: 1px solid red;
+}
+.adminContainer.half {
+	float: left;
+	clear: none;
+	width: 50%;
+	padding: 10px 15px;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+}
+.adminContainer.half > div {
+	margin: 0;
+	padding: 0;
+	float: left;
+	clear: left;
+	display: inline-block;
+}
+
+	/* MISC -- -- -- -- -- -- -- -- -- -- */
+.breaker {
+	clear: both;
+	width: 0;
+	height: 0;
+	margin: 0;
+	padding: 0;
 }
 /* t, r, b, l */

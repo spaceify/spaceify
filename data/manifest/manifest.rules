@@ -77,6 +77,14 @@
       "validator": {"type": "regx", "match": "not_empty"},
       "errors": {"type": "E_STOP_COMMAND_UNDEFINED", "error": "E_STOP_COMMAND_FORMAT"}
     },
+    "origins":
+    {
+      "type": "array",
+      "required": "spacelet",
+      "unique": [{"compare": "origins", "compare_type": "regx", "store": true, "error": "E_ORIGINS_DUPLICATE"}],
+      "sub_rules": {"type": "string", "validator": {"type": "regx", "match": "wildcard_url"}, "errors": {"type": "E_ORIGIN_STRING", "error": "E_ORIGIN_FORMAT"}},
+      "errors": {"field": "E_ORIGINS_UNDEFINED", "type": "E_ORIGINS_TYPE", "empty": "E_ORIGINS_EMPTY"}
+    },
     "shared":
     {
       "type": "boolean",
@@ -96,7 +104,7 @@
       "type": "array",
       "required": "spacelet",
       "unique": [{"compare": "inject_hostnames", "compare_type": "regx", "store": true, "error": "E_INJECT_HOSTNAMES_DUPLICATE"}],
-      "sub_rules": {"type": "string", "validator": {"type": "regx", "match": "inject_hostnames"}, "errors": {"type": "E_INJECT_HOSTNAME_STRING", "error": "E_INJECT_HOSTNAME_FORMAT"}},
+      "sub_rules": {"type": "string", "validator": {"type": "regx", "match": "wildcard_url"}, "errors": {"type": "E_INJECT_HOSTNAME_STRING", "error": "E_INJECT_HOSTNAME_FORMAT"}},
       "errors": {"field": "E_INJECT_HOSTNAMES_UNDEFINED", "type": "E_INJECT_HOSTNAMES_TYPE", "empty": "E_INJECT_HOSTNAMES_EMPTY"}
     },
     "inject_files":
@@ -235,7 +243,7 @@
     "unique_name": "/[^a-z0-9\\/]|\\s|^$|^\\/+|\\/+$|\\/{2,}|^.{129,}$/",
     "name": "/[^0-9a-zA-Z\\x20_-]|^$|^\\s+|\\s+$|^.{129,}$/",
     "category": "/[^a-z-_]|\\s|^$|^.{129,}$/",
-    "inject_hostnames": "/^$|\\s/",
+    "wildcard_url": "/^$|\\s/",
     "not_empty": "/^$/",
     "not_empty_trimmed": "/^$|^\\s+|\\s+$/",
     "directory": "/[^0-9a-zA-Z-._\\/]|^$|^\\.+|\\.+$|^\\/|^-|\\/$|\\/{2,}/",
@@ -249,7 +257,7 @@
 
   "lists":
   {
-    "service_types": ["open", "open_local", "standard"],
+    "service_types": ["open", "open_local", "standard", "alien"],
     "application_types": ["spacelet", "sandboxed", "native"],
     "boolean_values": [false, true],
     "inject_types": ["javascript", "css", "file"],
@@ -277,8 +285,8 @@
     "E_SERVICE_NAME_UNDEFINED_R": "Manifest: requires services must have service_name field defined.",
     "E_SERVICE_NAME_STRING_P": "Manifest: provides services service_name type must be string.",
     "E_SERVICE_NAME_STRING_R": "Manifest: requires services service_name type must be string.",
-    "E_SERVICE_TYPE_P": "Manifest: provides service_type accepts values shared, open and open_local.",
-    "E_SERVICE_TYPE_R": "Manifest: requires service_type accepts values shared, open and open_local.",
+    "E_SERVICE_TYPE_P": "Manifest: provides service_type accepts values standard, open, open_local and alien.",
+    "E_SERVICE_TYPE_R": "Manifest: requires service_type accepts values standard, open, open_local and alien.",
     "E_SERVICE_TYPE_UNDEFINED_P": "Manifest: provides services must have service_type field defined.",
     "E_SERVICE_TYPE_UNDEFINED_R": "Manifest: requires provides services must have service_type field defined.",
     "E_SERVICE_TYPE_STRING_P": "Manifest: provides services service_type type must be string.",
@@ -307,6 +315,13 @@
 
     "E_STOP_COMMAND_UNDEFINED": "Manifest: stop_command type must be string.",
     "E_STOP_COMMAND_FORMAT": "Manifest: stop_command can not be empty or have leading or trailing whitespace. Leave it out if it is not required.",
+
+    "E_ORIGINS_UNDEFINED": "Manifest: origins field must be defined for spacelets.",
+    "E_ORIGINS_TYPE": "Manifest: origins type must be array.",
+    "E_ORIGINS_EMPTY": "Manifest: origins must have hostname(s) defined.",
+    "E_ORIGIN_STRING": "Manifest: origins hostname type must be string.",
+    "E_ORIGIN_FORMAT": "Manifest: origins hostname value can not be empty or contain whitespace.",
+    "E_ORIGINS_DUPLICATE": "Manifest: Duplicate host names in origins.",
 
     "E_SHARED_UNDEFINED": "Manifest: shared field must be defined for spacelets.",
     "E_SHARED_TYPE": "Manifest: shared type must be boolean.",

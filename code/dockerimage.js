@@ -7,8 +7,8 @@
 var fibrous = require("fibrous");
 var Docker = require("dockerode");
 var logger = require("./logger");
-var Utility = require("./utility");
-var Language = require("./language");
+var utility = require("./utility");
+var language = require("./language");
 
 function DockerImage()
 {
@@ -27,7 +27,7 @@ self.stopContainers = fibrous( function(imageId, imageName)
 			containerInfo.Image = containerInfo.Image.split(":")[0];			// containerInfo.Image can be either <name:tag> or <id>!? Check which it is.
 			if(containerInfo.Image == imageId || containerInfo.Image == imageName)
 				{
-				logger.info(Utility.replace(Language.STOP_CONTAINER, {":container": containerInfo.Image}));
+				logger.info(utility.replace(language.STOP_CONTAINER, {":container": containerInfo.Image}));
 
 				var container = docker.getContainer(containerInfo.Id);
 				container.sync.stop({"t": "0"});
@@ -36,7 +36,7 @@ self.stopContainers = fibrous( function(imageId, imageName)
 		}
 	catch(err)
 		{
-		Utility.ferror(Language.E_GENERAL_ERROR.p("DockerImage::stopContainers"), {":err": err.toString()});
+		utility.ferror(language.E_GENERAL_ERROR.p("DockerImage::stopContainers"), {":err": err.toString()});
 		}
 	});
 
@@ -53,7 +53,7 @@ self.removeContainers = fibrous( function(imageId, imageName, streams)
 			containerInfo.Image = containerInfo.Image.split(":")[0];			// containerInfo.Image can be either <name:tag> or <id>!? Check which it is.
 			if(containerInfo.Image == imageId || containerInfo.Image == imageName)
 				{
-				Utility.replace(Language.REMOVE_CONTAINER, {":container": containerInfo.Image});
+				utility.replace(language.REMOVE_CONTAINER, {":container": containerInfo.Image});
 
 				var container = docker.getContainer(containerInfo.Id);
 				container.sync.remove(/*{"force": "1"}*/);
@@ -65,7 +65,7 @@ self.removeContainers = fibrous( function(imageId, imageName, streams)
 		}
 	catch(err)
 		{
-		Utility.ferror(Language.E_GENERAL_ERROR.p("DockerImage::removeContainers"), {":err": err.toString()});
+		utility.ferror(language.E_GENERAL_ERROR.p("DockerImage::removeContainers"), {":err": err.toString()});
 		}
 	});
 
@@ -82,7 +82,7 @@ self.removeImage = fibrous( function(imageId, imageName)
 		}
 	catch(err)
 		{
-		Utility.ferror(Language.E_GENERAL_ERROR.p("DockerImage::removeImage"), {":err": err.toString()});
+		utility.ferror(language.E_GENERAL_ERROR.p("DockerImage::removeImage"), {":err": err.toString()});
 		}
 	});
 

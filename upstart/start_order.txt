@@ -1,0 +1,5 @@
+Services must be and are start in the following order:
+1. spaceifydns
+2. spaceifyipt
+4. spaceify
+5. spaceifyappman and spaceifyhttp (in non-specific order after spaceify)

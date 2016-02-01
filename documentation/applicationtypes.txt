@@ -1,3 +1,5 @@
+THIS DOCUMENT IS PARTLY DEPRECATED!
+
 Spaceify application types
 
 There are 3 different types of applications in Spaceify.

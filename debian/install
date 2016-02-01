@@ -12,10 +12,9 @@ data/scripts/spmc etc/bash_completion.d
 data/docs/* var/lib/spaceify/data/docs
 data/db/create.sql var/lib/spaceify/data/db
 data/manifest/manifest.rules var/lib/spaceify/data/manifest
+data/docker/* var/lib/spaceify/data/docker
 
 upstart/* var/lib/spaceify/data/upstart
-
-docker/Dockerfile var/lib/spaceify/data/docker
 
 monit/spaceify.conf etc/monit/conf.d
 

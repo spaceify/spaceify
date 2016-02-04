@@ -13,7 +13,7 @@ var http = require("http");
 var https = require("https");
 var WebSocketServer = require("websocket").server;
 var crypt = require("./crypt");
-var logger = require("./logger");
+var logger = require("./www/libs/logger");
 var config = require("./config")();
 var utility = require("./utility");
 var language = require("./language");
@@ -53,6 +53,9 @@ self.connect = function(opts, callback)
 	options.protocol = (!options.is_secure ? "ws" : "wss");
 	options.server_type = opts.server_type || (!options.is_secure ? config.WEBSOCKET_RPC_SERVER : config.WEBSOCKET_RPC_SERVER_SECURE);
 	options.user_object = opts.user_object || null;
+
+	options.debug = opts.debug || true;
+	logger.setOptions({write_to_console: options.debug});
 
 	logger.info(utility.replace(language.WEBSOCKET_OPENING, {":owner": options.owner, ":class": _class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port, ":subprotocol": options.subprotocol}));
 

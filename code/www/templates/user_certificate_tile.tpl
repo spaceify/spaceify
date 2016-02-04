@@ -1,4 +1,4 @@
-<div class="edgeTile" onclick="return new SpaceifyNet().loadCertificate();">
+<div class="edgeTile pointer" onclick="return new SpaceifyNet().loadCertificate();">
 	<div class="edgeTileImage">
 		<img width="128" height="128" src="images/certificate.png" id="installCertificateId">
 	</div>

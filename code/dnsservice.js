@@ -5,7 +5,7 @@
  */
 
 var fs = require("fs");
-var logger = require("./logger");
+var logger = require("./www/libs/logger");
 var config = require("./config")();
 var DNSServer = require("./dnsserver");
 

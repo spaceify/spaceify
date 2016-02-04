@@ -66,6 +66,11 @@ self.getService = function(service_name, unique_name, callback)
 			});
 	}
 
+self.getServices = function(unique_names, callback)
+	{
+	call("getServices", [unique_names], false, callback);
+	}
+
 self.getManifest = function(unique_name, callback)
 	{
 	var manifest = (isCache() ? getCache().getManifest(unique_name) : null);

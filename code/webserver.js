@@ -13,7 +13,7 @@ var http = require("http");
 var https = require("https");
 var qs = require("querystring");
 var fibrous = require("fibrous");
-var logger = require("./logger");
+var logger = require("./www/libs/logger");
 var reload = require("./reload");
 var config = require("./config")();
 var utility = require("./utility");
@@ -60,6 +60,9 @@ self.connect = function(opts, callback)
 	options.carbage_collect_interval = (opts.carbage_collect_interval || 600) * 1000;	// Execute carbage collection every ten minutes
 	options.session_delete_interval = (opts.session_delete_interval || 3600) * 1000;	// Session expires after one hour of inactivity
 
+	options.debug = opts.debug || true;
+	logger.setOptions({write_to_console: options.debug});
+	
 	// -- --
 
 	options.carbage_interval_id = setInterval(carbageCollection, options.carbage_collect_interval);

@@ -164,7 +164,7 @@ self.exposeRpcMethod = function(name, object, method)
 self.notifyAll = function(method, params)
 	{
 	try {
-		if(type == config.SERVER)
+		if(connection && type == config.SERVER)
 			connection.notifyAll(method, params);
 		}
 	catch(err)

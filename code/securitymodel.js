@@ -60,7 +60,7 @@ self. getEdgeURL = function()
 
 self.getApplicationURL = function(is_secure)
 	{
-	return (is_secure ? "http://" : "https://") + config.EDGE_IP + ":" + (is_secure ? process.env.PORT_80 : process.env.PORT_443);
+	return (is_secure ? "http://" : "https://") + config.EDGE_IP + ":" + (is_secure ? "80" : "443");
 	}
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //

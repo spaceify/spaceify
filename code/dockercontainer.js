@@ -9,7 +9,7 @@
 var events = require("events");
 var fibrous = require("fibrous");
 var Docker = require("dockerode");
-var logger = require("./logger");
+var logger = require("./www/libs/logger");
 var language = require("./language");
 var config = require("./config")();
 var utility = require("./utility");
@@ -122,7 +122,8 @@ self.startContainer = fibrous( function(portCount, imageNameOrId, volumes, binds
 		containerPorts.push(hostPort);
 		logger.info("HostPort " + port + " = " + hostPort);
 
-		envPorts += " && export PORT_" + port.replace(/[^0-9]/g, "") + "=" + hostPort;
+		//envPorts += " && export PORT_" + port.replace(/[^0-9]/g, "") + "=" + hostPort;
+		envPorts += "export PORT_" + port.replace(/[^0-9]/g, "") + "=" + hostPort + "\n";
 		}
 
 	});
@@ -163,18 +164,34 @@ self.runApplication = fibrous( function(appobj)
 	{
 	dockerHelper.sync.executeCommand("/usr/sbin/sshd -D & echo spaceifyend", ["spaceifyend"]);
 
-	var response = dockerHelper.sync.executeCommand("export NODE_PATH=" + config.API_NODE_MODULES_DIRECTORY +
-									 envPorts + 
-									 " && cd " + config.APPLICATION_PATH +
-									 " && " + appobj.getStartCommand() + " &", [config.CLIENT_APPLICATION_INITIALIZED, config.CLIENT_APPLICATION_UNINITIALIZED]);
+	var bash = 	  "cd " + config.APPLICATION_PATH + "\n"
+				+ "printf \""
+				+ "#!/bin/bash" + "\n"
+				+ "export NODE_PATH=" + config.API_NODE_MODULES_DIRECTORY + "\n"
+				+ "export APPLICATION_INITIALIZED=" + config.APPLICATION_INITIALIZED + "\n"
+				+ "export APPLICATION_UNINITIALIZED=" + config.APPLICATION_UNINITIALIZED + "\n"
+				+  envPorts + "\n"
+				+  appobj.getStartCommand() + "\n"
+				+ "ec=\\\$?" + "\n"
+				+ "if (( \\\$ec != 0 )); then" + "\n"
+				+ "    printf ';;Starting the application failed with return code '" + "\\\$ec::" + "\n"
+				+ "    printf '" + config.APPLICATION_UNINITIALIZED + "'\n" + "\n"
+				+ "fi" + "\n"
+				+ "kill -9 \\\$\\\$" + "\n"
+				+ "\" > /tmp/run.sh && bash /tmp/run.sh \n";
+
+	var response = dockerHelper.sync.executeCommand(bash, [config.APPLICATION_INITIALIZED, config.APPLICATION_UNINITIALIZED]);
+
+	/*var response = dockerHelper.sync.executeCommand(
+									"export NODE_PATH=" + config.API_NODE_MODULES_DIRECTORY
+									+ " && export APPLICATION_INITIALIZED=" + config.APPLICATION_INITIALIZED
+									+ " && export APPLICATION_UNINITIALIZED=" + config.APPLICATION_UNINITIALIZED
+									+ envPorts
+									+ " && cd " + config.APPLICATION_PATH
+									+ " && " + appobj.getStartCommand() + " &", [config.APPLICATION_INITIALIZED, config.APPLICATION_UNINITIALIZED]);*/
 
 	return response;
 	});
-
-self.sendClientReadyToStdIn = function()
-	{
-	dockerHelper.executeCommand("echo " + config.CLIENT_APPLICATION_INITIALIZED, ["*"]);
-	}
 
 self.getIpAddress = function()
 	{

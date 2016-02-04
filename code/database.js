@@ -90,16 +90,13 @@ self.rollback = fibrous( function(str)
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 // APPLICATIONS - spaceify.db // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-self.getApplication = fibrous( function(params, bAll)
+self.getApplication = fibrous( function(unique_name)
 	{
 	try {
 		if(!isOpen())
 			openDB();
 
-		if(!bAll)
-			return db.sync.get("SELECT * FROM applications WHERE unique_name=?", params);			// One specific application
-		else
-			return db.sync.all("SELECT * FROM applications WHERE type=?", params);					// All applications of the type
+		return db.sync.get("SELECT * FROM applications WHERE unique_name=?", [unique_name]);
 		}
 	catch(err)
 		{
@@ -113,22 +110,11 @@ self.getApplications = fibrous( function(type)
 		if(!isOpen())
 			openDB();
 
-		order = " ORDER BY (CASE type";
-		if(type.length == 0)
-			order += " WHEN '" + config.SPACELET + "' THEN 0 WHEN '" + config.SANDBOXED + "' THEN 1 WHEN '" + config.NATIVE + "' THEN 2 END)";
-		else
-			{
-			for(var i=0; i<type.length; i++)
-				order += " WHEN '" + config.SHORT_APPLICATION_TYPES[type[i]] + "' THEN " + i;
-			order += " END)";
-			}
+		var order = " ORDER BY type, position ASC";
 
-		where = "";
+		var where = "";
 		for(var i=0; i<type.length; i++)
-			{
 			where += (where == "" ? " WHERE " : " OR ") + "type=?";
-			type[i] = config.SHORT_APPLICATION_TYPES[type[i]];
-			}
 
 		return db.sync.all("SELECT * FROM applications" + where + order, type);
 		}
@@ -144,11 +130,13 @@ self.insertApplication = fibrous( function(manifest)
 		if(!isOpen())
 			openDB();
 
+		var max = db.sync.get("SELECT MAX(position) AS pos FROM applications WHERE type=?", [manifest.type]);
+
 		var inject_identifier = (manifest.type == config.SPACELET ? manifest.inject_identifier : "");
 		var inject_enabled = (manifest.type == config.SPACELET ? "1" : "0");
-		var params = [manifest.unique_name, manifest.unique_directory, manifest.docker_image_id, manifest.type, manifest.version, utility.getLocalDateTime(), inject_identifier, inject_enabled];
+		var params = [manifest.unique_name, manifest.unique_directory, manifest.docker_image_id, manifest.type, manifest.version, utility.getLocalDateTime(), inject_identifier, inject_enabled, max.pos + 1];
 
-		db.sync.run("INSERT INTO applications (unique_name, unique_directory, docker_image_id, type, version, install_datetime, inject_identifier, inject_enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", params);
+		db.sync.run("INSERT INTO applications (unique_name, unique_directory, docker_image_id, type, version, install_datetime, inject_identifier, inject_enabled, position) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", params);
 
 		addProvidedServices.sync(manifest);
 
@@ -201,10 +189,13 @@ self.removeApplication = fibrous( function(unique_name)
 		if(!isOpen())
 			openDB();
 
+		var results = db.sync.get("SELECT type, position FROM applications WHERE unique_name=?", [unique_name]);
+
 		db.sync.run("DELETE FROM inject_hostnames WHERE unique_name=?", unique_name);
 		db.sync.run("DELETE FROM inject_files WHERE unique_name=?", unique_name);
 		db.sync.run("DELETE FROM provided_services WHERE unique_name=?", unique_name);
-		db.sync.run("DELETE FROM applications WHERE unique_name=?", unique_name);		
+		db.sync.run("DELETE FROM applications WHERE unique_name=?", unique_name);
+		db.sync.run("UPDATE applications SET position=position-1 WHERE position>? AND type=?", [results.position, results.type]);
 		}
 	catch(err)
 		{
@@ -423,6 +414,20 @@ self.adminLoggedIn = fibrous( function(params)
 	catch(err)
 		{
 		throw err;	//utility.error(language.E_DATABASE_ADMIN_LOGGED_IN.p("Database::adminLoggedIn"), err);
+		}
+	});
+
+
+self.test = fibrous( function()
+	{
+	try {
+		if(!isOpen())
+			openDB();
+
+		}
+	catch(err)
+		{
+		throw err;	//utility.error(language.E_DATABASE_REMOVE_APPLICATION.p("Database::removeApplication"), err);
 		}
 	});
 

@@ -1,5 +1,5 @@
 /**
- * Logger by Spaceify Inc. 29.7.2015
+ * Logger, 18.12.2013 Spaceify Inc.
  *
  * @class Logger
  */
@@ -7,28 +7,95 @@
 function Logger()
 {
 var self = this;
-var isEnabled = true;
-var printType = false;
 
-var config = new SpaceifyConfig();
+var isNodeJS = (typeof exports !== "undefined" ? true : false);
 
-self.info = function(message)
+if(isNodeJS)
 	{
-	if(isEnabled)
-		console.log((printType ? "INFO: " : "") + message);
+	var api_path = process.env.PORT_80 ? "/api/" : "/var/lib/spaceify/code/";
+
+	var fs = require("fs");
+	var config = require(api_path + "config")();
+	}
+else
+	{
+	var config = new SpaceifyConfig();
 	}
 
-self.error = function(message)
+	// -- -- -- -- -- -- -- -- -- -- //
+var write_to_file = false;
+var write_to_console = true;
+
+var file_name = "/tmp/debug.txt";
+
+self.INFO = 1;
+self.ERROR = 2;
+self.WARN = 4;
+self.FORCE = 8;
+
+var label_str = {};
+label_str[self.INFO] = "INFO: ";
+label_str[self.ERROR] = "ERROR: ";
+label_str[self.WARN] = "WARNING: ";
+label_str[self.FORCE] = "";
+var labels = self.INFO | self.ERROR | self.WARN | self.FORCE;
+
+var levels = self.INFO | self.ERROR | self.WARN | self.FORCE;
+
+self.info = function(str) { out(self.INFO, str); }
+self.error = function(str) { out(self.ERROR, str);  }
+self.warn = function(str) { out(self.WARN, str); }
+self.force = function(str) { out(self.FORCE, str); }
+
+var out = function(level, str)
 	{
-	if(isEnabled)
-		console.log((printType ? "ERROR: " : "") + message);
+	if(typeof str == "undefined" || str == null)											// String doesn't have to provided, output nothing
+		str = "";
+
+	if(typeof str == "string")																// Replace "illegal" characters 0-9, 11-12, 14-31
+		{
+		str = str.replace(/[\x00-\x09\x0b-\x0c\x0e-\x1f\x7f-\xff]/g, "");
+		//str = str.trim();
+		}
+
+	label = ((labels & level) ? label_str[level] : "");										// Show label only if allowed
+
+	if(isNodeJS && write_to_file && (levels & level))
+		fs.appendFileSync(file_name, label + str + "\n");
+
+	if((write_to_console && (levels & level)) || level == self.FORCE)
+		{
+		txt = label + str;
+		isNodeJS ? process.stdout.write(txt + "\n") : console.log(txt);
+		}
 	}
 
-self.force = function(message)
+self.setOptions = function(options)
 	{
-	console.log(message);
+	if(options.write_to_file)
+		write_to_file = options.write_to_file;
+	if(options.write_to_console)
+		write_to_console = options.write_to_console;
+
+	if(options.info_label)
+		labels[self.INFO] = options.info_label;
+	if(options.error_label)
+		labels[self.ERROR] = options.error_label;
+	if(options.warn_label)
+		labels[self.WARN] = options.warn_label;
+	if(options.force_label)
+		labels[self.FORCE] = options.force_label;
+
+	if(options.labels)
+		labels = options.labels;
+
+	if(options.file_name)
+		file_name = options.file_name;
+
+	if(options.levels)
+		levels = options.levels;
 	}
-	
+
 self.printErrors = function(err, print_path, print_code, print_type)
 	{
 	var message = "";
@@ -54,3 +121,6 @@ self.printErrors = function(err, print_path, print_code, print_type)
 	}
 
 }
+
+if(typeof exports !== "undefined")
+	module.exports = new Logger();

@@ -7,7 +7,7 @@
 
 var url = require("url");
 var fibrous = require("fibrous");
-var logger = require("./logger");
+var logger = require("./www/libs/logger");
 var utility = require("./utility");
 var config = require("./config")();
 var language = require("./language");

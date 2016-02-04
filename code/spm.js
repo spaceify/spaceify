@@ -13,7 +13,7 @@ var http = require("http");
 var crypto = require("crypto");
 var qs = require("querystring");
 var fibrous = require("fibrous");
-var logger = require("./logger");
+var logger = require("./www/libs/logger");
 var config = require("./config")();
 var utility = require("./utility");
 var language = require("./language");
@@ -221,7 +221,7 @@ var messageListener = function(message)
 	try {
 		message = utility.parseJSON(message);
 		if(message.message != config.END_OF_MESSAGES)
-			logger.force(message.message, false);
+			logger.force(message.message);
 		}
 	catch(err)
 		{}

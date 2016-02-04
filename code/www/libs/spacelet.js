@@ -8,23 +8,19 @@ function Spacelet()
 {
 var self = this;
 
-var connectionListener = null;
-var disconnectionListener = null;
-
 var core = new SpaceifyCore();
-var utility = new SpaceifyUtility();
-var services = new SpaceifyService();
+var spaceifyService = new SpaceifyService();
 
 self.start = function(unique_name, callback)
 	{
 	try {
-		core.startSpacelet(unique_name, function(err, serviceobj)
+		core.startSpacelet(unique_name, function(err, serviceobj)									// Returns only services where type is open
 			{
 			if(err)
 				callback(err, false);
 			else
 				{
-				services.connectServices(serviceobj.service_names, function()
+				spaceifyService.connectServices(serviceobj.service_names, function()
 					{
 					callback(null, true);
 					});
@@ -39,12 +35,12 @@ self.start = function(unique_name, callback)
 
 self.getRequiredService = function(service_name)
 	{
-	return services.getRequiredService(service_name);
+	return spaceifyService.getRequiredService(service_name);
 	}
 
 self.getRequiredServiceSecure = function(service_name)
 	{
-	return services.getRequiredServiceSecure(service_name);
+	return spaceifyService.getRequiredServiceSecure(service_name);
 	}
 
 }

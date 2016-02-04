@@ -1,18 +1,18 @@
 /**
- * Spaceify Async by Spaceify Inc. 29.7.2015
+ * Spaceify Synchronous by Spaceify Inc. 29.7.2015
  *
- * @class SpaceifyAsync
+ * @class SpaceifySynchronous
  */
 
-function SpaceifyAsync()
+function SpaceifySynchronous()
 {
 var self = this;
 
 var method_id = 0;
 var methods = [];
 var results = {};
-var originals = {};
 var _finally = null;
+var waiting = null;
 
 // Setup an arbitrary amount of method calls and start traversing them in the order they are defined.
 self.waterFall = function(_methods, callback)
@@ -24,8 +24,7 @@ self.waterFall = function(_methods, callback)
 
 	_finally = callback;
 
-	for(i=0; i<_methods.length; i++)
-		methods.push(_methods[i]);
+	methods = _methods;
 
 	next();
 	}
@@ -40,33 +39,25 @@ var next = function()
 
 	// Call a method that has a callback. Store the original callback and replace it with ours. It's assumed that
 	// the original callback is the last parameter. After our callback returns call the original callback.
-	if(calling.type == "async")
+	if(calling.type == "sync")
 		{
-		originals[++method_id] = calling.params[calling.params.length - 1];				// Store the original callback
-		calling.params[calling.params.length - 1] = new Function(method_id)					// Replace with our callback
-			{
-			function finish()
-				{
-				// ToDo: should the array-like arguments be converted to an array to make apply more compatible
-				originals[method_id].apply(calling.owner, arguments);						// Call the original after our method has returned
-				delete originals[method_id];
-
-				results[method_id] = arguments;												// Store the result if somebody wants to get them after waterfall finishes
-
-				next();																		// Move on to processing the next method
-				}
-
-			finish();
-			}
-
-		calling.method.apply(calling.owner, calling.params);
+		waiting = calling.params[calling.params.length - 1];
+		calling.params[calling.params.length - 1] = wait;
+		calling.method.apply(calling.object, calling.params);
 		}
 	// Call a method that doesn't have callback processing inside it.
 	else
 		{
-		results[++method_id] = calling.method.apply(calling.owner, calling.params);
+		results[++method_id] = calling.method.apply(calling.object, calling.params);
 		next();
 		}
+	}
+
+var wait = function()
+	{
+	results[++method_id] = arguments;
+	waiting.apply(this, arguments);
+	next();
 	}
 
 self.getResult = function(mid)

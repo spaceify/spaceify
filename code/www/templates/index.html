@@ -6,12 +6,14 @@
 			{
 			var core = new SpaceifyCore();
 
-			new SpaceifyAsync().waterFall(
-				[{owner: core, method: spaceifyNet.showAdminTile, params: [function(){}], type: "async"},
+			jQuery("#user_utilities, #admin_utilities").css("display", "block");
 
-				{owner: core, method: spaceifyNet.showUserUtilities, params: [function(){}], type: "async"},
+			new SpaceifySynchronous().waterFall(
+				[{object: core, method: spaceifyNet.showAdminTile, params: [function(){}], type: "sync"},
 
-				{owner: core, method: spaceifyNet.showInstalledApplications, params: [function(){}], type: "async"}],
+				{object: core, method: spaceifyNet.showUserUtilities, params: [function(){}], type: "sync"},
+
+				{object: core, method: spaceifyNet.showInstalledApplications, params: [function(){}], type: "sync"}],
 
 				function()												/* finally */
 					{
@@ -50,25 +52,25 @@
 
 {{else}}
 
-		<h4 class="edge_h4 hidden" id="spacelets_header">${language.spacelets}</h4>
-		<div class="tiles" id="spacelet"></div>
+		<h4 class="edge_h4 hidden" id="spacelets_header" style="display: none;">${language.spacelets}</h4>
+		<div class="tiles" id="spacelet" style="display: none;"></div>
 		<div class="breaker"></div>
 
-		<h4 class="edge_h4 hidden" id="sandboxed_header">${language.sandboxed}</h4>
-		<div class="tiles" id="sandboxed"></div>
+		<h4 class="edge_h4 hidden" id="sandboxed_header" style="display: none;">${language.sandboxed}</h4>
+		<div class="tiles" id="sandboxed" style="display: none;"></div>
 		<div class="breaker"></div>
 
-		<h4 class="edge_h4 hidden" id="native_header">${language.native}</h4>
-		<div class="tiles" id="native"></div>
+		<h4 class="edge_h4 hidden" id="native_header" style="display: none;">${language.native}</h4>
+		<div class="tiles" id="native" style="display: none;"></div>
 		<div class="breaker"></div>
 
-		<div class="tiles" style="display: block" id="user_utilities">
+		<div class="tiles" style="display: none" id="user_utilities">
 			<h4 class="edge_h4">${language.user_utilities}</h4>
 			<div id="userInstallCertificate"></div>
 		</div>
 		<div class="breaker"></div>
 
-		<div class="tiles" style="display: block" id="admin_utilities">
+		<div class="tiles" style="display: none" id="admin_utilities">
 			<h4 class="edge_h4">${language.admin_utilities}</h4>
 			<div id="adminLogIn"></div>
 		</div>

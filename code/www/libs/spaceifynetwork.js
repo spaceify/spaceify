@@ -102,6 +102,11 @@ self.parseURL = function(url)
 	return parser;
 	}
 
+self.implementsWebServer = function(manifest)
+	{
+	return (manifest.implements && manifest.implements.indexOf(config.WEB_SERVER) != -1 ? true : false);
+	}
+
 	// XMLHttp -- -- -- -- -- -- -- -- -- -- //
 self.GET = function(url, callback, rtype)
 	{

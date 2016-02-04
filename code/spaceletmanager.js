@@ -29,9 +29,9 @@ self.start = fibrous( function(unique_name, run_spacelet, throw_errors)
 
 	try {
 		if(unique_name)																		// Build one application
-			db_applications = [database.sync.getApplication(unique_name, false)];
+			db_applications = [database.sync.getApplication(unique_name)];
 		else																				// Build all applications
-			db_applications = database.sync.getApplication([config.SPACELET], true);
+			db_applications = database.sync.getApplications([config.SPACELET]);
 
 		for(var i=0; i<db_applications.length; i++)
 			{

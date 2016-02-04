@@ -38,7 +38,7 @@ javascript	libs/engineiorpcconnection.js	-	application/javascript	-
 javascript	libs/websocketrpcconnection.js	-	application/javascript	-
 javascript	libs/websocketconnection.js	-	application/javascript	-
 javascript	libs/spaceifyapplicationmanager.js	-	application/javascript	-
-javascript	libs/spaceifyasync.js	-	application/javascript	-
+javascript	libs/spaceifysynchronous.js	-	application/javascript	-
 javascript	libs/spaceifycache.js	-	application/javascript	-
 javascript	libs/spaceifyconfig.js	-	application/javascript	-
 javascript	libs/spaceifycore.js	-	application/javascript	-
@@ -49,6 +49,7 @@ javascript	libs/spaceifyrequest.js	-	application/javascript	-
 javascript	libs/spaceifyservice.js	-	application/javascript	-
 javascript	libs/spaceifyutility.js	-	application/javascript	-
 javascript	libs/spacelet.js	-	application/javascript	-
+javascript	libs/spaceifyapplication.js	-	application/javascript	-
 javascript	libs/handlers/rpc.js	-	application/javascript	-
 javascript	libs/handlers/service.js	-	application/javascript	-
 css	css/spaceify.css	-	text/css	all

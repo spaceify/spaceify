@@ -6,7 +6,7 @@
 
 var fs = require("fs");
 var net = require("net");
-var logger = require("./logger");
+var logger = require("./www/libs/logger");
 var utility = require("./utility");
 var language = require("./language");
 

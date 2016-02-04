@@ -213,7 +213,7 @@ var language =
 	"ENGINE_IO_ON_MESSAGE": ":owner/:class::onMessage :protocol://:hostname::port, id=:id, message=:message",
 
 	// DockerHelper
-	"EXECUTE_COMMAND": "Trying to execute command: :command\n",
+	"EXECUTE_COMMAND": "Trying to execute command:\n:command\n",
 	"EXECUTE_COMMAND_RECEIVED": "Received the end code ':code' from stdout.",
 
 	// DockerImage

@@ -9,7 +9,7 @@ var fs = require("fs");
 var mkdirp = require("mkdirp");
 var crypto = require("crypto");
 var fibrous = require("fibrous");
-var logger = require("./logger");
+var logger = require("./www/libs/logger");
 var config = require("./config")();
 var utility = require("./utility");
 var DHCPDLog = require("./dhcpdlog");
@@ -70,6 +70,7 @@ self.connect = fibrous( function(opts)
 		// Expose RPC nethods
 		server.exposeRpcMethod("startSpacelet", self, startSpacelet);
 		server.exposeRpcMethod("getService", self, getService);
+		server.exposeRpcMethod("getServices", self, getServices);
 		server.exposeRpcMethod("registerService", self, registerService);
 		server.exposeRpcMethod("unregisterService", self, unregisterService);
 		server.exposeRpcMethod("setSplashAccepted", self, setSplashAccepted);
@@ -234,9 +235,8 @@ var getService = fibrous( function(service_name, unique_name)
 	if(!_service.obj.registered)
 		throw utility.ferror(language.E_GET_SERVICE_UNREGISTERED.p("Core::getService"), {":name": service_name});
 
-	_application = self.find("container_ip", connection_ip);
-
-// securityModel.isLocalIP(_service.obj, connection_ip);
+	//_application = self.find("container_ip", connection_ip);
+	//securityModel.isLocalIP(_service.obj, connection_ip);
 	// ToDo:
 	// SPACELET, SANDBOXED APPLICATIONS OR NATIVE APPLICATION CAN ASK SERVICES THAT ARE LISTED IN THEIR MANIFESTS REQUIRED SERVICES.
 	// or anybody can ask any service?
@@ -259,6 +259,23 @@ var getService = fibrous( function(service_name, unique_name)
 	return _service.obj;
 	});
 
+var getServices = fibrous( function(unique_names)
+	{ // Get all the services for all the unique applications on the list
+	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
+	var connection_ip = connobj.remoteAddress;
+
+	// TRY TO FIND THE SERVICE
+	var services = [];
+	for(var i=0; i<unique_names.length; i++)
+		{
+		var _service = self.find("services", unique_names[i]);
+
+		services = services.concat(_service.obj ? _service.obj : []);
+		}
+
+	return services;
+	});
+	
 var adminLogIn = fibrous( function(password)
 	{
 	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
@@ -393,7 +410,7 @@ var startApplication = fibrous( function(unique_name, run, throws)
 		if(isApplicationRunning.sync(unique_name, connobj))
 			throw utility.ferror(language.ALREADY_RUNNING.p("Core::startApplication"), {":app": unique_name});
 
-		var app_data = database.sync.getApplication(unique_name, false);
+		var app_data = database.sync.getApplication(unique_name);
 		if(!app_data && throws)
 			throw utility.ferror(language.E_UNKNOWN_APPLICATION.p("Core::startApplication"), {":name": unique_name});
 
@@ -473,7 +490,7 @@ var getApplicationData = fibrous( function(unique_name)
 	try {
 		var app_data = { spacelets: [], sandboxed: [], native: [] };
 
-		var spacelets = database.sync.getApplication([config.SPACELET], true) || [];
+		var spacelets = database.sync.getApplications([config.SPACELET]) || [];
 		for(var i=0; i<spacelets.length; i++)
 			{
 			app_dir = config.SPACELETS_PATH + spacelets[i].unique_directory + config.VOLUME_DIRECTORY + config.APPLICATION_DIRECTORY;
@@ -484,7 +501,7 @@ var getApplicationData = fibrous( function(unique_name)
 			app_data.spacelets.push(manifest);
 			}
 
-		var sandboxed = database.sync.getApplication([config.SANDBOXED], true) || [];
+		var sandboxed = database.sync.getApplications([config.SANDBOXED]) || [];
 		for(var i=0; i<sandboxed.length; i++)
 			{
 			app_dir = config.SANDBOXED_PATH + sandboxed[i].unique_directory + config.VOLUME_DIRECTORY + config.APPLICATION_DIRECTORY;
@@ -496,7 +513,7 @@ var getApplicationData = fibrous( function(unique_name)
 			app_data.sandboxed.push(manifest);
 			}
 
-		/*var native = database.sync.getApplication([config.NATIVE], true) || [];
+		/*var native = database.sync.getApplications([config.NATIVE]) || [];
 		for(var i=0; i<native.length; i++)
 			{
 			app_dir = config.NATIVE_PATH + native[i].unique_directory + config.VOLUME_DIRECTORY + config.APPLICATION_DIRECTORY;
@@ -619,7 +636,7 @@ var saveOptions = fibrous( function(session_id, unique_name, directory, file, da
 		if(!session || session.ip != connection_ip)										// Accept only from the same ip (= logged in device)
 			throw utility.error(language.E_INVALID_SESSION.p("Core::saveOptions"));
 
-		var app = database.sync.getApplication([unique_name], false) || null;			// Get application, path to volume, create directory and save
+		var app = database.sync.getApplication(unique_name) || null;					// Get application, path to volume, create directory and save
 		if(!app)
 			throw utility.ferror(language.E_UNKNOWN_APPLICATION.p("Core::saveOptions"), {":name": unique_name});
 
@@ -665,7 +682,7 @@ var loadOptions = fibrous( function(session_id, unique_name, directory, file)
 		if(!session || session.ip != connection_ip)										// Accept only from the same ip (= logged in device)
 			throw utility.error(language.E_INVALID_SESSION.p("Core::loadOptions"));
 
-		var app = database.sync.getApplication([unique_name], false) || null;			// Get application, path to volume and load
+		var app = database.sync.getApplication(unique_name) || null;					// Get application, path to volume and load
 		if(!app)
 			throw utility.ferror(language.E_UNKNOWN_APPLICATION.p("Core::loadOptions"), {":name": unique_name});
 

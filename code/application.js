@@ -262,6 +262,9 @@ self.find = function(applications, _param, _find)
 				return gp;
 			}
 
+		else if(_param == "services" && _find == unique_name)
+			return applications[i].getServices();
+
 		else if(_param == "container_ip")
 			{
 			var dc = applications[i].getDockerContainer();

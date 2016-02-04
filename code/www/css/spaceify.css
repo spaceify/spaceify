@@ -53,6 +53,9 @@ a.edgeTileLink:link, a.edgeTileLink:visited, a.edgeTileLink:hover, a.edgeTileLin
 	margin: 0px 10px 10px 0px;
 	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 3px 8px rgba(0, 0, 0, 0.2);
 }
+.edgeTile.pointer {
+	cursor: pointer;
+}
 
 .edgeTileImage {
 	float: left;

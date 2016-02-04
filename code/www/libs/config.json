@@ -143,8 +143,8 @@
   "TILEFILE": "tile.html",
   "WEB_SERVER": "WEB_SERVER",
 
-  "CLIENT_APPLICATION_INITIALIZED": "client application initialized",
-  "CLIENT_APPLICATION_UNINITIALIZED": "client application uninitialized",
+  "APPLICATION_INITIALIZED": "*** application initialized",
+  "APPLICATION_UNINITIALIZED": "*** application uninitialized",
 
   "IMAGE_DIRECTORY": "www/images/",
   "IMAGE_TYPES": ["image/jpg", "image/gif", "image/png"],

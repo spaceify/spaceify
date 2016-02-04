@@ -118,6 +118,7 @@ var connect = function(service_name, port, is_secure, status, callback)
 		callback();
 	}
 
+	// -- -- -- -- -- -- -- -- -- -- //
 self.connectService = 
 self.reconnectService = function(service_name, callback)
 	{

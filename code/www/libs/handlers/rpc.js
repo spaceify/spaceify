@@ -29,7 +29,7 @@ if(isNodeJs)
 	var api_path = isApplication ? "/api/" : "/var/lib/spaceify/code/";
 
 	fibrous = require("fibrous");
-	logger = require(api_path + "logger");
+	logger = require(api_path + "www/libs/logger");
 	}
 else
 	{
@@ -202,7 +202,7 @@ var handleRequests = function(requests, is_batch, connobj_or_parent)
 			var unknown_result = null;
 
 			if(parent.onUnknownMethod)													// Parent wants to catch the unknown methods
-				unknown_result = parent.unknownMethod(requests[r], connobj_or_parent);
+				unknown_result = parent.onUnknownMethod(requests[r], connobj_or_parent);
 
 			if(requests[r].id != null)
 				unknown_result = {jsonrpc: "2.0", error: {code: -32601, message: "Method " + requests[r].method + " not found."}, id: requests[r].id};

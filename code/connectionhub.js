@@ -12,9 +12,7 @@ var fs = require("fs");
 var fibrous = require("fibrous");
 var engineio = require("engine.io");
 var crypt = require("./crypt");
-var logger = require("./logger");
 var config = require("./config")();
-var utility = require("./utility");
 var language = require("./language");
 var WebSocketRPCConnection = require("./websocketrpcconnection");
 

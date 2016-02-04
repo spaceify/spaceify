@@ -66,8 +66,6 @@ self.connect = function(opts, callback)
 
 	socket.onmessage = function(evt)
 		{ // The data is expected to be a string
-		logger.info("WSRPCC::onMessage() " + evt.data);
-
 		self.onMessage(evt.data);
 		}
 

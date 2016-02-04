@@ -6,7 +6,7 @@
 
 var fibrous = require("fibrous");
 var Docker = require("dockerode");
-var logger = require("./logger");
+var logger = require("./www/libs/logger");
 var utility = require("./utility");
 var language = require("./language");
 

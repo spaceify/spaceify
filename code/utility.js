@@ -299,7 +299,7 @@ self.remakeGET = function(get, exclude, include)
 
 self.postPublish = function(package, username, password, release_name, callback)
 	{
-	require("./logger").force(language.POSTING_PACKAGE);
+	require("./www/libs/logger").force(language.POSTING_PACKAGE);
 
 	request({
 		url: config.REGISTRY_PUBLISH_URL,
@@ -325,7 +325,7 @@ self.postPublish = function(package, username, password, release_name, callback)
 
 self.postRegister = function(edge_uuid, edge_password, callback)
 	{
-	require("./logger").force(language.POSTING_REGISTRATION);
+	require("./www/libs/logger").force(language.POSTING_REGISTRATION);
 
 	request({
 		url: config.EDGE_REGISTRATION_URL,
@@ -487,7 +487,7 @@ self.execute = function(command, args, options, spmMessage, callback)
 		if(spmMessage)
 			spmMessage.sync(data, true);
 		else
-			require("./logger").force(data, true);
+			require("./www/libs/logger").force(data, true);
 
 		stdout += data;
 		});
@@ -497,7 +497,7 @@ self.execute = function(command, args, options, spmMessage, callback)
 		if(spmMessage)
 			spmMessage.sync(data, true);
 		else
-			require("./logger").force(data, true);
+			require("./www/libs/logger").force(data, true);
 
 		stderr += data;
 		});

@@ -53,9 +53,9 @@ parent.run = fibrous( function(application)
 		application.makeServices(dockerContainer.getPublicPorts(), dockerContainer.getIpAddress());
 
 		var response = dockerContainer.sync.runApplication(application);		// [0] = output from the app, [1] = initialization status
-		if(response[1] == config.CLIENT_APPLICATION_UNINITIALIZED)
+		if(response[1] == config.APPLICATION_UNINITIALIZED)
 			{
-			var matches = /{{(.+)}}/.exec(response[0]);							// extract error string from the output
+			var matches = /;;(.+)::/.exec(response[0]);							// extract error string from the output
 			application.setInitialized(false, matches[1]);
 			}
 		else

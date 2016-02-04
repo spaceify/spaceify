@@ -8,7 +8,7 @@
 var fs = require("fs");
 var fibrous = require("fibrous");
 var wsClient = require("websocket").client;
-var logger = require("./logger");
+var logger = require("./www/libs/logger");
 var config = require("./config")();
 var utility = require("./utility");
 var language = require("./language");
@@ -36,6 +36,9 @@ self.connect = function(opts, callback)
 	options.subprotocol = opts.subprotocol || config.WS_JSON_RPC;
 	options.protocol = (!options.is_secure ? "ws" : "wss");
 	options.class = "WSC";
+
+	options.debug = opts.debug || true;
+	logger.setOptions({write_to_console: options.debug});
 
 	logger.info(utility.replace(language.WEBSOCKET_CONNECTING, {":owner": options.owner, ":class": options.class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port, ":subprotocol": options.subprotocol}));
 

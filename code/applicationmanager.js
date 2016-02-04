@@ -13,7 +13,7 @@ var mkdirp = require("mkdirp");
 var Github = require("github");
 var AdmZip = require("adm-zip");
 var fibrous = require("fibrous");
-var logger = require("./logger");
+var logger = require("./www/libs/logger");
 var config = require("./config")();
 var utility = require("./utility");
 var language = require("./language");
@@ -352,7 +352,7 @@ var removeApplication = fibrous( function(unique_name, session_id, is_spm)
 		if(!checkAuthentication.sync(connobj.remoteAddress, session_id, is_spm))
 			throw utility.error(language.E_AUTHENTICATION_FAILED.p("ApplicationManager::removeApplication"));
 
-		var app_data = database.sync.getApplication([unique_name]);
+		var app_data = database.sync.getApplication(unique_name);
 		if(!app_data)
 			throw utility.ferror(language.E_APPLICATION_NOT_INSTALLED.p("ApplicationManager::removeApplication"), {":name": unique_name});
 
@@ -389,7 +389,7 @@ var startApplication = fibrous( function(unique_name, session_id, is_spm)
 		if(!checkAuthentication.sync(connobj.remoteAddress, session_id, is_spm))
 			throw utility.error(language.E_AUTHENTICATION_FAILED.p("ApplicationManager::startApplication"));
 
-		var app_data = database.sync.getApplication([unique_name]);
+		var app_data = database.sync.getApplication(unique_name);
 		if(!app_data)
 			throw utility.ferror(language.E_APPLICATION_NOT_INSTALLED.p("ApplicationManager::startApplication"), {":name": unique_name});
 
@@ -425,7 +425,7 @@ var stopApplication = fibrous( function(unique_name, session_id, is_spm)
 		if(!checkAuthentication.sync(connobj.remoteAddress, session_id, is_spm))
 			throw utility.error(language.E_AUTHENTICATION_FAILED.p("ApplicationManager::stopApplication"));
 
-		var app_data = database.sync.getApplication([unique_name]);
+		var app_data = database.sync.getApplication(unique_name);
 		if(!app_data)
 			throw utility.ferror(language.E_APPLICATION_NOT_INSTALLED.p("ApplicationManager::stopApplication"), {":name": unique_name});
 
@@ -459,7 +459,7 @@ var restartApplication = fibrous( function(unique_name, session_id, is_spm)
 		if(!checkAuthentication.sync(connobj.remoteAddress, session_id, is_spm))
 			throw utility.error(language.E_AUTHENTICATION_FAILED.p("ApplicationManager::restartApplication"));
 
-		var app_data = database.sync.getApplication([unique_name]);
+		var app_data = database.sync.getApplication(unique_name);
 		if(!app_data)
 			throw utility.ferror(language.E_APPLICATION_NOT_INSTALLED.p("ApplicationManager::restartApplication"), {":name": unique_name});
 
@@ -830,7 +830,7 @@ var install = fibrous( function(manifest)
 		/*else if(manifest.type == config.NATIVE)
 			app_path = config.NATIVE_PATH;*/
 
-		app_data = database.sync.getApplication([manifest.unique_name]);
+		app_data = database.sync.getApplication(manifest.unique_name);
 
 		database.sync.begin();																				// global transaction
 
@@ -1029,7 +1029,7 @@ var sendMessage = fibrous( function()
 	for(var i=0; i<arguments.length; i++)													// Output to console
 		{
 		if(arguments[i] != config.END_OF_MESSAGES)
-			logger.force(arguments[i], false);
+			logger.force(arguments[i]);
 		}
 	});
 

@@ -209,24 +209,27 @@ self.showInstalledApplications = function(callback)
 		if(!apps)
 			return (typeof callback == "function" ? callback() : false);
 
-		jQuery("#spacelets, #spacelets_header").css("display", (apps.spacelets.length > 0 ? "block" : "none"));
+		jQuery("#spacelet, #spacelets_header").css("display", (apps.spacelets.length > 0 ? "block" : "none"));
 		for(var j=0; j<apps.spacelets.length; j++)
-			methods.push({owner: self, method: renderTile, params: [apps.spacelets[j], "spacelets", function(){}], type: "async"});
+			methods.push({object: self, method: renderTile, params: [apps.spacelets[j], function(){}], type: "sync"});
 
 		jQuery("#sandboxed, #sandboxed_header").css("display", (apps.sandboxed.length > 0 ? "block" : "none"));
 		for(var j=0; j<apps.sandboxed.length; j++)
-			methods.push({owner: self, method: renderTile, params: [apps.sandboxed[j], "sandboxed", function(){}], type: "async"});
+			methods.push({object: self, method: renderTile, params: [apps.sandboxed[j], function(){}], type: "sync"});
 
 		jQuery("#native, #native_header").css("display", (apps.native.length > 0 ? "block" : "none"));
 		for(var j=0; j<apps.native.length; j++)
-			methods.push({owner: self, method: renderTile, params: [apps.native[j], "native", function(){}], type: "async"});
+			methods.push({object: self, method: renderTile, params: [apps.native[j], function(){}], type: "sync"});
 
-		new SpaceifyAsync().waterFall(methods, function() { return (typeof callback == "function" ? callback() : false); } );
+		new SpaceifySynchronous().waterFall(methods, function()
+			{
+			return (typeof callback == "function" ? callback() : false);
+			});
 		});
 
 	}
 
-var renderTile = function(manifest, id, callback)
+var renderTile = function(manifest, callback)
 	{
 	if(manifest.has_tile)																			// APPLICATION SUPPLIES ITS OWN TILE
 		{
@@ -240,12 +243,15 @@ var renderTile = function(manifest, id, callback)
 				jQuery("#" + manifest.type).append(jQuery.parseHTML(content));
 
 				var src;																				// CONTENT
-				if(manifest.is_running)
+				if(manifest.is_running && network.implementsWebServer(manifest))
 					src = network.getProtocol(true) + "10.0.0.1" + ":" + (!network.isSecure() ? appURL.http_port : appURL.https_port) + "/" + config.TILEFILE;
 				else
 					src = network.getProtocol(true) + "10.0.0.1/_" + manifest.type + "/" + manifest.unique_name + "_/" + config.TILEFILE;
 
 				jQuery("#" + unique_name).attr("src", src);
+
+				if(typeof callback == "function")
+					callback();
 				});
 			});
 		}
@@ -261,14 +267,9 @@ var renderTile = function(manifest, id, callback)
 					{
 					if(manifest.images[i].file.search("/^(icon\.)/i" != -1))
 						{
-						image = "www/" + (manifest.images[i].directory ? manifest.images[i].directory : "") + "/images/" + manifest.images[i].file;
-						//image = network.getEdgeURL() + image + "?app=" + manifest.unique_name + "&type=" + manifest.type;
-						
-						//image = network.getEdgeURL() + image + "?app=" + manifest.unique_name + "&type=" + manifest.type;
-						
-						image = network.getEdgeURL() + "/_" + manifest.type + "/" + manifest.unique_name + "_" + image;
-						
-
+						image = network.getEdgeURL() + "/_" + manifest.type + "/" + manifest.unique_name + "_/www/images/";
+						image += (manifest.images[i].directory ? manifest.images[i].directory : "") + manifest.images[i].file;
+						break;
 						}
 					}
 				}

@@ -10,7 +10,7 @@ var api_path = isRealSpaceify ? "/api/" : "/var/lib/spaceify/code/";
 
 var fs = require("fs");
 var fibrous = require("fibrous");
-var logger = require(api_path + "logger");
+var logger = require(api_path + "www/libs/logger");
 var utility = require(api_path + "utility");
 var config = require(api_path + "config")();
 var WebServer = require(api_path + "webserver");
@@ -43,7 +43,7 @@ var crt = config.APPLICATION_TLS_PATH + config.SERVER_CRT;
 var provides_service_names = [];
 var requires_service_names = [];
 
-self.start = function(app, options)
+self.start = function(application, options)
 	{
 	fibrous.run( function()
 		{
@@ -97,16 +97,16 @@ self.start = function(app, options)
 					}
 				}
 
-			if(app.start)
-				app.start();
+			if(application.start)
+				application.start();
 
 				// APPLICATION INITIALIALIZED SUCCESSFULLY -- -- -- -- -- -- -- -- -- -- //
-			console.log(config.CLIENT_APPLICATION_INITIALIZED);
+			console.log(config.APPLICATION_INITIALIZED);
 			}
 		catch(err)
 			{
-			if(app.fail)
-				app.fail();
+			if(application.fail)
+				application.fail(err);
 
 			initFail.sync(err);
 			}
@@ -118,8 +118,8 @@ self.start = function(app, options)
 
 var initFail = fibrous( function(err)
 	{ // FAILED TO INITIALIALIZE THE APPLICATION. OUTPUT THE ERROR MESSAGE TO THE CORE -- -- -- -- -- -- -- -- -- -- //
-	logger.error("{{" + (err && err.message ? err.message : "undefined error") + "}}");
-	console.log(config.CLIENT_APPLICATION_UNINITIALIZED);
+	logger.error(";;" + (err && err.message ? err.message : "undefined error") + "::");
+	console.log(config.APPLICATION_UNINITIALIZED);
 
 	stop.sync();
 	});

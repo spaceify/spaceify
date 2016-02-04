@@ -14,7 +14,7 @@ var http = require("http");
 var https = require("https");
 var engineio = require("engine.io");
 var crypt = require("./crypt");
-var logger = require("./logger");
+var logger = require("./www/libs/logger");
 var config = require("./config")();
 var utility = require("./utility");
 var language = require("./language");
@@ -53,6 +53,9 @@ self.connect = function(opts, callback)
 	options.protocol = (!options.is_secure ? "ws" : "wss");
 	options.server_type = opts.server_type || (!options.is_secure ? config.ENGINE_IO_SERVER : config.ENGINE_IO_SERVER_SECURE);
 	options.user_object = opts.user_object || null;
+
+	options.debug = opts.debug || true;
+	logger.setOptions({write_to_console: options.debug});
 
 	logger.info(utility.replace(language.ENGINE_IO_OPENING, {":owner": options.owner, ":class": _class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port}));
 

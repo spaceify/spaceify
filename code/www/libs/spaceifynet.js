@@ -99,23 +99,20 @@ self.showLoading = function(show)
 		}
 	}
 
-self.showError = function(msg)
+self.showError = function(msgstr) { alerts(msgstr, "error"); }
+self.showSuccess = function(msgstr) { alerts(msgstr, "success"); }
+var alerts = function(msgstr, type)
 	{
-	var obj = jQuery('<span class="edgeAlertError" id="error' + ordinal++ + '">' + msgFormat(msg) + '</span>');
-	jQuery("#alert").append(obj);
-	self.waitRemove(obj, 5000);
-	}
+	if((obj = $("#alerting")).length > 0)
+		obj.remove();
 
-self.showSuccess = function(msg)
-	{
-	var obj = jQuery('<span class="edgeAlertSuccess" id="success' + ordinal++ + '">' + msgFormat(msg) + '</span>');
-	jQuery("#alert").append(obj);
-	self.waitRemove(obj, 5000);
-	}
+	obj = jQuery('<span class="edgeAlert ' + type + '" id="alerting">' + msgstr + '</span>');
+	$(document.body).append(obj);
 
-self.waitRemove = function(obj, wait)
-	{
-	window.setTimeout(function() { obj.remove(); }, wait);
+	obj.css("left", ($(window).width() - obj.width()) / 2);
+	obj.css("visibility", "visible");
+
+	window.setTimeout(function() { obj.remove(); }, 5000);
 	}
 
 var msgFormat = function(msg)

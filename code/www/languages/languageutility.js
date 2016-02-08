@@ -9,21 +9,17 @@ function LanguageUtility()
 {
 var self = this;
 
-self.make = function(section, _language)
+self.make = function(language, section, global)
 	{
-	var sections = JSON.parse(_language);
+	for(i in global)													// Add global strings to the selected section. NOTICE: global strings overwrite strings with same names in the section.
+		language[i] = global[i];
 
-	var language_smarty = "";
-	var language = (sections[section] ? sections[section] : {});
-
-	for(i in sections["global"])										// Add global strings to the selected section. NOTICE: global strings overwrite strings with same names in the section.
-		language[i] = sections["global"][i];
-
-	for(i in language)													// Make also smarty compatible language "file"
+	var language_smarty = "";											// Make also smarty compatible language "file"
+	for(i in language)
 		language_smarty += i + " = " + language[i] + "\r\n";
 
 	return { section: section,
-			 locale: sections["global"].locale,
+			 locale: global.locale,
 			 language: language,
 			 language_smarty: new Buffer(language_smarty).toString("base64") };
 	}

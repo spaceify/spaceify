@@ -34,6 +34,9 @@ var externalRequestListener = null;
 var sessions = {};
 var SESSIONTOKEN = "sessiontoken";
 
+var layout = null;
+var languages = {};
+
 self.connect = function(opts, callback)
 	{
 	options.hostname = opts.hostname || "";
@@ -50,6 +53,7 @@ self.connect = function(opts, callback)
 
 	options.locale = options.locale || config.DEFAULT_LOCALE;
 	options.template_path = opts.template_path || config.TEMPLATES_PATH;
+	options.layout_pathname = opts.layout_pathname || config.LAYOUT_PATHNAME;
 	options.language_path = opts.language_path || config.LANGUAGES_PATH;
 
 	options.owner = opts.owner || "-";
@@ -66,6 +70,45 @@ self.connect = function(opts, callback)
 	// -- --
 
 	options.carbage_interval_id = setInterval(carbageCollection, options.carbage_collect_interval);
+
+	// -- --
+
+	language_utility = reload.require(options.language_path + "languageutility.js");	// Get languages (en_US, fi_FI, fi_SE, ...)
+
+	fs.sync.readdir(options.language_path).forEach(function(file, index)				// Create language object for each language file
+		{
+		if(fs.sync.stat(options.language_path + file).isDirectory())
+			return;
+
+		files = file.split(".");														// Process only .json files
+		if(files.length != 2 || files[1] != "json")
+			return;
+
+		var language_file = fs.sync.readFile(options.language_path + file, {"encoding": "utf8"});
+					
+		var sections = JSON.parse(language_file);
+		var global = (sections && sections.global ? sections.global : null);
+		var locale = (global && global.locale ? global.locale : null);
+
+		if(sections && global && locale)												// Separate sections as individual objects (index, admin/login, ...)
+			{
+			languages[locale] = {};
+
+			for(var section in sections)
+				{
+				if(section.toLowerCase() != "global")
+					languages[locale][section] = language_utility.make(sections[section], section, global);
+				}
+			}
+		});
+
+	// -- --
+
+	if(utility.sync.isLocal(options.layout_pathname, "file"))							// Layout
+		{
+		var layout_file = fs.sync.readFile(options.layout_pathname, {"encoding": "utf8"});
+		layout = new kiwi.Template(layout_file);
+		}
 
 	// -- --
 
@@ -211,61 +254,50 @@ var getWebPage = function(request, response, body)
 var kiwiRender = fibrous(function(pathname, query, request, response, body, responseCode)
 	{
 	try {
-		if(!options.kiwi_used)
+		if(!options.kiwi_used || !layout)
 			throw false;
 
-		// Get base name from the url - remove the content type
+		// Get base name from the url - remove the content type, Load files.
 		pathname = checkURL("", pathname);
 
 		var basename = pathname.replace(/\.[^.]*$/, "");
 		basename = basename.replace(/^\//, "");
 		basename = basename.toLowerCase();
 
+		var template_pathname = options.template_path + basename + ".html";
+		var view_pathname = options.template_path + basename + ".js";
+		if(	!utility.sync.isLocal(template_pathname, "file") ||
+			!utility.sync.isLocal(view_pathname, "file"))
+			throw false;
+
 		// Parse POST parameters as object
 		var post = parsePost(request, body);
 
-		// Get a language file for the template - default is language defined in the options.locale
-		var locale = options.locale;
-
-		if(query && query.loc)
-			locale = query.loc;
-		else if(post.loc)
-			locale = post.loc;
-
-		// Get the actual layout, template, view and language files
-		var layout_file = options.template_path + "layout.tpl";
-		var template_file = options.template_path + basename + ".html";
-		var view_file = options.template_path + basename + ".js";
-		var language_file = options.language_path + locale + ".json";
-
-		if(	!utility.sync.isLocal(template_file, "file") ||
-			!utility.sync.isLocal(view_file, "file") ||
-			!utility.sync.isLocal(language_file, "file"))
-			throw false;
-
-		var layout = fs.sync.readFile(layout_file, {"encoding": "utf8"});
-		var template = fs.sync.readFile(template_file, {"encoding": "utf8"});
-		var languageo = fs.sync.readFile(language_file, {"encoding": "utf8"});
-
-		var view = reload.require(view_file);
-		var language_utility = reload.require(options.language_path + "languageutility.js");
-
 		// KiWi templates have sessions
 		var headers = setSession(request, []);
-
-		// Apply data and render
-		var parent = new kiwi.Template(layout);
-		var kiwit = new kiwi.Template(template);
-
-		var url = request.url;
-		var ip = request.connection.remoteAddress;		// Proxy? -> request.headers["x-forwarded-for"]
-		languageo = language_utility.make(basename, languageo);
 
 		var user_data = null, session = null, sessiontoken = parseCookie(request, SESSIONTOKEN);
 		if(sessiontoken)
 			session = getSession(sessiontoken);
 		if(session)
 			user_data = session.user_data;
+
+		// Get the language for the current session. Order of preference: GET, POST, session, default
+		var locale = "";
+		if(query && query.locale)
+			locale = query.locale;
+		else if(post.locale)
+			locale = post.locale;
+		else if(session && session.locale)
+			locale = session.locale;
+		else if(options.locale)
+			locale = options.locale;
+
+		if(!languages[locale])
+			locale = config.DEFAULT_LOCALE;
+
+		language_section = languages[locale][basename];
+
 /*if(session)
 {
 console.log("UDB: ", user_data);
@@ -273,8 +305,16 @@ console.log("ST: ", sessiontoken);
 console.log("SE: ", session);
 console.log("UDA: ", session.user_data, "\n\n");
 }*/
-		var data = view.sync.getData(ip, url, query, post, user_data, options.is_secure, languageo);
-		data.parent = parent;									// Template
+
+		// Render
+		var template_file = fs.sync.readFile(template_pathname, {"encoding": "utf8"});
+		var view = reload.require(view_pathname);
+
+		var url = request.url;
+		var ip = request.connection.remoteAddress;				// Proxy? -> request.headers["x-forwarded-for"]
+		
+		var data = view.sync.getData(ip, url, query, post, user_data, options.is_secure, language_section);
+		data.parent = layout;									// Template
 		data.host_protocol = options.protocol;					// Host
 		data.host_get = query;
 		data.host_post = post;
@@ -283,13 +323,15 @@ console.log("UDA: ", session.user_data, "\n\n");
 		data.edge_url_http = "http://" + config.EDGE_IP + "/";
 		data.edge_url_https = "https://" + config.EDGE_IP + "/";
 		data.is_secure = options.is_secure;
-		data.section = languageo.section;						//  Language
-		data.locale = languageo.locale;
-		data.language = languageo.language;
-		data.language_smarty = languageo.language_smarty;
+		data.section = language_section.section;				//  Language
+		data.locale = language_section.locale;
+		data.language = language_section.language;
+		data.language_smarty = language_section.language_smarty;
+
 		if(sessiontoken && data.user_data)						// Update sessions user data
 			updateSession(sessiontoken, data.user_data);
 
+		var kiwit = new kiwi.Template(template_file);	
 		var rendered = kiwit.sync.render(data);
 
 		write(rendered.toString(), "html", request, response, responseCode, "", headers);
@@ -298,7 +340,7 @@ console.log("UDA: ", session.user_data, "\n\n");
 		}
 	catch(err)
 		{
-if(err != false) console.log("RENDER ERROR:", err.toString());
+//if(err != false) console.log("RENDER ERROR:", err.toString());
 		return false;
 		}
 	});

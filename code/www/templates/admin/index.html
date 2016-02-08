@@ -103,6 +103,14 @@
 			sam.installApplication($("#package").val(), "", "", messages, null);
 			}
 
+		function logOut()
+			{
+			sam.logOut(null, function(err, status)
+				{
+				window.location.assign("${edge_url_https}admin/login.html");
+				});
+			}
+			
 		function messages(message)
 			{
 			var str = "";
@@ -288,11 +296,11 @@
 
 		<div class="adminContainer half" id="adminContainerLeft">
 
-			<form action="${edge_url_https}admin/login.html" method="post">		{{# POST the log out to the log in page!!!}}
-				<button class="adminButton normal" name="action" value="logout" type="submit">
+			<div class="adminInputContainer">
+				<button class="adminButton normal" name="action" onclick="logOut();">
 					${language.logout}
 				</button>
-			</form>
+			</div>
 
 			<hr>
 			<h3>Application Manager Commands</h3>

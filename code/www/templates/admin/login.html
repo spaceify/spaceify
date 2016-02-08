@@ -2,6 +2,9 @@
 {{block title}}${language.title}{{/block}}
 {{block head}}
 	<script>
+		var net = null; 
+		var sam = null;
+
 		function pageReady()
 			{
 			if(!${is_secure})
@@ -12,18 +15,31 @@
 				{
 				$("#adminLoginContainer").show();
 				$("#password").val("").focus();
+
+				$("#password").keyup(function(e)
+					{
+					if(e.which == "13")
+						logIn();
+					});
+
+				net = new SpaceifyNet();
+				sam = new SpaceifyApplicationManager();
 				}
 			}
 
-		function onEnter(e)
+		function logIn()
 			{
-			e = e || window.event;
-			var keyCode = e.keyCode || e.which;
-
-			if(keyCode == 13)
-				this.form.submit();
-
-			return false;
+			sam.logIn($("#password").val(), null, function(err, data)
+				{
+console.log(data);
+				if(err)
+					{
+					$("#password").empty();
+					net.showError(err.messages[0]);
+					}
+				else if(data.is_logged_in)
+					window.location.assign("${edge_url_https}admin/");
+				});
 			}
 	</script>
 {{/block}}
@@ -41,19 +57,18 @@
 			${language.admin_login}
 		</div>
 
-		<form action="${edge_url_https}admin/login.html" method="post">
-			<div class="adminInputContainer">
-				<input class="adminInput" style="width: 200px" type="password" name="password" id="password" placeholder="${language.password}" onkeydown="onEnter();"/>
-			</div>
+		<div class="adminInputContainer">
+			<input class="adminInput" style="width: 200px" type="password" name="password" id="password" placeholder="${language.password}"/>
+		</div>
 
-			<div class="adminInputContainer">
-				<button class="adminButton" name="action" value="login" type="submit">
-					${language.login}
-				</button>
-			</div>
-		</form>
+		<div class="adminInputContainer">
+			<button class="adminButton normal" name="action" onclick="logIn();">
+				${language.login}
+			</button>
+		</div>
 
 		<div class="breaker"></div>
+
 	</div>
 
 {{/block}}

@@ -13,7 +13,7 @@ var Communicator = require("/var/lib/spaceify/code/www/libs/communicator");
 function View()
 {
 var self = this;
-var amRPC = null;
+var srvRPC = null;
 var ca_crt = config.SPACEIFY_WWW_PATH + config.SPACEIFY_CRT;
 var securityModel = new SecurityModel();
 
@@ -56,8 +56,8 @@ self.getData = fibrous( function(IP, URL, GET, POST, user_data, is_secure, langu
 			var username = POST["username"] || "";
 			var password = POST["password"] || "";
 
-			connect.sync();
-			data = amRPC.sync.callRpc("installApplication", [POST["package"], username, password, null, user_data.session_id, false], self);
+			connect.sync(config.APPMAN_PORT_WEBSOCKET_SECURE);
+			data = srvRPC.sync.callRpc("installApplication", [POST["package"], username, password, null, user_data.session_id, false], self);
 			}
 		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 		else if(action == "removeApplication" && is_secure && user_data && user_data.session_id)
@@ -67,8 +67,8 @@ self.getData = fibrous( function(IP, URL, GET, POST, user_data, is_secure, langu
 			if(!POST["unique_name"])
 				throw utility.errorFromObject(language.E_UNDEFINED_PARAMETERS);
 
-			connect.sync();
-			data = amRPC.sync.callRpc("removeApplication", [POST["unique_name"], user_data.session_id, false], self);
+			connect.sync(config.APPMAN_PORT_WEBSOCKET_SECURE);
+			data = srvRPC.sync.callRpc("removeApplication", [POST["unique_name"], user_data.session_id, false], self);
 			}
 		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 		else if(action == "startApplication" && is_secure && user_data && user_data.session_id)
@@ -78,8 +78,8 @@ self.getData = fibrous( function(IP, URL, GET, POST, user_data, is_secure, langu
 			if(!POST["unique_name"])
 				throw utility.errorFromObject(language.E_UNDEFINED_PARAMETERS);
 
-			connect.sync();
-			data = amRPC.sync.callRpc("startApplication", [POST["unique_name"], user_data.session_id, false], self);
+			connect.sync(config.APPMAN_PORT_WEBSOCKET_SECURE);
+			data = srvRPC.sync.callRpc("startApplication", [POST["unique_name"], user_data.session_id, false], self);
 			}
 		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 		else if(action == "stopApplication" && is_secure && user_data && user_data.session_id)
@@ -89,8 +89,8 @@ self.getData = fibrous( function(IP, URL, GET, POST, user_data, is_secure, langu
 			if(!POST["unique_name"])
 				throw utility.errorFromObject(language.E_UNDEFINED_PARAMETERS);
 
-			connect.sync();
-			data = amRPC.sync.callRpc("stopApplication", [POST["unique_name"], user_data.session_id, false], self);
+			connect.sync(config.APPMAN_PORT_WEBSOCKET_SECURE);
+			data = srvRPC.sync.callRpc("stopApplication", [POST["unique_name"], user_data.session_id, false], self);
 			}
 		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 		else if(action == "restartApplication" && is_secure && user_data && user_data.session_id)
@@ -100,24 +100,24 @@ self.getData = fibrous( function(IP, URL, GET, POST, user_data, is_secure, langu
 			if(!POST["unique_name"])
 				throw utility.errorFromObject(language.E_UNDEFINED_PARAMETERS);
 
-			connect.sync();
-			data = amRPC.sync.callRpc("restartApplication", [POST["unique_name"], user_data.session_id, false], self);
+			connect.sync(config.APPMAN_PORT_WEBSOCKET_SECURE);
+			data = srvRPC.sync.callRpc("restartApplication", [POST["unique_name"], user_data.session_id, false], self);
 			}
 		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 		else if(action == "requestMessages" && is_secure && user_data && user_data.session_id)
 			{
 			is_logged_in = securityModel.sync.isAdminLoggedIn(user_data.session_id);
 
-			connect.sync();
-			data = amRPC.sync.callRpc("requestMessages", [user_data.session_id, false], self);
+			connect.sync(config.APPMAN_PORT_WEBSOCKET_SECURE);
+			data = srvRPC.sync.callRpc("requestMessages", [user_data.session_id, false], self);
 			}
 		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 		else if(action == "getApplications")
 			{
-			connect.sync();
+			connect.sync(config.APPMAN_PORT_WEBSOCKET_SECURE);
 
 			data = {spacelet: [], sandboxed: [], native: []};
-			var type, apps = amRPC.sync.callRpc("getApplications", [POST["types"] || ""], self);
+			var type, apps = srvRPC.sync.callRpc("getApplications", [POST["types"] || ""], self);
 
 			for(var i=0; i<apps.length; i++)
 				{
@@ -135,6 +135,27 @@ self.getData = fibrous( function(IP, URL, GET, POST, user_data, is_secure, langu
 				}
 			}
 		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+		else if(action == "logIn" && is_secure && user_data && !user_data.session_id)
+			{
+			connect.sync(config.CORE_PORT_WEBSOCKET_SECURE);
+
+			user_data.session_id = srvRPC.sync.callRpc("adminLogIn", [POST["password"] || ""], self);
+			is_logged_in = true;
+
+			data = {is_logged_in: is_logged_in};
+			}
+		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+		else if(action == "logOut" && is_secure && user_data)
+			{
+			connect.sync(config.CORE_PORT_WEBSOCKET_SECURE);
+
+			srvRPC.sync.callRpc("adminLogOut", [user_data.session_id || ""], self);
+			delete user_data.session_id;
+			is_logged_in = false;
+
+			data = {is_logged_in: is_logged_in};
+			}
+		// -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 		else
 			throw utility.errorFromObject(language.E_UNDEFINED_ACTION_DEFINED);
 		}
@@ -144,17 +165,17 @@ self.getData = fibrous( function(IP, URL, GET, POST, user_data, is_secure, langu
 		}
 	finally
 		{
-		if(amRPC)
-			amRPC.close();
+		if(srvRPC)
+			srvRPC.close();
 		}
 
 	return { is_logged_in: is_logged_in, error: error, data: data };
 	});
 
-var connect = fibrous( function()
+var connect = fibrous( function(port)
 	{
 	var communicator = new Communicator();
-	amRPC = communicator.sync.connect({hostname: null, port: config.APPMAN_PORT_WEBSOCKET_SECURE, is_secure: true, ca_crt: ca_crt, persistent: true}, config.WEBSOCKETRPCC);
+	srvRPC = communicator.sync.connect({hostname: null, port: port, is_secure: true, ca_crt: ca_crt, persistent: true}, config.WEBSOCKETRPCC);
 	});
 
 }

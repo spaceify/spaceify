@@ -176,9 +176,18 @@ self.parseJSON = function(str, throws)
 	// MISC -- -- -- -- -- -- -- -- -- -- //
 self.extendClass = function(source, target)
 	{ // Extend the target object (class) with the public methods from the source object
-	for(i in source)	// Add all the public methods from the source object to the target object
+	for(i in source)
 		{
 		if(typeof source[i] == "function")
+			target[i] = source[i];
+		}
+	}
+
+self.extendClassSelected = function(source, target, selected)
+	{ // Extend the target object (class) with the selected public methods from the source object
+	for(i in source)
+		{
+		if(typeof source[i] == "function" && selected.indexOf(i) != -1)
 			target[i] = source[i];
 		}
 	}

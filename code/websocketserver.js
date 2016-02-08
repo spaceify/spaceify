@@ -26,7 +26,6 @@ var webServer = null;
 var connections = {};		// We can handle multiple incoming connections
 var callSequence = 1;
 var connectionSequence = 0;
-var _class = "WSS";
 
 var binaryListener = null;
 var accessListener = null;
@@ -47,13 +46,14 @@ self.connect = function(opts, callback)
 	options.owner = opts.owner || "-";
 	options.subprotocol = opts.subprotocol || config.WS_JSON_RPC;
 	options.protocol = (!options.is_secure ? "ws" : "wss");
+	options.class = "WSS";
 	options.server_type = opts.server_type || (!options.is_secure ? config.WEBSOCKET_SERVER : config.WEBSOCKET_SERVER_SECURE);
 	options.user_object = opts.user_object || null;
 
 	options.debug = opts.debug || true;
 	logger.setOptions({write_to_console: options.debug});
 
-	logger.info(utility.replace(language.WEBSOCKET_OPENING, {":owner": options.owner, ":class": _class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port, ":subprotocol": options.subprotocol}));
+	logger.info(utility.replace(language.WEBSOCKET_OPENING, {":owner": options.owner, ":class": options.class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port, ":subprotocol": options.subprotocol}));
 
 		// CREATE THE WEB SERVER -- -- -- -- -- -- -- -- -- -- //
 	if(!options.is_secure)												// Start a http server
@@ -117,7 +117,7 @@ self.connect = function(opts, callback)
 		var remotePort = request.remotePort;
 		var remoteAddress = request.remoteAddress;
 
-		logger.info(utility.replace(language.WEBSOCKET_CONNECTION_REQUEST, {":owner": options.owner, ":class": _class, ":origin": request.origin, ":protocol": options.protocol, ":address": remoteAddress, ":port": remotePort, ":id": connectionSequence}));
+		logger.info(utility.replace(language.WEBSOCKET_CONNECTION_REQUEST, {":owner": options.owner, ":class": options.class, ":origin": request.origin, ":protocol": options.protocol, ":address": remoteAddress, ":port": remotePort, ":id": connectionSequence}));
 
 		var access = checkAccess(remoteAddress, remotePort, origin, request.requestedProtocols);
 		if(!access.granted)
@@ -181,7 +181,7 @@ self.close = function()
 
 	if(wsServer)
 		{
-		logger.info(utility.replace(language.WEBSOCKET_CLOSING, {":owner": options.owner, ":class": _class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port, ":subprotocol": options.subprotocol}));
+		logger.info(utility.replace(language.WEBSOCKET_CLOSING, {":owner": options.owner, ":class": options.class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port, ":subprotocol": options.subprotocol}));
 
 		wsServer.shutDown();
 		wsServer = null;
@@ -189,7 +189,7 @@ self.close = function()
 
 	if(webServer)
 		{
-		logger.info(utility.replace(language.WEBSOCKET_CLOSING_WEB, {":owner": options.owner, ":class": _class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port}));
+		logger.info(utility.replace(language.WEBSOCKET_CLOSING_WEB, {":owner": options.owner, ":class": options.class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port}));
 
 		webServer.close();
 		webServer = null;
@@ -205,7 +205,7 @@ self.closeConnection = function(connection)
 
 	if(connection.id in connections)
 		{
-		logger.info(utility.replace(language.WEBSOCKET_CLOSE_CONNECTION, {":owner": options.owner, ":class": _class, ":origin": connection.origin, ":protocol": options.protocol, ":hostname": connection.remoteAddress, ":port": connection.remotePort, ":subprotocol": options.subprotocol, ":id": connection.id}));
+		logger.info(utility.replace(language.WEBSOCKET_CLOSE_CONNECTION, {":owner": options.owner, ":class": options.class, ":origin": connection.origin, ":protocol": options.protocol, ":hostname": connection.remoteAddress, ":port": connection.remotePort, ":subprotocol": options.subprotocol, ":id": connection.id}));
 
 		if(disconnectionListener)
 			disconnectionListener(utility.createServerObject(
@@ -231,7 +231,7 @@ self.sendMessage = function(message, connection)
 
 		message = (typeof message == "string" ? message : JSON.stringify(message));
 
-		logger.info(utility.replace(language.WEBSOCKET_SEND_MESSAGE, {":owner": options.owner, ":class": _class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port, ":subprotocol": options.subprotocol, ":id": connection.id, ":message": message}));
+		logger.info(utility.replace(language.WEBSOCKET_SEND_MESSAGE, {":owner": options.owner, ":class": options.class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port, ":subprotocol": options.subprotocol, ":id": connection.id, ":message": message}));
 
 		connection.send(message);
 		}
@@ -259,11 +259,29 @@ var onMessage = function(message, connection)
 	{
 	message = (message.type == "utf8" ? message.utf8Data : message.binaryData);
 
-	logger.info(utility.replace(language.WEBSOCKET_ON_MESSAGE, {":owner": options.owner, ":class": _class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port, ":subprotocol": options.subprotocol, ":id": connection.id, ":message": message}));
+	logger.info(utility.replace(language.WEBSOCKET_ON_MESSAGE, {":owner": options.owner, ":class": options.class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port, ":subprotocol": options.subprotocol, ":id": connection.id, ":message": message}));
 
 	if(messageListener)
 		messageListener(message, connection);
+
+	connection.send(buffer);
 	}
+
+self.getBufferedAmount = function(connection)
+	{
+	var amount = 0;
+
+	try {
+		if(typeof connection !== "object")
+			connection = connections[connection];
+
+		amount = connection.getBufferedAmount();
+		}
+	catch(err)
+		{}
+
+	return amount;
+	};
 
 self.isOpen = function()
 	{

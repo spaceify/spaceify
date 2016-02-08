@@ -615,6 +615,15 @@ self.extendClass = function(source, target)
 		}
 	}
 
+self.extendClassSelected = function(source, target, selected)
+	{ // Extend the target object (class) with the selected public methods from the source object
+	for(i in source)
+		{
+		if(typeof source[i] == "function" && selected.indexOf(i) != -1)
+			target[i] = source[i];
+		}
+	}
+
 self.createServerObject = function(server_obj, user_obj)
 	{ // Appends named value from the user_obj to the server_obj
 	if(user_obj)				// e.g., {name: "service_name", value: "spaceify.org/spaceify/bigscreen"}

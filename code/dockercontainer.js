@@ -134,7 +134,7 @@ self.stopContainer = fibrous( function(appobj)
 		if(container != null)
 			{
 			if(appobj.getStopCommand() != "")
-				dockerHelper.sync.executeCommand("cd " + config.APPLICATION_PATH + " && " + appobj.getStopCommand() + " && echo stopcontainer", ["stopcontainer"]);
+				dockerHelper.sync.executeCommand("cd " + config.APPLICATION_PATH + " && " + appobj.getStopCommand() + " && echo stopcontainer", ["stopcontainer"], false);
 
 			container.sync.stop({"t": "0"});
 			container.sync.wait();
@@ -154,7 +154,7 @@ self.installApplication = fibrous( function(appobj)
 	for(var i=0; i<icommands.length; i++)
 		ics += " && " + icommands[i];
 
-	dockerHelper.sync.executeCommand("export NODE_PATH=" + config.API_NODE_MODULES_DIRECTORY + ics + " && echo icfinished", ["icfinished"]);
+	dockerHelper.sync.executeCommand("export NODE_PATH=" + config.API_NODE_MODULES_DIRECTORY + ics + " && echo icfinished", ["icfinished"], false);
 
 	// Create a new image (difference) for each application by committing the currently running container
 	return container.sync.commit({"repo": appobj.getUniqueName(), "container": self.getContainerId()});
@@ -162,7 +162,7 @@ self.installApplication = fibrous( function(appobj)
 
 self.runApplication = fibrous( function(appobj)
 	{
-	dockerHelper.sync.executeCommand("/usr/sbin/sshd -D & echo spaceifyend", ["spaceifyend"]);
+	dockerHelper.sync.executeCommand("/usr/sbin/sshd -D & echo spaceifyend", ["spaceifyend"], false);
 
 	var bash = 	  "cd " + config.APPLICATION_PATH + "\n"
 				+ "printf \""
@@ -180,7 +180,7 @@ self.runApplication = fibrous( function(appobj)
 				+ "kill -9 \\\$\\\$" + "\n"
 				+ "\" > /tmp/run.sh && bash /tmp/run.sh \n";
 
-	var response = dockerHelper.sync.executeCommand(bash, [config.APPLICATION_INITIALIZED, config.APPLICATION_UNINITIALIZED]);
+	var response = dockerHelper.sync.executeCommand(bash, [config.APPLICATION_INITIALIZED, config.APPLICATION_UNINITIALIZED], true);
 
 	/*var response = dockerHelper.sync.executeCommand(
 									"export NODE_PATH=" + config.API_NODE_MODULES_DIRECTORY
@@ -188,7 +188,7 @@ self.runApplication = fibrous( function(appobj)
 									+ " && export APPLICATION_UNINITIALIZED=" + config.APPLICATION_UNINITIALIZED
 									+ envPorts
 									+ " && cd " + config.APPLICATION_PATH
-									+ " && " + appobj.getStartCommand() + " &", [config.APPLICATION_INITIALIZED, config.APPLICATION_UNINITIALIZED]);*/
+									+ " && " + appobj.getStartCommand() + " &", [config.APPLICATION_INITIALIZED, config.APPLICATION_UNINITIALIZED], true);*/
 
 	return response;
 	});

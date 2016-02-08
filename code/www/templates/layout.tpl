@@ -40,9 +40,6 @@
 			</div>
 		</div>
 
-		<div class="edgeAlert" id="alert">													{{# Alert div }}
-		</div>
-
 		<div class="edgeBackGroundPopUp" id="popUpBG">										{{# Pop up background div }}
 		</div>
 	</div>

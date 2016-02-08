@@ -42,21 +42,21 @@ var labels = self.INFO | self.ERROR | self.WARN | self.FORCE;
 
 var levels = self.INFO | self.ERROR | self.WARN | self.FORCE;
 
-self.info = function(str) { out(self.INFO, str); }
-self.error = function(str) { out(self.ERROR, str);  }
-self.warn = function(str) { out(self.WARN, str); }
-self.force = function(str) { out(self.FORCE, str); }
+self.info = function() { out(self.INFO, arguments); }
+self.error = function() { out(self.ERROR, arguments);  }
+self.warn = function() { out(self.WARN, arguments); }
+self.force = function() { out(self.FORCE, arguments); }
 
-var out = function(level, str)
+var out = function(level)
 	{
-	if(typeof str == "undefined" || str == null)											// String doesn't have to provided, output nothing
-		str = "";
+	strs = arguments[1];
 
-	if(typeof str == "string")																// Replace "illegal" characters 0-9, 11-12, 14-31
-		{
-		str = str.replace(/[\x00-\x09\x0b-\x0c\x0e-\x1f\x7f-\xff]/g, "");
-		//str = str.trim();
-		}
+	var str = "";																			// Concatenate strings, separate strings with space
+	for(var i=0; i<strs.length; i++)
+		str += (strs[i] ? strs[i] + (i != strs.length - 1 ? "'" : "") : "");
+
+	if(typeof str == "string")																// Replace "illegal" characters 0-9, 11-12, 14-31, 127-end of UNICODE
+		str = str.replace(/[\x00-\x09\x0b-\x0c\x0e-\x1f\u007f-\uffff]/g, "");
 
 	label = ((labels & level) ? label_str[level] : "");										// Show label only if allowed
 

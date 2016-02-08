@@ -64,6 +64,16 @@ self.restartApplication = function(unique_name, messageCallback, returnCallback)
 	process("restartApplication", {unique_name: unique_name}, messageCallback, returnCallback);
 	}
 
+self.logIn = function(password, messageCallback, returnCallback)
+	{
+	process("logIn", {password: password}, messageCallback, returnCallback);
+	}
+
+self.logOut = function(messageCallback, returnCallback)
+	{
+	process("logOut", {}, messageCallback, returnCallback);
+	}
+
 /**
  * @param   types  an array of application types: "spacelet", "sandboxed" and/or "native" or empty for all types, e.g. ["spacelet", "sandboxed"]
  * @return         Node.js style error and data objects. data contains manifests of installed applications as JavaScript Objects

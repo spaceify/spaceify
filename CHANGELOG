@@ -1,3 +1,10 @@
+0.3.2  Alpha Centauri (developer-pre-alpha)
+    * Cores functionality and stability improved.
+    * API improved.
+
+0.3.1  Alpha Centauri (developer-pre-alpha)
+    * Cores functionality and stability improved.
+
 0.3.0  Alpha Centauri (developer-pre-alpha)
     * Major rewrite of the Web and Application API. Existing applications need to make necessary changes to be compatible with this version. The revised documentation for creating applications can be found from URL http://spaceify.org.
     * Several changes to core archtecture.

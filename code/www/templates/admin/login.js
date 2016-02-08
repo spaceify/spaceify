@@ -41,19 +41,7 @@ self.getData = fibrous( function(IP, URL, GET, POST, user_data, is_secure, langu
 			var communicator = new Communicator();
 			coreRPC = communicator.sync.connect({hostname: null, port: config.CORE_PORT_WEBSOCKET_SECURE, is_secure: true, ca_crt: ca_crt, persistent: true}, config.WEBSOCKETRPCC);
 
-			if(POST.action == "login" && !user_data.session_id)
-				{
-				user_data.session_id = coreRPC.sync.callRpc("adminLogIn", [POST.password], self);
-				is_logged_in = true;
-				}
-			else if(POST.action == "logout")
-				{
-				coreRPC.sync.callRpc("adminLogOut", [user_data.session_id || ""], self);
-				delete user_data.session_id;
-				is_logged_in = false;
-				}
-			else
-				is_logged_in = coreRPC.sync.callRpc("isAdminLoggedIn", [user_data.session_id || ""], self);
+			is_logged_in = coreRPC.sync.callRpc("isAdminLoggedIn", [user_data.session_id || ""], self);
 			}
 		}
 	catch(err)

@@ -80,7 +80,8 @@ var connectServer = fibrous( function(is_secure)
 						 www_path: config.SPACEIFY_WWW_PATH,
 						 template_path: config.TEMPLATES_PATH,
 						 language_path: config.LANGUAGES_PATH,
-						 locale: config.DEFAULT_LOCALE,	/* ToDo: get from database? */
+						 layout_pathname: config.LAYOUT_PATHNAME,
+						 locale: config.DEFAULT_LOCALE,
 						 owner: owner,
 						 server_name: server_name
 						 });

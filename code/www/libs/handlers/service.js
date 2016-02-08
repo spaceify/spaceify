@@ -16,9 +16,13 @@ if(isNodeJS)
 	{
 	var api_path = process.env.PORT_80 ? "/api/" : "/var/lib/spaceify/code/";
 	var config = require(api_path + "config")();
+	var utility = require(api_path + "utility");
 	}
 else
+	{
 	var config = new SpaceifyConfig();
+	var utility = new SpaceifyUtility();
+	}
 
 var exposedMethods = {};
 var status = config.CONNECTION_UNINITIALIZED;
@@ -51,6 +55,8 @@ self.init = function(_service_name, _is_secure, _connection, _err)
 
 		if(connectionListener)
 			connectionListener(self);
+
+		utility.extendClassSelected(connection, self, ["callRpc"])
 		}
 	else
 		status = config.CONNECTION_FAILED;
@@ -141,43 +147,12 @@ self.isSecure = function()
 	return is_secure;
 	}
 
-	// -- -- -- -- -- -- -- -- -- -- //
-self.callRpc = function(/*methods, params, object, ...*/)
-	{
-	if(connection)
-		{
-		var params = Array.prototype.slice.call(arguments);
-		connection.callRpc.apply(self, params);
-
-		//connection.callRpc(methods, params, object);
-		}
-	}
-
 self.exposeRpcMethod = function(name, object, method)
 	{
 	exposedMethods[name] = {object: object, method: method};
 
 	if(connection)
 		connection.exposeRpcMethod(name, object, method);
-	}
-
-self.notifyAll = function(method, params)
-	{
-	try {
-		if(connection && type == config.SERVER)
-			connection.notifyAll(method, params);
-		}
-	catch(err)
-		{}
-	}
-
-self.getBufferedAmount = function()
-	{
-	try {
-		return connection.getBufferedAmount();	
-		}
-	catch(err)
-		{}
 	}
 
 }

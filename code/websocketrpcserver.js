@@ -271,6 +271,22 @@ self.notifyAll = function(method, params)
 		{}
 	}
 
+self.getBufferedAmount = function(connection)
+	{
+	var amount = 0;
+
+	try {
+		if(typeof connection !== "object")
+			connection = connections[connection];
+
+		amount = connection.getBufferedAmount();
+		}
+	catch(err)
+		{}
+
+	return amount;
+	};
+
 self.isOpen = function()
 	{
 	return (webServer && wsServer == "open" ? true : false);

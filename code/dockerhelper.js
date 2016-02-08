@@ -26,6 +26,7 @@ self.init = function(container, callback)
 				throw utility.ferror(language.E_ATTACH_CONTAINER_OUTPUT.p("DockerHelper::init"), {":err": err.toString()});
 
 			standardOutput = stream;
+
 			container.attach({stream: true, stdin: true}, function(err, stream)
 				{
 				if(err)
@@ -47,9 +48,10 @@ self.getStreams = function()
 	return {in: standardInput, out: standardOutput };
 	}
 
-self.executeCommand = function(command, waitedStrings, callback)
+self.executeCommand = function(command, waitedStrings, disableInfo, callback)
 	{
-	logger.info(utility.replace(language.EXECUTE_COMMAND, {":command": command}));
+	if(!disableInfo)
+		logger.info(utility.replace(language.EXECUTE_COMMAND, {":command": command}));
 
 	if(callback)															// only wait for data if callback is given                        
 		self.waitForOutput(waitedStrings, callback);
@@ -67,16 +69,20 @@ self.waitForOutput = function(waitedStrings, callback)
 	standardOutput.removeAllListeners("data");
 	standardOutput.on("data", function(data)
 		{
-		logger.info(data.toString());
 		if(!waitedStrings)
-			callback(null, buf);
+			callback(null, "");
 
-		buf += data;
+		// <Buffer 01 00 00 00 00 00 00 xx ...> What is this 8 byte sequence? Always ends with 0a (f.ex. from console.log).
+		tdata = data.toString("ascii", 8, data.length - (data.length > 8 ? 1 : 0));
+
+		logger.info(tdata);
+
+		buf += tdata;
 		for(var i=0; i<waitedStrings.length; i++)
 			{
 			if(buf.lastIndexOf(waitedStrings[i]) != -1 || (buf.length > 0 && waitedStrings[i] == "*"))
 				{
-				logger.info(utility.replace(language.EXECUTE_COMMAND_RECEIVED, {":code": waitedStrings[i]}));
+				logger.info(utility.replace(language.EXECUTE_COMMAND_RECEIVED, {":code": waitedStrings[i]}), "\n");
 
 				standardOutput.removeAllListeners("data");
 				callback(null, [buf, waitedStrings[i]]);

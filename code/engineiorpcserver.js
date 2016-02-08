@@ -29,7 +29,6 @@ var eiServer = null;
 var webServer = null;
 var connections = {};
 var callSequence = 1;
-var _class = "EIORPCS";
 
 var binaryListener = null;
 var accessListener = null;
@@ -51,13 +50,15 @@ self.connect = function(opts, callback)
 	options.ca_crt = opts.ca_crt || config.SPACEIFY_WWW_PATH + config.SPACEIFY_CRT;
 	options.owner = opts.owner || "-";
 	options.protocol = (!options.is_secure ? "ws" : "wss");
+	options.class = "EIORPCS";
 	options.server_type = opts.server_type || (!options.is_secure ? config.ENGINE_IO_SERVER : config.ENGINE_IO_SERVER_SECURE);
 	options.user_object = opts.user_object || null;
-
+	options.class = "WSRPCC";
+	
 	options.debug = opts.debug || true;
 	logger.setOptions({write_to_console: options.debug});
 
-	logger.info(utility.replace(language.ENGINE_IO_OPENING, {":owner": options.owner, ":class": _class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port}));
+	logger.info(utility.replace(language.ENGINE_IO_OPENING, {":owner": options.owner, ":class": options.class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port}));
 
 		// CREATE THE WEB SERVER -- -- -- -- -- -- -- -- -- -- //
 	if(!options.is_secure)												// Start a http server
@@ -113,7 +114,7 @@ self.connect = function(opts, callback)
 		var remotePort = socket.request.connection.remotePort;
 		var remoteAddress = socket.request.connection.remoteAddress;
 
-		logger.info(utility.replace(language.ENGINE_IO_CONNECTION_REQUEST, {":owner": options.owner, ":class": _class, ":origin": origin, ":protocol": options.protocol, ":address": remoteAddress, ":port": remotePort}));
+		logger.info(utility.replace(language.ENGINE_IO_CONNECTION_REQUEST, {":owner": options.owner, ":class": options.class, ":origin": origin, ":protocol": options.protocol, ":address": remoteAddress, ":port": remotePort}));
 
 		var access = checkAccess(remoteAddress, remotePort, origin);
 		if(!access.granted)
@@ -169,7 +170,7 @@ self.close = function()
 
 	if(eiServer)
 		{
-		logger.info(utility.replace(language.ENGINE_IO_CLOSING, {":owner": options.owner, ":class": _class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port}));
+		logger.info(utility.replace(language.ENGINE_IO_CLOSING, {":owner": options.owner, ":class": options.class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port}));
 
 		eiServer.close();
 		eiServer = null;
@@ -177,7 +178,7 @@ self.close = function()
 
 	if(webServer)
 		{
-		logger.info(utility.replace(language.ENGINE_IO_CLOSING_WEB, {":owner": options.owner, ":class": _class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port}));
+		logger.info(utility.replace(language.ENGINE_IO_CLOSING_WEB, {":owner": options.owner, ":class": options.class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port}));
 
 		webServer.close();
 		webServer = null;
@@ -191,7 +192,7 @@ self.closeConnection = function(connection)
 
 	if(connection.id in connections)
 		{
-		logger.info(utility.replace(language.ENGINE_IO_CLOSE_CONNECTION, {":owner": options.owner, ":class": _class, ":origin": connection.origin, ":protocol": options.protocol, ":address": connection.remoteAddress, ":port": connection.remotePort, ":id": connection.id}));
+		logger.info(utility.replace(language.ENGINE_IO_CLOSE_CONNECTION, {":owner": options.owner, ":class": options.class, ":origin": connection.origin, ":protocol": options.protocol, ":address": connection.remoteAddress, ":port": connection.remotePort, ":id": connection.id}));
 
 		if(disconnectionListener)
 			disconnectionListener(utility.createServerObject(
@@ -219,7 +220,7 @@ self.sendMessage = function(message, connection)
 
 		message = (typeof message == "string" ? message : JSON.stringify(message));
 
-		logger.info(utility.replace(language.ENGINE_IO_SEND_MESSAGE, {":owner": options.owner, ":class": _class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port, ":id": connection.id, ":message": message}));
+		logger.info(utility.replace(language.ENGINE_IO_SEND_MESSAGE, {":owner": options.owner, ":class": options.class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port, ":id": connection.id, ":message": message}));
 
 		//if(connection.readyState == "open")
 		connection.send(message);
@@ -248,7 +249,7 @@ self.sendBinary = function(buffer, connection)
 self.notifyAll = function(method, params)
 	{
 	try {
-		logger.info(utility.replace(language.ENGINE_IO_NOTIFY_ALL, {":owner": options.owner, ":class": _class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port}));
+		logger.info(utility.replace(language.ENGINE_IO_NOTIFY_ALL, {":owner": options.owner, ":class": options.class, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port}));
 
 		for(var key in connections)
 			self.sendMessage({jsonrpc: "2.0", method: method, params: params, id: null}, key);
@@ -256,6 +257,22 @@ self.notifyAll = function(method, params)
 	catch(err)
 		{}
 	}
+
+self.getBufferedAmount = function(connection)
+	{
+	var amount = 0;
+
+	try {
+		if(typeof connection !== "object")
+			connection = connections[connection];
+
+		amount = connection.getBufferedAmount();
+		}
+	catch(err)
+		{}
+
+	return amount;
+	};
 
 self.isOpen = function()
 	{

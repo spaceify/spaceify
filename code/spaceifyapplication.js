@@ -40,6 +40,7 @@ var ca_crt = config.API_WWW_PATH + config.SPACEIFY_CRT;
 var key = config.APPLICATION_TLS_PATH + config.SERVER_KEY;
 var crt = config.APPLICATION_TLS_PATH + config.SERVER_CRT;
 
+var manifest = null;
 var provides_service_names = [];
 var requires_service_names = [];
 
@@ -49,7 +50,7 @@ self.start = function(application, options)
 		{
 		try
 			{
-			var manifest = utility.sync.loadJSON(manifest_path + config.MANIFEST, true, true);
+			manifest = utility.sync.loadJSON(manifest_path + config.MANIFEST, true, true);
 
 				// SERVICES -- -- -- -- -- -- -- -- -- -- //
 			if(manifest.provides_services)							// <= SERVERS
@@ -101,7 +102,7 @@ self.start = function(application, options)
 				application.start();
 
 				// APPLICATION INITIALIALIZED SUCCESSFULLY -- -- -- -- -- -- -- -- -- -- //
-			console.log(config.APPLICATION_INITIALIZED);
+			console.log(manifest.unique_name, config.APPLICATION_INITIALIZED);
 			}
 		catch(err)
 			{
@@ -119,7 +120,7 @@ self.start = function(application, options)
 var initFail = fibrous( function(err)
 	{ // FAILED TO INITIALIALIZE THE APPLICATION. OUTPUT THE ERROR MESSAGE TO THE CORE -- -- -- -- -- -- -- -- -- -- //
 	logger.error(";;" + (err && err.message ? err.message : "undefined error") + "::");
-	console.log(config.APPLICATION_UNINITIALIZED);
+	console.log((manifest ? manifest.unique_name : "") + config.APPLICATION_UNINITIALIZED);
 
 	stop.sync();
 	});

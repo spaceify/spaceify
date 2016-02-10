@@ -1,3 +1,6 @@
+0.3.3  Alpha Centauri (developer-pre-alpha)
+    * Fix to a problem in WebSocket server.
+
 0.3.2  Alpha Centauri (developer-pre-alpha)
     * Cores functionality and stability improved.
     * API improved.

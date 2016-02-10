@@ -264,7 +264,7 @@ var onMessage = function(message, connection)
 	if(messageListener)
 		messageListener(message, connection);
 
-	connection.send(buffer);
+	connection.send(message);
 	}
 
 self.getBufferedAmount = function(connection)

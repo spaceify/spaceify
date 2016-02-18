@@ -59,7 +59,7 @@ self.isSecure = function()
 // Return current protocol
 self.getProtocol = function(withScheme)
 	{
-	return (location.protocol == "http:" ? "http" : "http") + (withScheme ? "://" : "");
+	return (location.protocol == "http:" ? "http" : "https") + (withScheme ? "://" : "");
 	}
 	
 // Parse GET from the url. Add origin part of the url to the returned object if requested.

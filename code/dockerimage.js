@@ -56,7 +56,7 @@ self.removeContainers = fibrous( function(imageId, imageName, streams)
 				utility.replace(language.REMOVE_CONTAINER, {":container": containerInfo.Image});
 
 				var container = docker.getContainer(containerInfo.Id);
-				container.sync.remove(/*{"force": "1"}*/);
+				container.sync.remove({"f": true});
 				}
 			});
 

@@ -34,6 +34,7 @@ var self = this;
 
 var options = {};
 var is_locked = false;
+var lock_errors = [];
 var database = new Database();
 var coreClient = null;
 var RPCServer = new WebSocketRPCServer();
@@ -76,6 +77,7 @@ self.connect = fibrous( function(opts)
 	RPCServer.exposeRpcMethod("getApplications", self, getApplications);
 	RPCServer.exposeRpcMethod("sourceCode", self, sourceCode);
 	RPCServer.exposeRpcMethod("requestMessages", self, requestMessages);
+	RPCServer.exposeRpcMethod("test", self, test);
 	//RPCServer.exposeRpcMethod("publishPackage", self, publishPackage);
 
 	// Connect - secure servers only!!!
@@ -137,11 +139,13 @@ var RPCServerDownListener = function(server)
 var RPCServerConnectionListener = function(server)
 	{
 	is_locked = true;
+	lock_errors = [];
 	}
 
 var RPCServerDisconnectionListener = function(server)
 	{
 	is_locked = false;
+	lock_errors = [];
 	}
 
 var RPCServerAccessListener = function(remoteAddress, remotePort, origin, server_type, is_secure, requestedProtocols)
@@ -219,6 +223,7 @@ var installApplication = fibrous( function(package, username, password, cwd, ses
 	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
 
 	var packages = [];
+	var is_installed = false;
 	var is_suggested = false;
 	var suggested_applications = [];
 
@@ -236,6 +241,7 @@ var installApplication = fibrous( function(package, username, password, cwd, ses
 		packages.push(package);
 		for(var i=0; i<packages.length; i++)
 			{ // ---------->
+			sendMessage.sync(language.RESOLVING_ORIGIN);
 
 			// Get next package
 			package = packages[i];
@@ -246,17 +252,19 @@ var installApplication = fibrous( function(package, username, password, cwd, ses
 				throw utility.ferror(language.E_FAILED_TO_PROCESS_PACKAGE.p("ApplicationManager::installApplication"), {":package": package});
 
 			// Validate the package for any errors
-			sendMessage.sync(language.VALIDATING_PACKAGE);
+			sendMessage.sync(language.PACKAGE_VALIDATING);
 
 			var validator = new ValidateApplication();
 			var manifest = validator.sync.validatePackage(config.WORK_PATH, config.WORK_PATH + config.APPLICATION_DIRECTORY);
+
+			sendMessage.sync("");
 
 			// Application must not have same service names with already installed applications
 			var errors = database.sync.checkProvidedServices(manifest);
 			if(errors)
 				{
 				for(var j=0; j<errors.length; j++)
-					sendMessage.sync(utility.replace(language.SERVICE_ALREADY_REGISTERED, {":name": errors[j]["service_name"], ":app": errors[j]["unique_name"]}));
+					sendMessage.sync(utility.replace(language.SERVICE_ALREADY_REGISTERED, {":name": errors[j]["service_name"], ":name": errors[j]["unique_name"]}));
 
 				throw utility.error(language.E_SERVICE_ALREADY_REGISTERED.p("ApplicationManager::installApplication"));
 				}
@@ -264,16 +272,19 @@ var installApplication = fibrous( function(package, username, password, cwd, ses
 			// Stop existing application if application is running (and is installed)
 			if(coreClient.sync.callRpc("isApplicationRunning", [manifest.unique_name], self))
 				{
-				sendMessage.sync(language.STOPPING_EXISTING_APPLICATION);
+				sendMessage.sync(utility.replace(language.PACKAGE_STOPPING_EXISTING, {":type": config.HRL_TYPES[manifest.type], ":name": manifest.unique_name}));
 				coreClient.sync.callRpc("stopApplication", [manifest.unique_name, false], self);
 				}
 
 			// Install the application
 			install.sync(manifest);
 
-			// (Re)start the application
-			sendMessage.sync(language.STARTING_APPLICATION);
+			// (Re)start application or build spacelet. Show messages only for applilcations.
+			if(manifest.type != config.SPACELET)
+				sendMessage.sync(utility.replace(language.PACKAGE_STARTING, {":type": config.HRL_TYPES[manifest.type], ":name": manifest.unique_name}));
 			coreClient.sync.callRpc("startApplication", [manifest.unique_name, false, true], self);
+			if(manifest.type != config.SPACELET)
+				sendMessage.sync(utility.replace(language.PACKAGE_STARTED, {":type": config.HR_TYPES[manifest.type]}));
 
 			// Check does the package have suggested applications in required_services.
 			if(manifest.requires_services)
@@ -292,7 +303,7 @@ var installApplication = fibrous( function(package, username, password, cwd, ses
 
 					// ----- No suggested service but registered service name found -> using the existing application/service
 					else if(required_service.suggested_application == "" && existing_service)
-						sendMessage.sync("", utility.replace(language.REQUIRED_SERVICE_ALREADY_REGISTERED, {":name": existing_service.service_name, ":app": existing_service.unique_name, ":version": existing_service.version}));
+						sendMessage.sync("", utility.replace(language.REQUIRED_SERVICE_ALREADY_REGISTERED, {":name": existing_service.service_name, ":name": existing_service.unique_name, ":version": existing_service.version}));
 
 					// ----- Suggested application is defined .....
 					else
@@ -300,7 +311,7 @@ var installApplication = fibrous( function(package, username, password, cwd, ses
 						// .... and service not already registered -> try to install the suggested application
 						if(!existing_service)
 							{
-							sendMessage.sync("", utility.replace(language.REQUIRED_SERVICE_INSTALL_SA, {":name": required_service.service_name, ":app": required_service.suggested_application}));
+							sendMessage.sync("", utility.replace(language.REQUIRED_SERVICE_INSTALL_SA, {":name": required_service.service_name, ":name": required_service.suggested_application}));
 							suggested_applications.push(required_service.suggested_application);
 							}
 
@@ -311,11 +322,11 @@ var installApplication = fibrous( function(package, username, password, cwd, ses
 
 							// ----- Suggested and installed applications are different -> using the existing application/service
 							if(existing_service.unique_name != required_package[0])
-								sendMessage.sync("", utility.replace(language.REQUIRED_SERVICE_DIFFERENT_APPS, {":name": required_service.service_name, ":app": existing_service.unique_name, ":version": existing_service.version, ":sapp": required_service.suggested_application}));
+								sendMessage.sync("", utility.replace(language.REQUIRED_SERVICE_DIFFERENT_APPS, {":name": required_service.service_name, ":name": existing_service.unique_name, ":version": existing_service.version, ":sapp": required_service.suggested_application}));
 
 							// ----- Suggested application is same as the installed application -> using the existing application@version
 							else
-								sendMessage.sync("", utility.replace(language.REQUIRED_SERVICE_SAME_APPS, {":name": required_service.service_name, ":app": existing_service.unique_name, ":version": existing_service.version, ":sapp": required_service.suggested_application}));
+								sendMessage.sync("", utility.replace(language.REQUIRED_SERVICE_SAME_APPS, {":name": required_service.service_name, ":name": existing_service.unique_name, ":version": existing_service.version, ":sapp": required_service.suggested_application}));
 							}
 						}
 					}
@@ -328,19 +339,21 @@ var installApplication = fibrous( function(package, username, password, cwd, ses
 				}
 
 			} // <----------
+
+			is_installed = true;
 		}
 	catch(err)
 		{
-		printErrors.sync(err);
+		sendErrors.sync(err);
 		}
 	finally
 		{
 		database.close();
 		removeTemporaryFiles.sync();
-		sendMessage.sync(config.END_OF_MESSAGES);
+		sendEnd.sync();
 		}
 
-	return suggested_applications;
+	return is_installed;
 });
 	
 var removeApplication = fibrous( function(unique_name, session_id, is_spm)
@@ -352,29 +365,28 @@ var removeApplication = fibrous( function(unique_name, session_id, is_spm)
 		if(!checkAuthentication.sync(connobj.remoteAddress, session_id, is_spm))
 			throw utility.error(language.E_AUTHENTICATION_FAILED.p("ApplicationManager::removeApplication"));
 
-		var app_data = database.sync.getApplication(unique_name);
-		if(!app_data)
-			throw utility.ferror(language.E_APPLICATION_NOT_INSTALLED.p("ApplicationManager::removeApplication"), {":name": unique_name});
+		var app = database.sync.getApplication(unique_name);
+		if(!app)
+			throw utility.ferror(language.E_PACKAGE_NOT_INSTALLED.p("ApplicationManager::removeApplication"), {":name": unique_name});
 
 		// Remove the application
 		database.sync.begin();
-		remove.sync(app_data, false);
+		remove.sync(app, false);
 		database.sync.commit();
 
 		// Finalize remove
-		sendMessage.sync(utility.replace(language.APPLICATION_REMOVED, {":app": unique_name}));
+		sendMessage.sync(utility.replace(language.PACKAGE_REMOVED, {":type": config.HR_TYPES[app.type]}));
 		}
 	catch(err)
 		{
 		database.sync.rollback();
 
-		err = utility.error(err);
-		sendMessage.sync((err.messages ? err.messages : err.message));
+		sendErrors.sync(err);
 		}
 	finally
 		{
 		database.close();
-		sendMessage.sync(config.END_OF_MESSAGES);
+		sendEnd.sync();
 		}
 
 	return true;
@@ -389,28 +401,28 @@ var startApplication = fibrous( function(unique_name, session_id, is_spm)
 		if(!checkAuthentication.sync(connobj.remoteAddress, session_id, is_spm))
 			throw utility.error(language.E_AUTHENTICATION_FAILED.p("ApplicationManager::startApplication"));
 
-		var app_data = database.sync.getApplication(unique_name);
-		if(!app_data)
-			throw utility.ferror(language.E_APPLICATION_NOT_INSTALLED.p("ApplicationManager::startApplication"), {":name": unique_name});
+		var app = database.sync.getApplication(unique_name);
+		if(!app)
+			throw utility.ferror(language.E_PACKAGE_NOT_INSTALLED.p("ApplicationManager::startApplication"), {":name": unique_name});
 
 		// Start the application
-		if(coreClient.sync.callRpc("isApplicationRunning", [app_data.unique_name], self))
-			sendMessage.sync(utility.replace(language.ALREADY_RUNNING, {":app": app_data.unique_name}));
+		if(coreClient.sync.callRpc("isApplicationRunning", [app.unique_name], self))
+			sendMessage.sync(utility.replace(language.PACKAGE_ALREADY_RUNNING, {":type": config.HR_TYPES[app.type], ":name": app.unique_name}));
 		else
 			{
-			sendMessage.sync(language.STARTING_APPLICATION);
-			coreClient.sync.callRpc("startApplication", [app_data.unique_name, true, true], self);
-			sendMessage.sync(language.APPLICATION_STARTED);
+			sendMessage.sync(utility.replace(language.PACKAGE_STARTING, {":type": config.HRL_TYPES[app.type], ":name": app.unique_name}));
+			coreClient.sync.callRpc("startApplication", [app.unique_name, true, true], self);
+			sendMessage.sync(utility.replace(language.PACKAGE_STARTED, {":type": config.HR_TYPES[app.type]}));
 			}
 		}
 	catch(err)
 		{
-		sendMessage.sync((err.messages ? err.messages : err.message));
+		sendErrors.sync(err);
 		}
 	finally
 		{
 		database.close();
-		sendMessage.sync(config.END_OF_MESSAGES);
+		sendEnd.sync();
 		}
 
 	return true;
@@ -425,28 +437,28 @@ var stopApplication = fibrous( function(unique_name, session_id, is_spm)
 		if(!checkAuthentication.sync(connobj.remoteAddress, session_id, is_spm))
 			throw utility.error(language.E_AUTHENTICATION_FAILED.p("ApplicationManager::stopApplication"));
 
-		var app_data = database.sync.getApplication(unique_name);
-		if(!app_data)
-			throw utility.ferror(language.E_APPLICATION_NOT_INSTALLED.p("ApplicationManager::stopApplication"), {":name": unique_name});
+		var app = database.sync.getApplication(unique_name);
+		if(!app)
+			throw utility.ferror(language.E_PACKAGE_NOT_INSTALLED.p("ApplicationManager::stopApplication"), {":name": unique_name});
 
 		// Stop the application
-		if(!coreClient.sync.callRpc("isApplicationRunning", [app_data.unique_name, "MAL"], self))
-			sendMessage.sync(utility.replace(language.ALREADY_STOPPED, {":app": app_data.unique_name}));
+		if(!coreClient.sync.callRpc("isApplicationRunning", [app.unique_name], self))
+			sendMessage.sync(utility.replace(language.PACKAGE_ALREADY_STOPPED, {":type": config.HR_TYPES[app.type], ":name": app.unique_name}));
 		else
 			{
-			sendMessage.sync(language.STOPPING_APPLICATION);
-			coreClient.sync.callRpc("stopApplication", [app_data.unique_name, true], self);
-			sendMessage.sync(language.APPLICATION_STOPPED);
+			sendMessage.sync(utility.replace(language.PACKAGE_STOPPING, {":type": config.HRL_TYPES[app.type], ":name": app.unique_name}));
+			coreClient.sync.callRpc("stopApplication", [app.unique_name, true], self);
+			sendMessage.sync(utility.replace(language.PACKAGE_STOPPED, {":type": config.HR_TYPES[app.type]}));
 			}
 		}
 	catch(err)
 		{
-		sendMessage.sync((err.messages ? err.messages : err.message));
+		sendErrors.sync(err);
 		}
 	finally
 		{
 		database.close();
-		sendMessage.sync(config.END_OF_MESSAGES);
+		sendEnd.sync();
 		}
 	});
 
@@ -459,27 +471,26 @@ var restartApplication = fibrous( function(unique_name, session_id, is_spm)
 		if(!checkAuthentication.sync(connobj.remoteAddress, session_id, is_spm))
 			throw utility.error(language.E_AUTHENTICATION_FAILED.p("ApplicationManager::restartApplication"));
 
-		var app_data = database.sync.getApplication(unique_name);
-		if(!app_data)
-			throw utility.ferror(language.E_APPLICATION_NOT_INSTALLED.p("ApplicationManager::restartApplication"), {":name": unique_name});
+		var app = database.sync.getApplication(unique_name);
+		if(!app)
+			throw utility.ferror(language.E_PACKAGE_NOT_INSTALLED.p("ApplicationManager::restartApplication"), {":name": unique_name});
 
 		// Restart the application
-		sendMessage.sync(language.STOPPING_APPLICATION);
-		coreClient.sync.callRpc("stopApplication", [app_data.unique_name, true], self);
+		sendMessage.sync(utility.replace(language.PACKAGE_STOPPING, {":type": config.HRL_TYPES[app.type], ":name": app.unique_name}));
+		coreClient.sync.callRpc("stopApplication", [app.unique_name, true], self);
 
-		sendMessage.sync(language.STARTING_APPLICATION);
-		coreClient.sync.callRpc("startApplication", [app_data.unique_name, true, true], self);
-
-		sendMessage.sync(language.APPLICATION_RESTARTED);
+		sendMessage.sync(utility.replace(language.PACKAGE_STARTING, {":type": config.HRL_TYPES[app.type], ":name": app.unique_name}));
+		coreClient.sync.callRpc("startApplication", [app.unique_name, true, true], self);
+		sendMessage.sync(utility.replace(language.PACKAGE_RESTARTED, {":type": config.HRL_TYPES[app.type]}));
 		}
 	catch(err)
 		{
-		sendMessage.sync((err.messages ? err.messages : err.message));
+		sendErrors.sync(err);
 		}
 	finally
 		{
 		database.close();
-		sendMessage.sync(config.END_OF_MESSAGES);
+		sendEnd.sync();
 		}
 
 	return true;
@@ -537,13 +548,13 @@ var sourceCode = fibrous( function(package, username, password, cwd)
 		}
 	catch(err)
 		{
-		printErrors.sync(err);
+		sendErrors.sync(err);
 		}
 	finally
 		{
 		database.close();
 		removeTemporaryFiles.sync();
-		sendMessage.sync(config.END_OF_MESSAGES);
+		sendEnd.sync();
 		}
 	});
 
@@ -567,6 +578,15 @@ var requestMessages = fibrous( function(session_id, is_spm)
 		}
 		
 	return message_id;
+	});
+
+var test = fibrous( function()
+	{
+	var tests = {};
+
+	tests.core_open = (coreClient ? coreClient.isOpen() : false);
+
+	return tests;
 	});
 
 	// THESE METHODS ARE NOT PUBLISHED AND ARE AVAILABLE ONLY FROM THE COMMAND LINE TOOL -- -- -- -- -- -- -- -- -- -- //
@@ -650,7 +670,7 @@ self.publishPackage = fibrous( function(package, username, password, github_user
 		{
 		database.close();
 		removeTemporaryFiles.sync();
-		sendMessage.sync(config.END_OF_MESSAGES);
+		sendEnd.sync();
 		}
 
 	return true;
@@ -681,17 +701,17 @@ self.register = fibrous( function()
 			var edge_password = utility.bytesToHexString(crypto.randomBytes(16));
 
 			// Try to register this edge computer
-			sendMessage.sync(utility.replace(language.POSTING_REGISTER, {":where": language.REMOTE_ARCHIVE, ":edge_uiid": edge_uuid}));
+			sendMessage.sync(utility.replace(language.PACKAGE_POST_REGISTER, {":where": language.REMOTE_ARCHIVE, ":edge_uiid": edge_uuid}));
 
 			var result = utility.sync.postRegister(edge_uuid, edge_password);
 
 			if(typeof result == "number")																// Other than 200 OK was received?
-				sendMessage.sync(language.REGISTER_POST_ERROR + result + " " + (http_status[result] ? http_status[result].message : http_status["unknown"].message) + ".");
+				sendMessage.sync(language.PACKAGE_POST_REGISTER_ERROR + result + " " + (http_status[result] ? http_status[result].message : http_status["unknown"].message) + ".");
 			else if(result != "")
-				sendMessage.sync(language.REGISTER_POST_ERROR + result);
+				sendMessage.sync(language.PACKAGE_POST_REGISTER_ERROR + result);
 			else
 				{
-				sendMessage.sync(language.REGISTER_POST_OK);
+				sendMessage.sync(language.PACKAGE_POST_REGISTER_OK);
 				fs.sync.writeFile(config.SPACEIFY_REGISTRATION_FILE, {"encoding": "utf8"});
 				}
 			}
@@ -700,107 +720,121 @@ self.register = fibrous( function()
 		}
 	catch(err)
 		{
-		printErrors.sync(err);
+		sendErrors.sync(err);
 		}
 	finally
 		{
-		sendMessage.sync(config.END_OF_MESSAGES);	
+		sendEnd.sync();	
 		}
 	});
 
 	// PRIVATE -- -- -- -- -- -- -- -- -- -- //
 var getPackage = fibrous( function(package, is_suggested, try_local, username, password, registry_url, cwd)
 	{ // Get package by (unique name|directory|archive|url|git url), if is suggested than try only registry, if local try local directories
-	var is_package = false;
-
 	var purl = url.parse(package, true);
 	purl.pathname = purl.pathname.replace(/^\/|\/$/g, "");
 	var gitoptions = purl.pathname.split("/");
 
 	var cwd_package = cwd + "/" + package;
 
-	// --- 1.1 --- Try local directory <package>
+	// --- Try local directory <package>
+	sendMessage.sync(utility.replace(language.CHECKING_FROM, {":where": language.LOCAL_DIRECTORY}));
 	if(!is_suggested && try_local && utility.sync.isLocal(package, "directory"))	
-		is_package = getLocalInstallDirectory.sync(package);
+		return getLocalInstallDirectory.sync(package, false);
 
-	// --- 1.2 --- Try local directory <cwd/package>
-	else if(!is_suggested && try_local && utility.sync.isLocal(cwd_package, "directory"))
-		is_package = getLocalInstallDirectory.sync(cwd_package);
+	// --- Try local directory <cwd/package>
+	sendMessage.sync(utility.replace(language.CHECKING_FROM, {":where": language.WORKING_DIRECTORY}));
+	if(!is_suggested && try_local && utility.sync.isLocal(cwd_package, "directory"))
+		return getLocalInstallDirectory.sync(cwd_package, true);
 
-	// --- 2.1 --- Try local <package>.zip
-	else if(!is_suggested && try_local && utility.sync.isLocal(package, "file") && package.search(/\.zip$/i) != -1)
-		is_package = getLocalInstallZip.sync(package);
+	// --- Try local <package>.zip
+	sendMessage.sync(utility.replace(language.CHECKING_FROM, {":where": language.LOCAL_ARCHIVE}));
+	if(!is_suggested && try_local && utility.sync.isLocal(package, "file") && package.search(/\.zip$/i) != -1)
+		return getLocalInstallZip.sync(package, false);
 
-	// --- 2.2 --- Try local <cwd/package>.zip
-	else if(!is_suggested && try_local && utility.sync.isLocal(cwd_package, "file") && package.search(/\.zip$/i) != -1)
-		is_package = getLocalInstallZip.sync(cwd_package);
+	// --- Try local <cwd/package>.zip
+	sendMessage.sync(utility.replace(language.CHECKING_FROM, {":where": language.WORKING_DIRECTORY_ARCHIVE}));
+	if(!is_suggested && try_local && utility.sync.isLocal(cwd_package, "file") && package.search(/\.zip$/i) != -1)
+		return getLocalInstallZip.sync(cwd_package, true);
 
-	// --- 3.1 --- Try GitHub repository <package>
-	else if(!is_suggested && purl.hostname && purl.hostname.match(/(github\.com)/i) != null && gitoptions.length == 2)
+	// --- Try <unique_name>[@<version>] from the registry - suggested applications can be tried from the registry!!!
+	sendMessage.sync(utility.replace(language.CHECKING_FROM, {":where": language.SPACEIFY_REGISTRY}));
+	if(utility.sync.loadRemoteFileToLocalFile(registry_url, config.WORK_PATH, config.PACKAGE_ZIP))
 		{
-		sendMessage.sync(utility.replace(language.TRYING_TO_GET, {":where": language.GIT_REPOSITORY, ":package": package}));
+		is_einstl100 = false;
 
-		is_package = git.sync(gitoptions, username, password);
-		}
+		var is_package = utility.unZip(config.WORK_PATH + config.PACKAGE_ZIP, config.WORK_PATH, true);		
 
-	// --- 4.1 --- Try remote <package>.zip (remote url)
-	else if(!is_suggested && utility.sync.loadRemoteFileToLocalFile(package, config.WORK_PATH, config.PACKAGE_ZIP))
-		{
-		sendMessage.sync(utility.replace(language.TRYING_TO_GET, {":where": language.REMOTE_ARCHIVE, ":package": package}));
-
-		is_package = utility.unZip(config.WORK_PATH + config.PACKAGE_ZIP, config.WORK_PATH, true);
-		}
-
-	// --- 5.1 --- Try <unique_name>[@<version>] from the registry - suggested applications can be tried from the registry!!!
-	else if(utility.sync.loadRemoteFileToLocalFile(registry_url, config.WORK_PATH, config.PACKAGE_ZIP))
-		{
-		sendMessage.sync(utility.replace(language.TRYING_TO_GET, {":where": language.SPACEIFY_REGISTRY, ":package": package}));
-
-		// CHECK FOR ERRORS BEFORE TRYING TO FIND THE MANIFEST FROM THE PACKAGE
-		is_package = utility.unZip(config.WORK_PATH + config.PACKAGE_ZIP, config.WORK_PATH, true);
-
+		// CHECK FOR ERRORS BEFORE ACCEPTING "PACKAGE"
 		if(utility.sync.isLocal(config.WORK_PATH + config.SPM_ERRORS_JSON, "file"))
 			{
-			sendMessage.sync(language.PACKAGE_INSTALL_ERROR);
-
 			var errfile = fs.sync.readFile(config.WORK_PATH + config.SPM_ERRORS_JSON, {encoding: "utf8"});
+
 			var result = utility.parseJSON(errfile, true);
 
-			var errors = [];
+			var errors = [], str;													// Build error array
 			for(e in result.err)
 				{
-				var str = result.err[e].replace("Manifest: ", "");
+				str = result.err[e].replace("Manifest: ", "");
 				errors.push(utility.makeError(e, str, ""));
+
+				if(e == "EINSTL100")
+					is_einstl100 = true;
 				}
 
-			throw errors;
+			if(!is_einstl100)														// Package not found is not an error!!!
+				{
+				sendMessage.sync(language.PACKAGE_INSTALL_ERROR);
+				throw errors;
+				}
+			}
+		else
+			{
+			sendMessage.sync(utility.replace(language.PACKAGE_FOUND, {":where": language.SPACEIFY_REGISTRY, ":package": package}));
+
+			return is_package;
 			}
 		}
 
-	// --- FAILURE ---
-	else
-		throw utility.ferror(language.E_FAILED_TO_RESOLVE_PACKAGE.p("ApplicationManager::getPackage"), {":package": package});
+	// --- Try GitHub repository <package>
+	sendMessage.sync(utility.replace(language.CHECKING_FROM, {":where": language.GIT_REPOSITORY}));
+	if(!is_suggested && purl.hostname && purl.hostname.match(/(github\.com)/i) != null && gitoptions.length == 2)
+		{
+		sendMessage.sync(utility.replace(language.PACKAGE_FOUND, {":where": language.GIT_REPOSITORY, ":package": package}));
 
-	return is_package;
+		return git.sync(gitoptions, username, password);
+		}
+
+	// --- Try remote <package>.zip (remote url)
+	sendMessage.sync(utility.replace(language.CHECKING_FROM, {":where": language.REMOTE_ARCHIVE}));
+	if(!is_suggested && utility.sync.loadRemoteFileToLocalFile(package, config.WORK_PATH, config.PACKAGE_ZIP))
+		{
+		sendMessage.sync(utility.replace(language.PACKAGE_FOUND, {":where": language.REMOTE_ARCHIVE, ":package": package}));
+
+		return utility.unZip(config.WORK_PATH + config.PACKAGE_ZIP, config.WORK_PATH, true);
+		}
+
+	// --- FAILURE ---
+	throw utility.ferror(language.E_FAILED_TO_RESOLVE_PACKAGE.p("ApplicationManager::getPackage"), {":package": package});
 	});
 
-var getLocalInstallDirectory = fibrous( function(package)
+var getLocalInstallDirectory = fibrous( function(package, is_cwd)
 	{
-	sendMessage.sync(utility.replace(language.TRYING_TO_GET, {":where": language.LOCAL_DIRECTORY, ":package": package}));
-
 	package += (package.search(/\/$/) == -1 ? "/" : "");
 
 	if(package + config.PACKAGE_PATH == config.WORK_PATH)				// Prevent infinite recursion
 		return false;
+
+	sendMessage.sync(utility.replace(language.PACKAGE_FOUND, {":where": (is_cwd ? language.WORKING_DIRECTORY : language.LOCAL_DIRECTORY), ":package": package}));
 
 	utility.sync.copyDirectory(package, config.WORK_PATH, true);
 
 	return true;
 	});
 
-var getLocalInstallZip = fibrous( function(package)
+var getLocalInstallZip = fibrous( function(package, is_cwd)
 	{
-	sendMessage.sync(utility.replace(language.TRYING_TO_GET, {":where": language.LOCAL_ARCHIVE, ":package": package}));
+	sendMessage.sync(utility.replace(language.PACKAGE_FOUND, {":where": (is_cwd ? language.WORKING_DIRECTORY_ARCHIVE : language.LOCAL_ARCHIVE), ":package": package}));
 
 	return utility.unZip(package, config.WORK_PATH, false);
 	});
@@ -836,7 +870,12 @@ var install = fibrous( function(manifest)
 
 		// REMOVE EXISTING DOCKER IMAGE(S) AND APPLICATION FILES
 		if(app_data)
+			{
 			remove.sync(app_data, false);
+			sendMessage.sync("");
+			}
+
+		sendMessage.sync(utility.replace(language.INSTALL_APPLICATION, {":type": config.HRL_TYPES[manifest.type], ":name": manifest.unique_name}));
 
 		// INSTALL APPLICATION AND API FILES TO VOLUME DIRECTORY
 		sendMessage.sync(language.INSTALL_APPLICATION_FILES);
@@ -873,8 +912,8 @@ var install = fibrous( function(manifest)
 		utility.sync.zipDirectory(config.WORK_PATH, config.INSTALLED_PATH + manifest.docker_image_id + config.EXT_COMPRESSED);
 
 		// APPLICATION IS NOW INSTALLED SUCCESSFULLY
-		var tstr = (manifest.type == config.SPACELET ? "" : language.APPLICATIONLC);
-		sendMessage.sync(utility.replace(language.INSTALL_APPLICATION_OK, {":type": utility.ucfirst(manifest.type) + " " + tstr, ":app": manifest.unique_name, ":version": manifest.version}));
+		sendMessage.sync(utility.replace(language.INSTALL_APPLICATION_OK, {":type": config.HR_TYPES[manifest.type], ":name": manifest.unique_name, ":version": manifest.version}));
+		sendMessage.sync("");
 		}
 	catch(err)
 		{
@@ -888,39 +927,39 @@ var install = fibrous( function(manifest)
 		}
 	});
 
-var remove = fibrous( function(app_data, throws)
+var remove = fibrous( function(app, throws)
 	{
 	var dockerImage = new DockerImage();
 
 	// Stop all the instances of running applications having applications unique_name
-	sendMessage.sync(language.REMOVING_APPLICATION);
-	coreClient.sync.callRpc("removeApplication", [app_data.unique_name, throws], self);
+	sendMessage.sync(utility.replace(language.PACKAGE_REMOVING, {":type": config.HRL_TYPES[app.type], ":name": app.unique_name}));
+	coreClient.sync.callRpc("removeApplication", [app.unique_name, throws], self);
 
 	// Remove existing docker images + containers
-	sendMessage.sync(language.REMOVING_DOCKER);
+	sendMessage.sync(language.PACKAGE_REMOVING_DOCKER);
 
-	var inspected = dockerImage.sync.inspect(app_data.unique_name);
+	var inspected = dockerImage.sync.inspect(app.unique_name);
 	if(inspected)																					// try to remove committed image - made either from spaceifyubuntu or custom image
-		dockerImage.sync.removeImage(app_data.docker_image_id, app_data.unique_name);
+		dockerImage.sync.removeImage(app.docker_image_id, app.unique_name);
 
-	inspected = dockerImage.sync.inspect(config.CUSTOM_DOCKER_IMAGE + app_data.unique_name);		// try to remove custom image
+	inspected = dockerImage.sync.inspect(config.CUSTOM_DOCKER_IMAGE + app.unique_name);				// try to remove custom image
 	if(inspected)
-		dockerImage.sync.removeImage(inspected.id, config.CUSTOM_DOCKER_IMAGE + app_data.unique_name);
+		dockerImage.sync.removeImage(inspected.id, config.CUSTOM_DOCKER_IMAGE + app.unique_name);
 
 	// Remove application files directory
-	sendMessage.sync(language.DELETE_FILES);
+	sendMessage.sync(language.PACKAGE_DELETE_FILES);
 
-	if(app_data.type == config.SPACELET)
-		removeUniqueData.sync(config.SPACELETS_PATH, app_data);
-	else if(app_data.type == config.SANDBOXED)
-		removeUniqueData.sync(config.SANDBOXED_PATH, app_data);
-	/*else if(app_data.type == config.NATIVE)
-		removeUniqueData.sync(config.NATIVE_PATH, app_data);*/
+	if(app.type == config.SPACELET)
+		removeUniqueData.sync(config.SPACELETS_PATH, app);
+	else if(app.type == config.SANDBOXED)
+		removeUniqueData.sync(config.SANDBOXED_PATH, app);
+	/*else if(app.type == config.NATIVE)
+		removeUniqueData.sync(config.NATIVE_PATH, app);*/
 
 	// Remove database entries
-	sendMessage.sync(language.REMOVE_FROM_DATABASE);
+	sendMessage.sync(language.PACKAGE_REMOVE_FROM_DATABASE);
 
-	database.sync.removeApplication(app_data.unique_name);
+	database.sync.removeApplication(app.unique_name);
 	});
 
 var removeTemporaryFiles = fibrous( function()
@@ -1033,18 +1072,32 @@ var sendMessage = fibrous( function()
 		}
 	});
 
-var printErrors = fibrous( function(err)
+var sendErrors = fibrous( function(err)
 	{
-	if(err instanceof Array)																// These errors may originate from getPackage or validate
+	if(err instanceof Array)																// These errors originate from getPackage
 		{
 		for(var i=0; i<err.length; i++)
-			sendMessage.sync("(" + err[i].getCode() + "): " + err[i].getMessage());
+			{
+			lock_errors.push(utility.error(err));
+
+			sendMessage.sync("" + err[i].getCode() + " " + err[i].getMessage());
+			}
 		}
 	else if(err)																			// "Normal" errors
 		{
-		sendMessage.sync(err.getMessage ? err.getMessage() : err.toString());
-		throw utility.error(err);
+		err = utility.error(err);
+		lock_errors.push(err);
+
+		sendMessage.sync.apply(self, err.messages);
 		}
+	});
+
+var sendEnd = fibrous( function()
+	{
+	if(lock_errors.length > 0)
+		sendMessage.sync(config.END_OF_MESSAGES_ERROR + JSON.stringify(lock_errors));
+	else
+		sendMessage.sync(config.END_OF_MESSAGES);
 	});
 
 var carbageCollection = function()

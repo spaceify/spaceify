@@ -18,22 +18,22 @@
            verbose | -v
   
   package: URL, directory, zip archive, Spaceify registry, GitHub repository or unique_name
-           (unique name of an application) depending of the command.
+           (unique name of an application or a spacelet) depending of the command.
 
-  Command line completion with TAB key can be used with commands and options. Double-tap
-  to show available commands or options for current command.
+  TAB key can be used for command line completion. Completion can be used for both commands
+  and options. Double-tapping shows available commands or options for a command.
 @verbose
 Commands and options they accept.
 %help%
   help [command]
   
-    Displays help text of spm commands and options. If command is not defined the whole
-    help text is displayed. If command is defined the help text for it is displayed.
+    Displays help text of the command. If command is not defined the whole
+    help text is displayed.
 %%
 %install%
   install [authenticate | -a] package
   
-    Installs an application package to the Spaceify core.
+    Installs a package to the Spaceify core.
   
     The authenticate option can be used for authenticating to GitHub repository. The username
     and password will be prompted if this option is set.
@@ -81,7 +81,7 @@ Commands and options they accept.
 %publish%
   publish [authenticate | -a] package
   
-    Publish a Spaceify application package in the Spaceify registry (spaceify.org).
+    Publishes a package to the Spaceify registry (spaceify.org).
   
     The authenticate option can be used for authenticating to GitHub repository. The username
     and password will be prompted if this option is set.
@@ -115,7 +115,7 @@ Commands and options they accept.
 %source%
   source [authenticate | -a] package
   
-    Get the source codes for a package.
+    Gets the source codes for a package.
   
     The authenticate option can be used for authenticating to GitHub repository. The username
     and password will be prompted if this option is set.
@@ -165,7 +165,7 @@ Commands and options they accept.
 %remove%
   remove unique_name
   
-    Remove an application package from the Spaceify core. Packages can be removed only by using
+    Removes a package from the Spaceify core. Packages can be removed only by using
     their unique name. When a package is removed all the files and database entries are removed
     from the Spaceify core.
   
@@ -174,33 +174,33 @@ Commands and options they accept.
 %start%
   start unique_name
   
-    Starts a stopped application.
+    Starts an application or a spacelet.
   
       spm start spaceify/bigscreen
 %%
 %stop%
   stop unique_name
   
-    Stops a running application.
+    Stops a running application or spacelet.
   
       spm stop spaceify/bigscreen
 %%
 %restart%
   restart unique_name
   
-    Restart a running application.
+    Restarts a running application or spacelet.
   
       spm restart sapceify/bigscreen
 %%
 %list%
   list [spacelet | -s, sandboxed | -S, native | -n, verbose | -v]
   
-    Lists information about the installed applications.
+    Lists information about the installed packages.
   
-    The application type options spacelet, sandboxed and native can be used to limit the
-    resulting list to specific types of applications. The order of the options is the order
-    in which the applications are listed by the type. Use the verbose option to output a
-    more detailed list of the applications.
+    The package type options spacelet, sandboxed and native can be used to limit the
+    resulting list to specific types of packages. The order of the options is the order
+    in which the packages are listed. Use the verbose option to output a
+    more detailed list of the packages.
   
       spm list
       spm list spacelet

@@ -37,6 +37,8 @@ var SESSIONTOKEN = "sessiontoken";
 var layout = null;
 var languages = {};
 
+var isSpaceify = (typeof process.env.PORT_80 == "undefined" ? true : false);
+
 self.connect = function(opts, callback)
 	{
 	options.hostname = opts.hostname || "";
@@ -71,36 +73,38 @@ self.connect = function(opts, callback)
 
 	options.carbage_interval_id = setInterval(carbageCollection, options.carbage_collect_interval);
 
-	// -- --
-
-	language_utility = reload.require(options.language_path + "languageutility.js");	// Get languages (en_US, fi_FI, fi_SE, ...)
-
-	fs.sync.readdir(options.language_path).forEach(function(file, index)				// Create language object for each language file
+	// -- -- KiWi for Spaceify
+	if(isSpaceify)
 		{
-		if(fs.sync.stat(options.language_path + file).isDirectory())
-			return;
+		language_utility = reload.require(options.language_path + "languageutility.js");	// Get languages (en_US, fi_FI, fi_SE, ...)
 
-		files = file.split(".");														// Process only .json files
-		if(files.length != 2 || files[1] != "json")
-			return;
-
-		var language_file = fs.sync.readFile(options.language_path + file, {"encoding": "utf8"});
-					
-		var sections = JSON.parse(language_file);
-		var global = (sections && sections.global ? sections.global : null);
-		var locale = (global && global.locale ? global.locale : null);
-
-		if(sections && global && locale)												// Separate sections as individual objects (index, admin/login, ...)
+		fs.sync.readdir(options.language_path).forEach(function(file, index)				// Create language object for each language file
 			{
-			languages[locale] = {};
+			if(fs.sync.stat(options.language_path + file).isDirectory())
+				return;
 
-			for(var section in sections)
+			files = file.split(".");														// Process only .json files
+			if(files.length != 2 || files[1] != "json")
+				return;
+
+			var language_file = fs.sync.readFile(options.language_path + file, {"encoding": "utf8"});
+					
+			var sections = JSON.parse(language_file);
+			var globale = (sections && sections.global ? sections.global : null);
+			var locale = (globale && globale.locale ? globale.locale : null);
+
+			if(sections && globale && locale)												// Separate sections as individual objects (index, admin/login, ...)
 				{
-				if(section.toLowerCase() != "global")
-					languages[locale][section] = language_utility.make(sections[section], section, global);
+				languages[locale] = {};
+
+				for(var section in sections)
+					{
+					if(section.toLowerCase() != "global")
+						languages[locale][section] = language_utility.make(sections[section], section, globale);
+					}
 				}
-			}
-		});
+			});
+		}
 
 	// -- --
 

@@ -72,7 +72,7 @@
 				var acr = $("#adminContainerRight");
 
 				printApps(acr, applications.spacelet, "SPACELETS", true);
-				printApps(acr, applications.sandboxed, "SANDBOXED APPLICATIONS", false);
+				printApps(acr, applications.sandboxed, "APPLICATIONS", false);
 				});
 			}
 
@@ -87,20 +87,15 @@
 			var unique_name = $("#unique_name").val();
 
 			if(action == "stop")
-				sam.stopApplication(unique_name, messages, null);	{{# replace null with function(err, data) {} to catch response }}
+				sam.stopApplication(unique_name, messages, operationOver);
 			else if(action == "start")
-				sam.startApplication(unique_name, messages, null);
+				sam.startApplication(unique_name, messages, operationOver);
 			else if(action == "restart")
-				sam.restartApplication(unique_name, messages, null);
+				sam.restartApplication(unique_name, messages, operationOver);
 			else if(action == "remove")
-				sam.removeApplication(unique_name, messages, null);
-			}
-
-		function installApplication()
-			{
-			jQuery("#adminContainerRight").empty();
-
-			sam.installApplication($("#package").val(), "", "", messages, null);
+				sam.removeApplication(unique_name, messages, operationOver);
+			else if(action == "install")
+				sam.installApplication($("#package").val(), "", "", messages, operationOver);
 			}
 
 		function logOut()
@@ -110,7 +105,34 @@
 				window.location.assign("${edge_url_https}admin/login.html");
 				});
 			}
-			
+
+		function operationOver(err, data)
+			{
+			if(!err)
+				{
+				{{#
+					The status/returned errors (status errors) of the latest operation must not be confused with err.
+					Err contains information about connection errors (general errors) with the application manager and core.
+					Status errors deal with the progress of an operation, e.g., "installApplication("ABC") >>> ABC does not resolve to any known package."
+				}}
+				if(!sam.success())
+					{
+					var errors = sam.getErrors();						{{# Get the errors of the latest operation }}
+					
+					$("#adminContainerRight").append($("<div><h3>There were " + errors.length + " error(s) during the operation:</h3></div><br>"));
+					for(var i=0; i<errors.length; i++)
+						{
+						for(var j=0; j<errors[i].messages.length; j++)
+							$("#adminContainerRight").append($("<div><i>" + errors[i].codes[j] + "</i> <b>" + errors[i].messages[j] + "</b></div><br>"));
+						}
+					}
+				}
+			else
+				{
+				console.log(err);
+				}
+			}
+
 		function messages(message)
 			{
 			var str = "";
@@ -119,18 +141,18 @@
 			else
 				str = message;
 
-			$("#adminContainerRight").append($("<div>" + str + "</div>"));
+			$("#adminContainerRight").append($("<div>" + (str != "" ? str : "<br>") + "</div>"));
 			}
 
 		function printApps(acr, apps, title, is_spacelet)
 			{
 			if(apps.length == 0)
 				acr.append($("<div><h3>NO " + title + " INSTALLED</h3></div><br><br>"));
-				
-			for(var i=0; i<apps.length; i++)
-				{
+			else
 				acr.append($("<div><h3>" + title + "</h3></div><br><br>"));
 
+			for(var i=0; i<apps.length; i++)
+				{
 				var app = apps[i];
 
 				acr.append($("<div><b>" + app.name + "</b></div>"));
@@ -164,8 +186,8 @@
 				if(app.keywords)
 					{
 					acr.append($("<div><u>Keywords</u></div>"));
-					for(i=0; i<app.keywords.length; i++)
-						acr.append($("<div>" + app.keywords[i] + "</div>"));
+					for(j=0; j<app.keywords.length; j++)
+						acr.append($("<div>" + app.keywords[j] + "</div>"));
 					acr.append($("<div>&nbsp;</div>"));
 					}
 
@@ -181,13 +203,13 @@
 					{
 					acr.append($("<div><u>Contributors</u></div>"));
 
-					for(i=0; i<app.contributors.length; i++)
+					for(j=0; j<app.contributors.length; j++)
 						{
-						acr.append($("<div>name: " + app.contributors[i].name + "</div>"));
-						if(app.contributors[i].email)
-							acr.append($("<div>email: " + app.contributors[i].email + "</div>"));
-						if(app.contributors[i].url)
-							acr.append($("<div>url: " + app.contributors[i].url + "</div>"));
+						acr.append($("<div>name: " + app.contributors[j].name + "</div>"));
+						if(app.contributors[j].email)
+							acr.append($("<div>email: " + app.contributors[j].email + "</div>"));
+						if(app.contributors[j].url)
+							acr.append($("<div>url: " + app.contributors[j].url + "</div>"));
 						acr.append($("<div>&nbsp;</div>"));
 						}
 					}
@@ -196,13 +218,13 @@
 					{
 					acr.append($("<div><u>Images</u></div>"));
 
-					for(i=0; i<app.images.length; i++)
+					for(j=0; j<app.images.length; j++)
 						{
-						if(app.images[i].directory)
-							acr.append($("<div>directory: " + app.images[i].directory + "</div>"));
-						acr.append($("<div>file: " + app.images[i].file + "</div>"));
-						if(app.images[i].title)
-							acr.append($("<div>title: " + app.images[i].title + "</div>"));
+						if(app.images[j].directory)
+							acr.append($("<div>directory: " + app.images[j].directory + "</div>"));
+						acr.append($("<div>file: " + app.images[j].file + "</div>"));
+						if(app.images[j].title)
+							acr.append($("<div>title: " + app.images[j].title + "</div>"));
 						acr.append($("<div>&nbsp;</div>"));
 						}
 					}
@@ -214,23 +236,23 @@
 					{
 					acr.append($("<div><u>Install Commands</u></div>"));
 
-					for(i=0; i<app.install_commands.length; i++)
-						acr.append($("<div>" + app.install_commands[i] + "</div><div>&nbsp;</div>"));
+					for(j=0; j<app.install_commands.length; j++)
+						acr.append($("<div>" + app.install_commands[j] + "</div><div>&nbsp;</div>"));
 					}
 
 				if(is_spacelet)
 					{
 					acr.append($("<div><u>Origins</u></div>"));
-					for(i=0; i<app.origins.length; i++)
-						acr.append($("<div>" + app.origins[i] + "</div>"));
+					for(j=0; j<app.origins.length; j++)
+						acr.append($("<div>" + app.origins[j] + "</div>"));
 					acr.append($("<div>&nbsp;</div>"));
 					}
 
 				if(is_spacelet)
 					{
 					acr.append($("<div><u>Inject Hostnames</u></div>"));
-					for(i=0; i<app.inject_hostnames.length; i++)
-						acr.append($("<div>" + app.inject_hostnames[i] + "</div>"));
+					for(j=0; j<app.inject_hostnames.length; j++)
+						acr.append($("<div>" + app.inject_hostnames[j] + "</div>"));
 					acr.append($("<div>&nbsp;</div>"));
 					}
 
@@ -243,12 +265,12 @@
 				if(is_spacelet)
 					{
 					acr.append($("<div><u>Inject Files</u></div>"));
-					for(i=0; i<app.inject_files.length; i++)
+					for(j=0; j<app.inject_files.length; j++)
 						{
-						if(app.inject_files[i].directory)
-							acr.append($("<div>directory: " + app.inject_files[i].directory + "</div>"));
-						acr.append($("<div>file: " + app.inject_files[i].file + "</div>"));
-						acr.append($("<div>type: " + app.inject_files[i].type + "</div>"));
+						if(app.inject_files[j].directory)
+							acr.append($("<div>directory: " + app.inject_files[j].directory + "</div>"));
+						acr.append($("<div>file: " + app.inject_files[j].file + "</div>"));
+						acr.append($("<div>type: " + app.inject_files[j].type + "</div>"));
 						acr.append($("<div>&nbsp;</div>"));
 						}
 					}
@@ -257,10 +279,10 @@
 					{
 					acr.append($("<div><u>Provides Services</u></div>"));
 
-					for(i=0; i<app.provides_services.length; i++)
+					for(j=0; j<app.provides_services.length; j++)
 						{
-						acr.append($("<div>service_name: " + app.provides_services[i].service_name + "</div>"));
-						acr.append($("<div>service_type: " + app.provides_services[i].service_type + "</div><div>&nbsp;</div>"));
+						acr.append($("<div>service_name: " + app.provides_services[j].service_name + "</div>"));
+						acr.append($("<div>service_type: " + app.provides_services[j].service_type + "</div><div>&nbsp;</div>"));
 						}
 					}
 
@@ -268,11 +290,11 @@
 					{
 					acr.append($("<div><u>Requires Services</u></div>"));
 
-					for(i=0; i<app.requires_services.length; i++)
+					for(j=0; j<app.requires_services.length; j++)
 						{
-						acr.append($("<div>service_name: " + app.requires_services[i].service_name + "</div>"));
-						acr.append($("<div>service_type: " + app.requires_services[i].service_type + "</div>"));
-						acr.append($("<div>suggested_application: " + app.requires_services[i].suggested_application + "</div><div>&nbsp;</div>"));
+						acr.append($("<div>service_name: " + app.requires_services[j].service_name + "</div>"));
+						acr.append($("<div>service_type: " + app.requires_services[j].service_type + "</div>"));
+						acr.append($("<div>suggested_application: " + app.requires_services[j].suggested_application + "</div><div>&nbsp;</div>"));
 						}
 					}
 				}
@@ -300,9 +322,11 @@
 				<button class="adminButton normal" name="action" onclick="logOut();">
 					${language.logout}
 				</button>
+
+				<br><hr>
 			</div>
 
-			<hr>
+			<br><br>
 			<h3>Application Manager Commands</h3>
 			
 			<button class="adminButton normal" name="action" onclick="getApplications();">
@@ -340,7 +364,7 @@
 			<input type="text" value="spaceify/bigscreen", id="package" class="adminInput wider">
 
 			<br><br>
-			<button class="adminButton normal" name="action" onclick="installApplication();">
+			<button class="adminButton normal" name="action" onclick="commandApplication('install');">
 				installApplication
 			</button>
 

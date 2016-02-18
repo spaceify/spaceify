@@ -1,5 +1,6 @@
 #!/bin/bash
 
-if [ -e /var/lib/spaceify/data/scripts/cleanup_installation.sh ]; then
-. /var/lib/spaceify/data/scripts/cleanup_installation.sh "remove"
+if [ -e /usr/share/debconf/confmodule ]; then
+	. /usr/share/debconf/confmodule
+	db_purge
 fi

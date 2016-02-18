@@ -25,6 +25,7 @@ function SPM()
 {
 var self = this;
 
+var exit_code = 0;
 var appManConnection = null;
 var appManMessageConnection = null;
 var communicator = new Communicator();
@@ -41,6 +42,7 @@ var RESTART = "restart";
 var LIST = "list";
 var REGISTER = "register";
 var HELP = "help";
+var TEST = "test";
 
 var AUTH  = "authenticate";
 var AUTH_ = "-a";
@@ -55,7 +57,7 @@ var VERB_ = "-v";
 
 var EMPTY = "empty";
 
-var commands = INSTALL + "|" + PUBLISH + "|" + SOURCE + "|" + REMOVE + "|" + START + "|" + STOP + "|" + RESTART + "|" + LIST + "|" + REGISTER + "|" + HELP;
+var commands = INSTALL + "|" + PUBLISH + "|" + SOURCE + "|" + REMOVE + "|" + START + "|" + STOP + "|" + RESTART + "|" + LIST + "|" + REGISTER + "|" + HELP + "|" + TEST;
 var oper_regex = new RegExp("^(" + commands + ")$");
 var options = AUTH+"|"+SPAC+"|"+SAND+"|"+NATI+"|"+VERB;
 var opts_regex = new RegExp("^(" + options + ")$");
@@ -107,7 +109,7 @@ self.start = fibrous( function()
 		cwd = process.argv[2];
 		command = process.argv[3];
 		last = process.argv[length - 1];
-		package = (command != HELP && command != LIST ? last : "");								// package is the last argument
+		package = (command != HELP && command != LIST && command != TEST ? last : "");						// package is the last argument
 
 																								// Check argument count for commands
 		if( (command == INSTALL || command == PUBLISH || command == PUBLISH) && (length < (5 + (authenticate ? 1 : 0))) )
@@ -157,6 +159,8 @@ self.start = fibrous( function()
 			list.sync(type, verbose);
 		else if(command == REGISTER)
 			register.sync(type, verbose);
+		else if(command == TEST)
+			test.sync();
 		else if(command == PUBLISH)
 			publish.sync(package, username, password, github_username, github_password, cwd);
 		else if(command == HELP || command == EMPTY)
@@ -170,7 +174,7 @@ self.start = fibrous( function()
 	finally
 		{
 		disconnectApplicationManager();
-		process.exit(0);
+		process.exit(exit_code);
 		}
 	});
 
@@ -220,7 +224,7 @@ var messageListener = function(message)
 	{
 	try {
 		message = utility.parseJSON(message);
-		if(message.message != config.END_OF_MESSAGES)
+		if(typeof message.message != "undefined" && message.message != config.END_OF_MESSAGES && message.message.indexOf(config.END_OF_MESSAGES_ERROR) == -1)
 			logger.force(message.message);
 		}
 	catch(err)
@@ -262,7 +266,8 @@ var help = fibrous( function(bVerbose, command)
 
 var install = fibrous( function(package, username, password, cwd)
 	{
-	appManConnection.sync.callRpc("installApplication", [package, username, password, cwd, null, true], self);
+	var result = appManConnection.sync.callRpc("installApplication", [package, username, password, cwd, null, true], self);
+	exit_code = (result ? 0 : 1);
 	});
 
 var remove = fibrous( function(unique_name)
@@ -483,6 +488,17 @@ var register = fibrous( function()
 	{
 	var appman = new ApplicationManager();
 	appman.sync.register();
+	});
+
+var test = fibrous( function()
+	{
+	var result = appManConnection.sync.callRpc("test", [], self);
+
+	var lines = "";
+	for(i in result)
+		lines += i + "=" + result[i] + "\n";
+
+	console.log(lines);
 	});
 
 }

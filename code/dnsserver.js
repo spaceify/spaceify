@@ -6,7 +6,6 @@
  */
 
 var dns = require("./lib/native-dns");
-var config = require("./config")();
 var Netmask = require("./lib/netmask").Netmask
 
 function DNSServer()

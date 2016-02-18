@@ -72,8 +72,9 @@ self.waitForOutput = function(waitedStrings, callback)
 		if(!waitedStrings)
 			callback(null, "");
 
-		// <Buffer 01 00 00 00 00 00 00 xx ...> What is this 8 byte sequence? Always ends with 0a (f.ex. from console.log).
-		tdata = data.toString("ascii", 8, data.length - (data.length > 8 ? 1 : 0));
+		// <Buffer 01 00 00 00 00 00 00 0a ...> What is this 8 byte sequence?
+		var seq = (data.length >= 8 ? seq1 = data.readInt32BE(0) + data.readInt32BE(4) : 0);
+		var tdata = (seq == 16777226 ? data.toString("ascii", 8, data.length - 1) : data.toString("ascii"));
 
 		logger.info(tdata);
 

@@ -1,3 +1,7 @@
+0.3.4  Alpha Centauri (developer-pre-alpha)
+    * This update fixes errors in installation scripts. Updating Spaceify does not freeze anymore.
+    * Improvements and fixes to the core.
+
 0.3.3  Alpha Centauri (developer-pre-alpha)
     * Fix to a problem in WebSocket server.
 

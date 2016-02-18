@@ -16,6 +16,7 @@ var language =
 	"E_GENERAL_ERROR": new SpaceifyError({"code": "", "message": ":err"}),
 	"E_WRONG_NUMBER_OF_ARGUMENTS": new SpaceifyError({"code": 1, "message": "Wrong number of arguments: :number expected."}),
 	"E_ADMIN_NOT_LOGGED_IN": new SpaceifyError({"code": 2, "message": "Administrator must be logged in to perform this operation."}),
+	"E_PACKAGE_NOT_INSTALLED": new SpaceifyError({"code": 2, "message": "Package :name is not installed."}),
 
 	// Utility
 	"E_FAILED_TO_INITIATE_HTTP_GET": new SpaceifyError({"code": 1000, "message": "Failed to initiate HTTP(S) GET."}),
@@ -95,11 +96,10 @@ var language =
 
 	// ApplicationManager
 	"E_FAILED_TO_INSTALL_APPLICATION": new SpaceifyError({"code": 7000, "message": "Failed to install application."}),
-	"E_FAILED_TO_RESOLVE_PACKAGE": new SpaceifyError({"code": 7001, "message": ":package doesn't resolve to any known package."}),
+	"E_FAILED_TO_RESOLVE_PACKAGE": new SpaceifyError({"code": 7001, "message": ":package does not resolve to any known package."}),
 	"E_FAILED_TO_UPDATE_SETTINGS": new SpaceifyError({"code": 7002, "message": "Failed to update settings."}),
 	"E_FAILED_TO_FIND_GIT_APPLICATION": new SpaceifyError({"code": 7003, "message": "The application directory was not found from the git repository :repo."}),
 	"E_FAILED_TO_REMOVE_APPLICATION": new SpaceifyError({"code": 7004, "message": "Failed to remove application."}),
-	"E_APPLICATION_NOT_INSTALLED": new SpaceifyError({"code": 7005, "message": "Application :name is not installed."}),
 	"E_LOCKED": new SpaceifyError({"code": 7007, "message": "Another process has locked the application manager."}),
 	"E_SERVICE_ALREADY_REGISTERED": new SpaceifyError({"code": 7008, "message": "Applications with same service names can not be installed at the same time."}),
 	"E_FAILED_TO_LIST_APPLICATIONS": new SpaceifyError({"code": 7009, "message": "Failed to list applications."}),
@@ -175,7 +175,6 @@ var language =
 	** TEXTS ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
 	** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 	// COMMON
-	"APPLICATIONLC": "application",
 
 	// CONNECTIONS / ACCESS
 	"NO_CONNECTION_TO_SERVER": "No connection to server.",
@@ -226,52 +225,61 @@ var language =
 	"LOGGED_OUT_SPACEIFY_NET": "Logged out of spaceify.net.",
 
 	// ApplicationManager
-	"TRYING_TO_GET": "Trying to get :package from :where",
+	"RESOLVING_ORIGIN": "Resolving package origin...",
+	"CHECKING_FROM": "Checking :where",
+	"PACKAGE_FOUND": "Package :package found from :where",
 	"TRYING_TO_PUBLISH": "Trying to publish :where",
 	"LOCAL_DIRECTORY": "local directory.",
+	"WORKING_DIRECTORY": "current working directory.",
 	"LOCAL_ARCHIVE": "local Zip archive.",
+	"WORKING_DIRECTORY_ARCHIVE": "Zip archive in the current working directory.",
 	"GIT_REPOSITORY": "the GitHub repository.",
 	"REMOTE_ARCHIVE": "remote Zip archive.",
 	"SPACEIFY_REGISTRY": "the Spaceify registry.",
 	"DOWNLOADING_GITUHB": "(:pos/:count) Downloading :what (:bytes bytes)",
-	"POSTING_PACKAGE": "Please wait, posting the package to the Spaceify registry.",
+
+	"PACKAGE_POSTING": "Please wait, posting the package to the Spaceify registry.",
 	"PACKAGE_POST_ERROR": "Failed to publish the package.",
 	"PACKAGE_POST_OK": "Success. The package is now published.",
-	"APPLICATION_REMOVED": "Application :app is now removed.",
-	"VALIDATING_PACKAGE": "Validating package.",
-	"STOPPING_APPLICATION": "Stopping application.",
-	"STOPPING_EXISTING_APPLICATION": "Stopping existing application.",
-	"APPLICATION_STOPPED": "Application is now stopped.",
-	"REMOVING_APPLICATION": "Removing existing application.",
-	"STARTING_APPLICATION": "Starting application.",
-	"APPLICATION_STARTED": "Application is now started.",
-	"RESTARTING_APPLICATION": "Restarting application.",
-	"APPLICATION_RESTARTED": "The application is now restarted.",
-	"INSTALL_GENERATE_CERTIFICATE": "Generating a Spaceify CA signed certificate for the application.",
-	"INSTALL_CERTIFICATE_EXISTS": "Using existing certificate.",
-	"REMOVING_DOCKER": " - Docker image and container.",
-	"DELETE_FILES": " - Application files.",
-	"INSTALL_CREATE_DOCKER": "Creating a Docker image for the application from the default image :image.",
-	"INSTALL_CREATE_DOCKER_IMAGE": "Creating a custom Docker image :image for the application.",
-	"INSTALL_UPDATE_DATABASE": "Writing database entries for the application.",
-	"INSTALL_APPLICATION_FILES": "Copying application files to volume.",
-	"INSTALL_APPLICATION_OK": ":type :app@:version is now installed.",
-	"REMOVE_FROM_DATABASE": " - Application entries from the database.",
-	"ALREADY_STOPPED": "Application :app is already stopped.",
-	"ALREADY_RUNNING": "Application :app is already running.",
-	"SERVICE_ALREADY_REGISTERED": "Service name :name is already registered by application :app",
+	"PACKAGE_REMOVED": ":type is now removed.",
+	"PACKAGE_VALIDATING": "Validating package.",
+	"PACKAGE_STOPPING": "Stopping :type :name.",
+	"PACKAGE_STOPPING_EXISTING": "Stopping already installed :type :name.",
+	"PACKAGE_STOPPED": ":type is now stopped.",
+	"PACKAGE_REMOVING": "Removing :type :name:",
+	"PACKAGE_STARTING": "Starting :type :name.",
+	"PACKAGE_STARTED": ":type is now started.",
+	"PACKAGE_RESTARTED": "The :type is now restarted.",
+	"PACKAGE_ALREADY_STOPPED": ":type :name is already stopped.",
+	"PACKAGE_ALREADY_RUNNING": ":type :name is already running.",
 	"PACKAGE_INSTALL_ERROR": "Failed to get the requested package.",
+	"PACKAGE_REMOVE_FROM_DATABASE": " - Application entries from the database.",
+	"PACKAGE_REMOVING_DOCKER": " - Docker image and container.",
+	"PACKAGE_DELETE_FILES": " - Application files.",
+
+	"INSTALL_APPLICATION": "Installing :type :name:",
+	"INSTALL_APPLICATION_FILES": " - Copying files to volume.",
+	"INSTALL_GENERATE_CERTIFICATE": " - Generating Spaceify CA signed certificate.",
+	"INSTALL_CREATE_DOCKER_IMAGE": " - Creating custom Docker image :image.",
+	"INSTALL_CREATE_DOCKER": " - Creating Docker image from the default image :image.",
+	"INSTALL_UPDATE_DATABASE": " - Writing database entries.",
+	"INSTALL_APPLICATION_OK": ":type :name@:version is now installed.",
+
+	"SERVICE_ALREADY_REGISTERED": "Service name :name is already registered by application :name",
+
 	"GET_SOURCES_OK": "Source codes are now loaded and are in the directory :directory.",
-	"POSTING_REGISTER": "Please wait, registering this edge computer with edge id: :edge_uiid",
-	"REGISTER_POST_ERROR": "Registration failed. ",
-	"REGISTER_POST_OK": "Success. This edge computer is now registered.",
+
+	"PACKAGE_POST_REGISTER": "Please wait, registering this edge computer with edge id: :edge_uiid",
+	"PACKAGE_POST_REGISTER_ERROR": "Registration failed. ",
+	"PACKAGE_POST_REGISTER_OK": "Success. This edge computer is now registered.",
+
 	"ALREADY_REGISTERED": "The registration file edge_id.uuid was found containing edge id :edge_uiid. Previous registration is valid.",
 
 	"REQUIRED_SERVICE_NOT_AVAILABLE": "Required service ':name' is not registered to the edge. Because suggested application is not defined for the required service, edge can not try to install application which implements the service. Search Spaceify's repository (:url) or third party repositories for applications that implement the service and install suitable application manually.",
-	"REQUIRED_SERVICE_ALREADY_REGISTERED": "Required service ':name' is registered by application ':app@:version'. Because suggested application is not defined for the required service, the already installed application provides the service this applications requires.",
-	"REQUIRED_SERVICE_INSTALL_SA": "Required service ':name' is not registered to the edge. Spm tries to install the suggested application ':app'.",
-	"REQUIRED_SERVICE_DIFFERENT_APPS": "Required service ':name' is already provided by application ':app@:version'. The suggested application ':sapp' is not installed. If you prefer to use the suggested application remove the existing application and then install the suggested application manually.",
-	"REQUIRED_SERVICE_SAME_APPS": "Required service ':name' is provided by the same application ':app@:version' as the suggested application. The suggested application ':sapp' is not reinstalled.",
+	"REQUIRED_SERVICE_ALREADY_REGISTERED": "Required service ':name' is registered by application ':name@:version'. Because suggested application is not defined for the required service, the already installed application provides the service this applications requires.",
+	"REQUIRED_SERVICE_INSTALL_SA": "Required service ':name' is not registered to the edge. Spm tries to install the suggested application ':name'.",
+	"REQUIRED_SERVICE_DIFFERENT_APPS": "Required service ':name' is already provided by application ':name@:version'. The suggested application ':sapp' is not installed. If you prefer to use the suggested application remove the existing application and then install the suggested application manually.",
+	"REQUIRED_SERVICE_SAME_APPS": "Required service ':name' is provided by the same application ':name@:version' as the suggested application. The suggested application ':sapp' is not reinstalled.",
 
 	// SPM
 	"AUTHENTICATION": "Enter user authentication for :auth.",

@@ -19,7 +19,6 @@ var disconnectionListener = null;
 var socket = { readyState: "closed" };
 
 var config = new SpaceifyConfig();
-var network = new SpaceifyNetwork();
 
 var E_NO_CONNECTION_EIO = "EIOC::connect() failed ";
 var E_NO_CONNECTION_CODE_EIO = "eio1";
@@ -33,7 +32,7 @@ self.connect = function(opts, callback)
 	options.subprotocol = opts.subprotocol || config.WS_JSON_RPC;
 	options.persistent = opts.persistent || false;						// Reduce overhead by keeping connection open between calls
 
-	uri = (!network.isSecure() && !options.is_secure ? "ws" : "wss") + "://" + options.hostname + ":" + options.port + "/json-rpc";
+	uri = (!options.is_secure ? "ws" : "wss") + "://" + options.hostname + ":" + options.port + "/json-rpc";
 
 	// NOTICE! (SPACEIFY'S) WEBSOCKET SERVER EXPECTS SPECIFIC SUBPROTOCOL(S) - SEE "REQUIRED BY SPACEIFY" CHANGES IN js/engine.io.js
 	logger.info("EIOC()::connect() " + uri);

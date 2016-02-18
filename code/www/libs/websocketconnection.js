@@ -19,7 +19,6 @@ var disconnectionListener = null;
 var socket = { readyState: 0 };
 
 var config = new SpaceifyConfig();
-var network = new SpaceifyNetwork();
 
 var E_NO_CONNECTION_WS = "WSC::connect() failed ";
 var E_NO_CONNECTION_CODE_WS = "ws1";
@@ -33,7 +32,7 @@ self.connect = function(opts, callback)
 	options.subprotocol = opts.subprotocol || config.WS_JSON_RPC;
 	options.persistent = opts.persistent || false;						// Reduce overhead by keeping connection open between calls
 
-	uri = (!network.isSecure() && !options.is_secure ? "ws" : "wss") + "://" + options.hostname + ":" + options.port + "/";
+	uri = (!options.is_secure ? "ws" : "wss") + "://" + options.hostname + ":" + options.port + "/";
 	logger.info("WSC::connect() " + uri);
 
 	socket = new WebSocket(uri, config.WS_JSON_RPC);

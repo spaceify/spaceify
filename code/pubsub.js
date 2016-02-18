@@ -5,8 +5,6 @@
  */
 
 var rebus = require("./lib/rebus");
-var utility = require("./utility");
-var config = require("./config")();
 
 function PubSub(path)
 {

@@ -407,18 +407,18 @@ var startApplication = fibrous( function(unique_name, run, throws)
 		if(!securityModel.isLocalIP(connection_ip))
 			throw utility.error(language.E_NON_EDGE_CALLER.p("Core::startApplication"));
 
+		var app = database.sync.getApplication(unique_name);
+		if(!app && throws)
+			throw utility.ferror(language.E_PACKAGE_NOT_INSTALLED.p("Core::startApplication"), {":name": unique_name});
+
 		if(isApplicationRunning.sync(unique_name, connobj))
-			throw utility.ferror(language.ALREADY_RUNNING.p("Core::startApplication"), {":app": unique_name});
+			throw utility.ferror(language.PACKAGE_ALREADY_RUNNING.p("Core::startApplication"), {":type": config.HR_TYPES[app.type], ":name": unique_name});
 
-		var app_data = database.sync.getApplication(unique_name);
-		if(!app_data && throws)
-			throw utility.ferror(language.E_UNKNOWN_APPLICATION.p("Core::startApplication"), {":name": unique_name});
-
-		if(app_data && app_data.type == config.SPACELET)
+		if(app && app.type == config.SPACELET)
 			spaceletManager.sync.start(unique_name, run, true);
-		else if(app_data && app_data.type == config.SANDBOXED)
+		else if(app && app.type == config.SANDBOXED)
 			sandboxedManager.sync.start(unique_name, true);
-		/*else if(app_data && app_data.type == config.NATIVE)
+		/*else if(app && app.type == config.NATIVE)
 			nativeManager.sync.start(unique_name, true);*/
 		}
 	catch(err)
@@ -443,7 +443,7 @@ var stopApplication = fibrous( function(unique_name, throws)
 
 	_find = self.find("application", unique_name);
 	if(!_find.manager && throws)
-		throw utility.ferror(language.E_UNKNOWN_APPLICATION.p("Core::stopApplication"), {":name": unique_name});
+		throw utility.ferror(language.E_PACKAGE_NOT_INSTALLED.p("Core::stopApplication"), {":name": unique_name});
 
 	if(_find.manager)
 		_find.manager.sync.stop(unique_name);
@@ -461,7 +461,7 @@ var removeApplication = fibrous( function(unique_name, throws)
 
 	_find = self.find("application", unique_name);
 	if(!_find.manager && throws)
-		throw utility.ferror(language.E_UNKNOWN_APPLICATION.p("Core::removeApplication"), {":name": unique_name});
+		throw utility.ferror(language.E_PACKAGE_NOT_INSTALLED.p("Core::removeApplication"), {":name": unique_name});
 
 	if(_find.manager)
 		_find.manager.sync.remove(unique_name);
@@ -638,7 +638,7 @@ var saveOptions = fibrous( function(session_id, unique_name, directory, file, da
 
 		var app = database.sync.getApplication(unique_name) || null;					// Get application, path to volume, create directory and save
 		if(!app)
-			throw utility.ferror(language.E_UNKNOWN_APPLICATION.p("Core::saveOptions"), {":name": unique_name});
+			throw utility.ferror(language.E_PACKAGE_NOT_INSTALLED.p("Core::saveOptions"), {":name": unique_name});
 
 		var volume = "";
 		if(app.type == config.SPACELET)
@@ -684,7 +684,7 @@ var loadOptions = fibrous( function(session_id, unique_name, directory, file)
 
 		var app = database.sync.getApplication(unique_name) || null;					// Get application, path to volume and load
 		if(!app)
-			throw utility.ferror(language.E_UNKNOWN_APPLICATION.p("Core::loadOptions"), {":name": unique_name});
+			throw utility.ferror(language.E_PACKAGE_NOT_INSTALLED.p("Core::loadOptions"), {":name": unique_name});
 
 		var volume = "";
 		if(app.type == config.SPACELET)

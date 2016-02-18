@@ -6,22 +6,29 @@
  * @class SpaceifyMessages
  */
 
-function SpaceifyMessages(messageCallback, readyCallback)
+function SpaceifyMessages()
 {
 var self = this
 
+var errors = [];
 var communicator = null;
 
 var config = new SpaceifyConfig();
 var network = new SpaceifyNetwork();
 var _communicator = new Communicator();
+var readyCallback = null;
+var messageCallback = null;
 
-self.connect = function(callback)
+self.connect = function(_readyCallback, _messageCallback, callback)
 	{
+	readyCallback = _readyCallback;
+	messageCallback = _messageCallback
+
 	try {
 		if(!messageCallback)
 			throw "";
 
+		errors = [];
 		network.POST_JSON(config.ACTION_URL, { action: "requestMessages" }, function(err, message_id)	// Request a message_id
 			{
 			if(err)
@@ -67,8 +74,15 @@ var receive = function(message)
 	try {
 		message = JSON.parse(message);
 
-		if(message.message == config.END_OF_MESSAGES)
+		if(typeof message.message == "undefined")
+			return;
+		else if(message.message == config.END_OF_MESSAGES)
 			throw "";
+		else if(message.message.indexOf(config.END_OF_MESSAGES_ERROR) != -1)
+			{
+			errors = JSON.parse(message.message.replace(config.END_OF_MESSAGES_ERROR, ""));
+			throw "";
+			}
 		else
 			messageCallback(message.message);
 		}
@@ -82,6 +96,11 @@ var receive = function(message)
 
 		readyCallback();
 		}
+	}
+
+self.getErrors = function()
+	{
+	return errors;
 	}
 
 }

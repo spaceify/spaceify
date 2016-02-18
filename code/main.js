@@ -10,7 +10,6 @@ var Core = require("./core");
 var Server = require("./server");
 var logger = require("./www/libs/logger");
 var config = require("./config")();
-var utility = require("./utility");
 var Iptables = require("./iptables");
 
 function Main()

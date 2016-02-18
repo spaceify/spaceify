@@ -54,4 +54,4 @@ dpkg-buildpackage -i.svn -us -uc
 
 cd -
 
-printf "\nPackages build and are in directory /tmp/build\n"
+printf "\nPackage build. Files are in directory /tmp/build\n"

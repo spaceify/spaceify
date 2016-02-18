@@ -5,8 +5,6 @@
 
 var fibrous = require("fibrous");
 var logger = require("./www/libs/logger");
-var config = require("./config")();
-var utility = require("./utility");
 var ApplicationManager = require("./applicationmanager");
 
 fibrous.run( function()

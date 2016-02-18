@@ -9,6 +9,8 @@ function SpaceifyCore()
 var self = this;
 
 var isNodeJS = (typeof exports !== "undefined" ? true : false);
+var isWindow = (typeof window !== "undefined" ? true : false);
+var secureState = (isWindow ? new SpaceifyNetwork().isSecure() : false);
 
 if(isNodeJS)
 	{
@@ -32,7 +34,7 @@ var secure_connection = null;
 
 self.startSpacelet = function(unique_name, callback)
 	{
-	call("startSpacelet", [unique_name], false, function(err, services, id, ms)
+	call("startSpacelet", [unique_name], (isWindow ? secureState : false), function(err, services, id, ms)
 		{
 		if(err)
 			callback(err, null);
@@ -57,7 +59,7 @@ self.getService = function(service_name, unique_name, callback)
 	if(service)
 		callback(null, service, -1, 0);
 	else
-		call("getService", [service_name, unique_name], false, function(err, data, id, ms)
+		call("getService", [service_name, unique_name], (isWindow ? secureState : false), function(err, data, id, ms)
 			{
 			if(!err && isCache())
 				getCache().setService(data, unique_name);
@@ -68,7 +70,7 @@ self.getService = function(service_name, unique_name, callback)
 
 self.getServices = function(unique_names, callback)
 	{
-	call("getServices", [unique_names], false, callback);
+	call("getServices", [unique_names], (isWindow ? secureState : false), callback);
 	}
 
 self.getManifest = function(unique_name, callback)
@@ -78,7 +80,7 @@ self.getManifest = function(unique_name, callback)
 	if(manifest)
 		callback(null, manifest, -1, 0);
 	else
-		call("getManifest", [unique_name], false, function(err, data, id, ms)
+		call("getManifest", [unique_name], (isWindow ? secureState : false), function(err, data, id, ms)
 			{
 			if(!err && isCache())
 				getCache().setManifest(unique_name, data);
@@ -104,7 +106,7 @@ self.loadOptions = function(session_id, unique_name, directory, filename, callba
 
 self.getApplicationData = function(callback)
 	{
-	call("getApplicationData", [], false, function(err, data, id, ms)
+	call("getApplicationData", [], (isWindow ? secureState : false), function(err, data, id, ms)
 		{
 		if(!err && isCache())
 			{
@@ -129,18 +131,13 @@ self.getApplicationURL = function(unique_name, callback)
 	if(urls)
 		callback(null, urls, -1, 0);
 	else
-		call("getApplicationURL", [unique_name], false, function(err, data, id, ms)
+		call("getApplicationURL", [unique_name], (isWindow ? secureState : false), function(err, data, id, ms)
 			{
 			if(!err && isCache())
 				getCache().setApplicationURL(unique_name, data);
 
 			callback(err, data, id, ms);
 			});
-	}
-
-self.setSplashAccepted = function(callback)
-	{
-	call("setSplashAccepted", [], false, callback);
 	}
 
 self.isApplicationRunning = function(unique_name, callback)
@@ -150,7 +147,7 @@ self.isApplicationRunning = function(unique_name, callback)
 	if(is_running === null)
 		callback(null, true, -1, 0);
 	else
-		call("isApplicationRunning", [unique_name], false, function(err, data, id, ms)
+		call("isApplicationRunning", [unique_name], (isWindow ? secureState : false), function(err, data, id, ms)
 			{
 			if(!err && isCache())
 				getCache().setRunning(unique_name, data);
@@ -161,7 +158,7 @@ self.isApplicationRunning = function(unique_name, callback)
 
 self.setSplashAccepted = function(callback)
 	{
-	call("setSplashAccepted", [], false, callback);
+	call("setSplashAccepted", [], (isWindow ? secureState : false), callback);
 	}
 
 self.registerService = function(service_name, callback)
@@ -196,7 +193,7 @@ var callRpc = function(method, params, is_secure, callback)
 
 var connect = function(is_secure, callback)
 	{
-	if(isNodeJS || (window && window.WebSocket))
+	if(isNodeJS || (isWindow && window.WebSocket))
 		port = !is_secure ? config.CORE_PORT_WEBSOCKET : config.CORE_PORT_WEBSOCKET_SECURE;
 	else
 		port = !is_secure ? config.CORE_PORT_ENGINEIO : config.CORE_PORT_ENGINEIO_SECURE;
@@ -213,7 +210,7 @@ var connect = function(is_secure, callback)
 	// CACHE -- -- -- -- -- -- -- -- -- -- //
 var getCache = function()
 	{
-	return (typeof window !== "undefined" && window.spaceifyCache ? window.spaceifyCache : null);
+	return (isWindow && window.spaceifyCache ? window.spaceifyCache : null);
 	}
 
 var isCache = function()

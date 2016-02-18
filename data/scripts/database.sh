@@ -2,16 +2,7 @@
 # Spaceify Inc. 7.7.2015
 # Database creation and maintenance
 
-# ----- Set initial positions ----- #
-position ()
-{
-	pos=1
-	unique_names=$(sqlite3 $2 "SELECT unique_name FROM applications WHERE type='$1';")
-	while read -r unique_name; do
-		sqlite3 $2 "UPDATE applications SET position=$pos WHERE unique_name='$unique_name';"
-		((pos++))
-	done <<< "$unique_names"
-}
+#printf "\e[4mDatabase management\e[0m\n\n"
 
 # ----- Create Spaceify's database ----- #
 
@@ -25,7 +16,9 @@ if [ ! -e $dbs ]; then																		# create a new database
 	sqlite3 $dbs < /var/lib/spaceify/data/db/create.sql
 fi
 
-	# -- set release name and version and database version --#
+chmod 0764 spaceify.db > /dev/null 2>&1 || true											# spm must be able to write to the database
+
+# ----- Set release name and version and database version ----- #
 versions=$(< /var/lib/spaceify/versions)
 release_version=$(echo $versions | awk -F : '{print $2}')
 release_name=$(echo $versions | awk -F : '{print $3}')
@@ -35,13 +28,33 @@ current_version=$(sqlite3 $dbs "SELECT db_version FROM settings;")
 
 sqlite3 $dbs "UPDATE settings SET release_name='${release_name}', release_version='${release_version}', db_version='${db_version}';"
 
-chmod 0764 data/db/spaceify.db > /dev/null 2>&1 || true										# spm must be able to write to the database
+# ----- (Re)create user table row ----- #
+if [ -e /tmp/edge_id.uuid ]; then
+	eid=$(</tmp/edge_id.uuid)
+elif [ -e /var/lib/spaceify/data/db/edge_id.uuid ]; then										# Find existing registration
+	eid=$(</var/lib/spaceify/data/db/edge_id.uuid)
+else
+	eid=","
+fi
+OIFS="$IFS"; IFS="," read -ra auuid <<< "$eid"; IFS="$OIFS"
+eid="${auuid[0]}"
+epw="${auuid[1]}"
 
-# ----- Changes between database versions ----- #
-if (( $current_version < 6 )); then															# add position column and set initial positions
+as=$(< /var/lib/spaceify/data/db/admin_salt) > /dev/null 2>&1 || true
+ah=$(< /var/lib/spaceify/data/db/admin_hash) > /dev/null 2>&1 || true
+rm /var/lib/spaceify/data/db/admin_salt > /dev/null 2>&1 || true
+rm /var/lib/spaceify/data/db/admin_hash > /dev/null 2>&1 || true
+
+ac=$(sqlite3 $dbs "SELECT admin_login_count FROM user LIMIT 1;")
+al=$(sqlite3 $dbs "SELECT admin_last_login FROM user LIMIT 1;")
+if [ "$ac" == "" ]; then ac=0; fi
+if [ "$al" == "" ]; then al=0; fi
+
+sqlite3 $dbs "DELETE FROM user;"
+
+sqlite3 $dbs "INSERT INTO user (admin_password_hash, admin_salt, edge_id, edge_password, admin_login_count, admin_last_login) VALUES('$ah', '$as', '$eid', '$epw', $ac, $al);"
+
+# -----Changes between database versions ----- #
+if (( $current_version < 6 )); then															# add position column
 	sqlite3 $dbs "ALTER TABLE applications ADD COLUMN position INTEGER DEFAULT 0;"
-
-	position "spacelet" $dbs
-	position "sandboxed" $dbs
-	position "native" $dbs
 fi

@@ -299,7 +299,7 @@ self.remakeGET = function(get, exclude, include)
 
 self.postPublish = function(package, username, password, release_name, callback)
 	{
-	require("./www/libs/logger").force(language.POSTING_PACKAGE);
+	require("./www/libs/logger").force(language.PACKAGE_POSTING);
 
 	request({
 		url: config.REGISTRY_PUBLISH_URL,
@@ -347,7 +347,7 @@ self.postRegister = function(edge_uuid, edge_password, callback)
 self.error = function()	// errors are in the arguments!!!
 	{
 	var path, paths = [];
-	var code, ccode = "", codes = [];
+	var code, codes = [];
 	var message = "", messages = [];
 	for(var i=0; i<arguments.length; i++)																// More than one error can be passed in the arguments
 		{
@@ -366,6 +366,7 @@ self.error = function()	// errors are in the arguments!!!
 			}
 		}
 
+	var ccode = "";
 	for(var i=0; i<messages.length; i++)																// Make a simple error string of the error arrays
 		{
 		code = (codes[i] ? "(" + codes[i] + ") " : "");

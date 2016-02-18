@@ -13,7 +13,6 @@ var fibrous = require("fibrous");
 var engineio = require("engine.io");
 var crypt = require("./crypt");
 var config = require("./config")();
-var language = require("./language");
 var WebSocketRPCConnection = require("./websocketrpcconnection");
 
 function ConnectionHub()

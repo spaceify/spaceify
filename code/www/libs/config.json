@@ -110,7 +110,8 @@
   "SANDBOXED": "sandboxed",
   "NATIVE": "native",
   "ANY": "any",
-  "SHORT_APPLICATION_TYPES": {"spacelet": "spacelet", "sandboxed": "sandboxed", "native": "native"},
+  "HR_TYPES": {"spacelet": "Spacelet", "sandboxed": "Application", "native": "Native application"},
+  "HRL_TYPES": {"spacelet": "spacelet", "sandboxed": "application", "native": "native application"},
 
   "OPEN": "open",
   "OPEN_LOCAL": "open_local",
@@ -177,6 +178,7 @@
   "ENGINEIORPCS": 6,
 
   "END_OF_MESSAGES": "<end>",
+  "END_OF_MESSAGES_ERROR": "<error>",
   "MESSAGING_FAILED": "<fail>",
 
   "SERVER": 0,

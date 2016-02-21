@@ -20,7 +20,7 @@ var socket = { readyState: "closed" };
 
 var config = new SpaceifyConfig();
 
-var E_NO_CONNECTION_EIO = "EIOC::connect() failed ";
+var E_NO_CONNECTION_EIO = "EIOC::connect failed ";
 var E_NO_CONNECTION_CODE_EIO = "eio1";
 
 // The callback is a standard node-type callback with error as its first parameter
@@ -35,7 +35,7 @@ self.connect = function(opts, callback)
 	uri = (!options.is_secure ? "ws" : "wss") + "://" + options.hostname + ":" + options.port + "/json-rpc";
 
 	// NOTICE! (SPACEIFY'S) WEBSOCKET SERVER EXPECTS SPECIFIC SUBPROTOCOL(S) - SEE "REQUIRED BY SPACEIFY" CHANGES IN js/engine.io.js
-	logger.info("EIOC()::connect() " + uri);
+	logger.info("EIOC::connect " + uri);
 	socket = eio.Socket(uri, {transports: ["websocket", "polling"], binaryType: "arraybuffer", spaceify_subprotocol: options.subprotocol});
 
 	socket.on("open", function()
@@ -48,7 +48,7 @@ self.connect = function(opts, callback)
 
 	socket.on("close", function()
 		{
-		logger.info("EIOC()::disconnect " + uri);
+		logger.info("EIOC::disconnect " + uri);
 
 		if(typeof disconnectionListener == "function")
 			disconnectionListener();
@@ -63,7 +63,7 @@ self.connect = function(opts, callback)
 
 	socket.on("message", function(data)
 		{ // The data is expected to be a string
-		logger.info("EIOC::onMessage() " + data);
+		logger.info("EIOC::onMessage " + data);
 
 		onMessage(data);
 		});
@@ -85,7 +85,7 @@ self.sendMessage = function(message)
 	try {
 		message = (typeof message == "string" ? message : JSON.stringify(message));
 
-		logger.info("EIOC::sendMessage() " + message);
+		logger.info("EIOC::sendMessage " + message);
 
 		socket.send(message);
 		}
@@ -98,7 +98,7 @@ self.sendBinary = function(buffer)
 	try {
 		// Make ArrayBuffer?
 
-		logger.info("EIOC::sendBinary() length: " + buffer.byteLength);
+		logger.info("EIOC::sendBinary length: " + buffer.byteLength);
 
 		if(self.isOpen())
 			socket.send(buffer);
@@ -109,7 +109,7 @@ self.sendBinary = function(buffer)
 
 var onMessage = function(message)
 	{
-	logger.info("EIOC::onMessage() " + message);
+	logger.info("EIOC::onMessage " + message);
 
 	if(messageListener)
 		messageListener(message);

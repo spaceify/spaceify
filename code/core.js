@@ -159,10 +159,9 @@ var accessListener = function(remoteAddress, remotePort, origin, server_type, is
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 // EXPOSED RPC METHODS  // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-var startSpacelet = fibrous( function(unique_name)
+var startSpacelet = fibrous( function(unique_name, connObj/*Added by Spaceify*/)
 	{
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-	var connection_ip = connobj.remoteAddress;
+	var connection_ip = connObj.remoteAddress;
 	var spacelet = null;
 
 	if(securityModel.isApplicationIP(connection_ip))
@@ -179,10 +178,9 @@ var startSpacelet = fibrous( function(unique_name)
 	return (spacelet ? spacelet.getProvidesServices() : []);
 	});
 
-var registerService = fibrous( function(service_name)
+var registerService = fibrous( function(service_name, connObj/*Added by Spaceify*/)
 	{
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-	var connection_ip = connobj.remoteAddress;
+	var connection_ip = connObj.remoteAddress;
 
 	// ALLOW REGISTRATION FROM APPLICATIONS ONLY - STARTED CONTAINERS (APPLICATIONS) HAVE AN IP THAT IDENTIFIES THEM
 	var _find = self.find("container_ip", connection_ip);
@@ -200,10 +198,9 @@ var registerService = fibrous( function(service_name)
 	return service;
 	});
 
-var unregisterService = fibrous( function(service_name)
+var unregisterService = fibrous( function(service_name, connObj/*Added by Spaceify*/)
 	{
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-	var connection_ip = connobj.remoteAddress;
+	var connection_ip = connObj.remoteAddress;
 
 	// ALLOW UNREGISTRATION FROM APPLICATIONS ONLY - STARTED CONTAINERS (APPLICATIONS) HAVE AN IP THAT IDENTIFIES THEM
 	var _find = self.find("container_ip", connection_ip);
@@ -221,10 +218,9 @@ var unregisterService = fibrous( function(service_name)
 	return service;
 	});
 
-var getService = fibrous( function(service_name, unique_name)
+var getService = fibrous( function(service_name, unique_name, connObj/*Added by Spaceify*/)
 	{ // Get either by service name or service name and unique_name.
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-	var connection_ip = connobj.remoteAddress;
+	var connection_ip = connObj.remoteAddress;
 
 	// TRY TO FIND THE SERVICE
 	var _service = self.find("service", {service_name: service_name, unique_name: unique_name});
@@ -243,7 +239,7 @@ var getService = fibrous( function(service_name, unique_name)
 	// http and https services are "open" to everyone
 	/*if(_find.obj.service_type == config.OPEN) // UNLESS SERVICE TYPE IS OPEN
 		{
-		if((client = self.find("container_ip", connobj.remoteAddress)) == null)
+		if((client = self.find("container_ip", connObj.remoteAddress)) == null)
 		throw utility.error(language.E_GET_SERVICE_UNKNOWN_ADDRESS.p("Core::getService"));
 		// ip not from local source
 		}
@@ -259,10 +255,9 @@ var getService = fibrous( function(service_name, unique_name)
 	return _service.obj;
 	});
 
-var getServices = fibrous( function(unique_names)
+var getServices = fibrous( function(unique_names, connObj/*Added by Spaceify*/)
 	{ // Get all the services for all the unique applications on the list
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-	var connection_ip = connobj.remoteAddress;
+	var connection_ip = connObj.remoteAddress;
 
 	// TRY TO FIND THE SERVICE
 	var services = [];
@@ -276,10 +271,9 @@ var getServices = fibrous( function(unique_names)
 	return services;
 	});
 	
-var adminLogIn = fibrous( function(password)
+var adminLogIn = fibrous( function(password, connObj/*Added by Spaceify*/)
 	{
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-	var connection_ip = connobj.remoteAddress;
+	var connection_ip = connObj.remoteAddress;
 
 	var session_id = null;
 
@@ -332,10 +326,9 @@ var adminLogIn = fibrous( function(password)
 	return session_id;
 	});
 
-var adminLogOut = fibrous( function(session_id)
+var adminLogOut = fibrous( function(session_id, connObj/*Added by Spaceify*/)
 	{
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-	var connection_ip = connobj.remoteAddress;
+	var connection_ip = connObj.remoteAddress;
 
 	try {
 		if(!securityModel.isLocalIP(connection_ip))											// Only the local callers can call this method
@@ -365,10 +358,9 @@ var isAdminLoggedIn = fibrous( function(session_id)
 	return (session ? true : false);
 	});
 
-var setSplashAccepted = fibrous( function()
+var setSplashAccepted = fibrous( function(connObj)
 	{
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-	var connection_ip = connobj.remoteAddress;
+	var connection_ip = connObj.remoteAddress;
 
 	try {
 		var lease = dhcpdlog.getDHCPLeaseByIP(connection_ip);							// Lease must exist for the device
@@ -398,10 +390,9 @@ var setSplashAccepted = fibrous( function()
 	return true;
 	});
 
-var startApplication = fibrous( function(unique_name, run, throws)
+var startApplication = fibrous( function(unique_name, run, throws, connObj/*Added by Spaceify*/)
 	{
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-	var connection_ip = connobj.remoteAddress;
+	var connection_ip = connObj.remoteAddress;
 
 	try {
 		if(!securityModel.isLocalIP(connection_ip))
@@ -411,7 +402,7 @@ var startApplication = fibrous( function(unique_name, run, throws)
 		if(!app && throws)
 			throw utility.ferror(language.E_PACKAGE_NOT_INSTALLED.p("Core::startApplication"), {":name": unique_name});
 
-		if(isApplicationRunning.sync(unique_name, connobj))
+		if(isApplicationRunning.sync(unique_name, connObj))
 			throw utility.ferror(language.PACKAGE_ALREADY_RUNNING.p("Core::startApplication"), {":type": config.HR_TYPES[app.type], ":name": unique_name});
 
 		if(app && app.type == config.SPACELET)
@@ -433,10 +424,9 @@ var startApplication = fibrous( function(unique_name, run, throws)
 	return true;
 	});
 
-var stopApplication = fibrous( function(unique_name, throws)
+var stopApplication = fibrous( function(unique_name, throws, connObj/*Added by Spaceify*/)
 	{
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-	var connection_ip = connobj.remoteAddress;
+	var connection_ip = connObj.remoteAddress;
 
 	if(!securityModel.isLocalIP(connection_ip))											// Only local caller (applicationmanager/spm) can call this method
 		throw utility.error(language.E_NON_EDGE_CALLER.p("Core::stopApplication"));
@@ -451,10 +441,9 @@ var stopApplication = fibrous( function(unique_name, throws)
 	return true;
 	});
 
-var removeApplication = fibrous( function(unique_name, throws)
+var removeApplication = fibrous( function(unique_name, throws, connObj/*Added by Spaceify*/)
 	{ // Stops application and removes it from the running applications list - files are not removed.
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-	var connection_ip = connobj.remoteAddress;
+	var connection_ip = connObj.remoteAddress;
 
 	if(!securityModel.isLocalIP(connection_ip))
 		throw utility.error(language.E_NON_EDGE_CALLER.p("Core::removeApplication"));
@@ -471,17 +460,13 @@ var removeApplication = fibrous( function(unique_name, throws)
 
 var isApplicationRunning = fibrous( function(unique_name)
 	{
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-
 	_find = self.find("is_running", unique_name);
 
 	return _find.obj;
 	});
 
-var getApplicationData = fibrous( function(unique_name)
+var getApplicationData = fibrous( function()
 	{
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-
 	var app_dir = "";
 	var app_data = null;
 	var manifest = null;
@@ -538,8 +523,6 @@ var getApplicationData = fibrous( function(unique_name)
 
 var getApplicationURL = fibrous( function(unique_name)
 	{
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-
 	var app_dir = "";
 
 	try {
@@ -585,10 +568,8 @@ var getManifest = fibrous( function(unique_name)
 	return _find.obj;
 	});
 
-var connectTo = fibrous( function(service_name, is_secure)
+var connectTo = fibrous( function(service_name, is_secure, connObj/*Added by Spaceify*/)
 	{
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-
 	var _find = spaceletManager.find("service", service_name);
 	if(!_find.obj)
 		throw utility.ferror(language.E_NOT_A_SPACELET_SERVICE.p("Core::getManifest"), {":name": service_name});
@@ -597,13 +578,11 @@ var connectTo = fibrous( function(service_name, is_secure)
 		
 	var port = (is_secure ? service.secure_port : service.port);
 
-	ConnectionHub.connectTo.sync(service_port, is_secure, connobj.server_type, connobj.id);
+	ConnectionHub.connectTo.sync(service_port, is_secure, connObj.server_type, connObj.id);
 	});
 
 var updateSettings = fibrous( function(settings, session_id)
 	{
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-
 	try {
 		if(!isAdminLoggedIn(session_id))
 			throw utility.error(language.E_AUTHENTICATION_FAILED.p("Core::updateSettings"));
@@ -624,10 +603,9 @@ var updateSettings = fibrous( function(settings, session_id)
 	});
 
 // USER APPLICATION SPECIFIC
-var saveOptions = fibrous( function(session_id, unique_name, directory, file, data)
+var saveOptions = fibrous( function(session_id, unique_name, directory, file, data, connObj/*Added by Spaceify*/)
 	{
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-	var connection_ip = connobj.remoteAddress;
+	var connection_ip = connObj.remoteAddress;
 
 	var optionsOk = false;
 	var session = securityModel.findSession(session_id);
@@ -670,10 +648,9 @@ var saveOptions = fibrous( function(session_id, unique_name, directory, file, da
 	return optionsOk;
 	});
 
-var loadOptions = fibrous( function(session_id, unique_name, directory, file)
+var loadOptions = fibrous( function(session_id, unique_name, directory, file, connObj/*Added by Spaceify*/)
 	{
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-	var connection_ip = connobj.remoteAddress;
+	var connection_ip = connObj.remoteAddress;
 
 	var data = null;
 	var session = securityModel.findSession(session_id);

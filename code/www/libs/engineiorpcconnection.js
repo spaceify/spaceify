@@ -21,7 +21,7 @@ var socket = { readyState: "closed" };
 var config = new SpaceifyConfig();
 var network = new SpaceifyNetwork();
 
-var E_NO_CONNECTION_EIO = "EIORPCC::connect() failed ";
+var E_NO_CONNECTION_EIO = "EIORPCC::connect failed ";
 var E_NO_CONNECTION_CODE_EIO = "eio1";
 
 new SpaceifyUtility().extendClass(new RPC(self), self);					// Make methods from the handler class available to this class
@@ -38,7 +38,7 @@ self.connect = function(opts, callback)
 	uri = (!network.isSecure() && !options.is_secure ? "ws" : "wss") + "://" + options.hostname + ":" + options.port + "/json-rpc";
 
 	// NOTICE! (SPACEIFY'S) WEBSOCKET SERVER EXPECTS SPECIFIC SUBPROTOCOL(S) - SEE "REQUIRED BY SPACEIFY" CHANGES IN js/engine.io.js
-	logger.info("EIORPCC()::connect() " + uri);
+	logger.info("EIORPCC::connect " + uri);
 	socket = eio.Socket(uri, {transports: ["websocket", "polling"], binaryType: "arraybuffer", spaceify_subprotocol: options.subprotocol});
 
 	socket.on("open", function()
@@ -51,7 +51,7 @@ self.connect = function(opts, callback)
 
 	socket.on("close", function()
 		{
-		logger.info("EIORPCC()::disconnect " + uri);
+		logger.info("EIORPCC::disconnect " + uri);
 
 		if(typeof disconnectionListener == "function")
 			disconnectionListener();
@@ -66,7 +66,7 @@ self.connect = function(opts, callback)
 
 	socket.on("message", function(data)
 		{ // The data is expected to be a string
-		logger.info("EIORPCC::onMessage() " + data);
+		logger.info("EIORPCC::onMessage " + data);
 
 		self.onMessage(data);
 		});
@@ -88,7 +88,7 @@ self.sendMessage = function(message)
 	try {
 		message = (typeof message == "string" ? message : JSON.stringify(message));
 
-		logger.info("EIORPCC::sendMessage() " + message);
+		logger.info("EIORPCC::sendMessage " + message);
 
 		socket.send(message);
 		}
@@ -101,7 +101,7 @@ self.sendBinary = function(buffer)
 	try {
 		// Make ArrayBuffer?
 
-		logger.info("EIORPCC::sendBinary() length: " + buffer.byteLength);
+		logger.info("EIORPCC::sendBinary length: " + buffer.byteLength);
 
 		socket.send(buffer);
 		}

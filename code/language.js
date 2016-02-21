@@ -265,7 +265,7 @@ var language =
 	"INSTALL_UPDATE_DATABASE": " - Writing database entries.",
 	"INSTALL_APPLICATION_OK": ":type :name@:version is now installed.",
 
-	"SERVICE_ALREADY_REGISTERED": "Service name :name is already registered by application :name",
+	"SERVICE_ALREADY_REGISTERED": "Service name :service_name is already registered by application :unique_name",
 
 	"GET_SOURCES_OK": "Source codes are now loaded and are in the directory :directory.",
 
@@ -275,11 +275,11 @@ var language =
 
 	"ALREADY_REGISTERED": "The registration file edge_id.uuid was found containing edge id :edge_uiid. Previous registration is valid.",
 
-	"REQUIRED_SERVICE_NOT_AVAILABLE": "Required service ':name' is not registered to the edge. Because suggested application is not defined for the required service, edge can not try to install application which implements the service. Search Spaceify's repository (:url) or third party repositories for applications that implement the service and install suitable application manually.",
-	"REQUIRED_SERVICE_ALREADY_REGISTERED": "Required service ':name' is registered by application ':name@:version'. Because suggested application is not defined for the required service, the already installed application provides the service this applications requires.",
-	"REQUIRED_SERVICE_INSTALL_SA": "Required service ':name' is not registered to the edge. Spm tries to install the suggested application ':name'.",
-	"REQUIRED_SERVICE_DIFFERENT_APPS": "Required service ':name' is already provided by application ':name@:version'. The suggested application ':sapp' is not installed. If you prefer to use the suggested application remove the existing application and then install the suggested application manually.",
-	"REQUIRED_SERVICE_SAME_APPS": "Required service ':name' is provided by the same application ':name@:version' as the suggested application. The suggested application ':sapp' is not reinstalled.",
+	"REQUIRED_SERVICE_NOT_AVAILABLE": "Required service ':service_name' is not registered to the edge. Because suggested application is not defined for the required service, edge can not try to install application which implements the service. Search Spaceify's repository (:url) or third party repositories for applications that implement the service and install suitable application manually.",
+	"REQUIRED_SERVICE_ALREADY_REGISTERED": "Required service ':service_name' is registered by application ':unique_name@:version'. Because suggested application is not defined for the required service, the already installed application provides the service this applications requires.",
+	"REQUIRED_SERVICE_INSTALL_SA": "Required service ':service_name' is not registered to the edge. Spm tries to install the suggested application ':unique_name'.",
+	"REQUIRED_SERVICE_DIFFERENT_APPS": "Required service ':service_name' is already provided by application ':unique_name@:version'. The suggested application ':sapp' is not installed. If you prefer to use the suggested application remove the existing application and then install the suggested application manually.",
+	"REQUIRED_SERVICE_SAME_APPS": "Required service ':service_name' is provided by the same application ':unique_name@:version' as the suggested application. The suggested application ':sapp' is not reinstalled.",
 
 	// SPM
 	"AUTHENTICATION": "Enter user authentication for :auth.",

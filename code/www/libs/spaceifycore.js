@@ -14,7 +14,7 @@ var secureState = (isWindow ? new SpaceifyNetwork().isSecure() : false);
 
 if(isNodeJS)
 	{
-	var api_path = process.env.PORT_80 ? "/api/" : "/var/lib/spaceify/code/";
+	var api_path = process.env.IS_REAL_SPACEIFY ? "/api/" : "/var/lib/spaceify/code/";
 
 	var config = require(api_path + "config")();
 	var _Communicator = require(api_path + "www/libs/communicator.js");

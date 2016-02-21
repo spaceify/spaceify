@@ -12,7 +12,7 @@ var isNodeJS = (typeof exports !== "undefined" ? true : false);
 
 if(isNodeJS)
 	{
-	var api_path = process.env.PORT_80 ? "/api/" : "/var/lib/spaceify/code/";
+	var api_path = process.env.IS_REAL_SPACEIFY ? "/api/" : "/var/lib/spaceify/code/";
 
 	var fs = require("fs");
 	var config = require(api_path + "config")();

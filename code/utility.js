@@ -425,8 +425,8 @@ self.saveJSON = fibrous( function(file, json, bThrows)
 	var success = false;
 
 	try {
-		var jsondata = JSON.stringify(json);
-
+		var jsondata = JSON.stringify(json, null, 2);
+console.log(jsondata);
 		fs.sync.writeFile(file, jsondata, {encoding: "utf8"});
 
 		success = true;

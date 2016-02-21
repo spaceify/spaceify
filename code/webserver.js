@@ -37,7 +37,7 @@ var SESSIONTOKEN = "sessiontoken";
 var layout = null;
 var languages = {};
 
-var isSpaceify = (typeof process.env.PORT_80 == "undefined" ? true : false);
+var isSpaceify = (typeof process.env.IS_REAL_SPACEIFY == "undefined" ? true : false);
 
 self.connect = function(opts, callback)
 	{

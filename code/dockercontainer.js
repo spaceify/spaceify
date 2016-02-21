@@ -122,7 +122,6 @@ self.startContainer = fibrous( function(portCount, imageNameOrId, volumes, binds
 		containerPorts.push(hostPort);
 		logger.info("HostPort " + port + " = " + hostPort);
 
-		//envPorts += " && export PORT_" + port.replace(/[^0-9]/g, "") + "=" + hostPort;
 		envPorts += "export PORT_" + port.replace(/[^0-9]/g, "") + "=" + hostPort + "\n";
 		}
 
@@ -167,6 +166,7 @@ self.runApplication = fibrous( function(appobj)
 	var bash = 	  "cd " + config.APPLICATION_PATH + "\n"
 				+ "printf \""
 				+ "#!/bin/bash" + "\n"
+				+ "export IS_REAL_SPACEIFY=YES\n"
 				+ "export NODE_PATH=" + config.API_NODE_MODULES_DIRECTORY + "\n"
 				+ "export APPLICATION_INITIALIZED=" + config.APPLICATION_INITIALIZED + "\n"
 				+ "export APPLICATION_UNINITIALIZED=" + config.APPLICATION_UNINITIALIZED + "\n"
@@ -181,14 +181,6 @@ self.runApplication = fibrous( function(appobj)
 				+ "\" > /tmp/run.sh && bash /tmp/run.sh \n";
 
 	var response = dockerHelper.sync.executeCommand(bash, [config.APPLICATION_INITIALIZED, config.APPLICATION_UNINITIALIZED], true);
-
-	/*var response = dockerHelper.sync.executeCommand(
-									"export NODE_PATH=" + config.API_NODE_MODULES_DIRECTORY
-									+ " && export APPLICATION_INITIALIZED=" + config.APPLICATION_INITIALIZED
-									+ " && export APPLICATION_UNINITIALIZED=" + config.APPLICATION_UNINITIALIZED
-									+ envPorts
-									+ " && cd " + config.APPLICATION_PATH
-									+ " && " + appobj.getStartCommand() + " &", [config.APPLICATION_INITIALIZED, config.APPLICATION_UNINITIALIZED], true);*/
 
 	return response;
 	});

@@ -185,7 +185,8 @@ var returnURL = function(src, urls, callback)
 		var obj_get = network.parseGET(src, false);
 		obj_get["app"] = urls.unique_name;
 		obj_get["type"] = urls.type;
-		var app_url = network.getProtocol(true) + (!network.isSecure() ? urls.http : urls.https) + src + network.makeGET(obj_get);
+
+		var app_url = network.getProtocol(true) + (!network.isSecure() ? urls.http_url : urls.https_url) + src + network.makeGET(obj_get);
 
 		callback(null, app_url);
 		}

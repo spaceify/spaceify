@@ -4,7 +4,7 @@
  * @class SpaceifyApplication
  */
 
-var isRealSpaceify = process.env.PORT_80;
+var isRealSpaceify = process.env.IS_REAL_SPACEIFY;
 
 var api_path = isRealSpaceify ? "/api/" : "/var/lib/spaceify/code/";
 
@@ -135,10 +135,13 @@ var stop = fibrous( function()
 	});
 
 	// METHODS -- -- -- -- -- -- -- -- -- -- //
-self.getOwnUrl = function(is_secure)
+self.getOwnUrl = function(is_secure, use_ip)
 	{
-	var port = (!is_secure ? process.env.PORT_80 : process.env.PORT_443);
-	var ownUrl = (!is_secure ? "http://" : "https://") + config.EDGE_HOSTNAME + ":" + port;
+	http_port = (isRealSpaceify ? process.env.PORT_80 : HTTP_PORT);
+	https_port = (isRealSpaceify ? process.env.PORT_443 : HTTPS_PORT);
+
+	var port = (!is_secure ? http_port : https_port);
+	var ownUrl = (!is_secure ? "http://" : "https://") + (!use_ip ? config.EDGE_HOSTNAME : config.EDGE_IP) + ":" + port;
 
 	return ownUrl;
 	}
@@ -154,7 +157,7 @@ self.getRequiredServiceSecure = function(service_name)
 	return spaceifyService.getRequiredServiceSecure(service_name);
 	}
 
-self.exposeRpcMethodRequired = function (name, object, method, service_name)
+self.exposeRpcMethodRequired = function(name, object, method, service_name)
 	{
 	spaceifyService.getRequiredService(service_name).exposeRpcMethod(name, object, method);
 	spaceifyService.getRequiredServiceSecure(service_name).exposeRpcMethod(name, object, method);

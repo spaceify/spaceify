@@ -20,7 +20,7 @@ var socket = { readyState: 0 };
 
 var config = new SpaceifyConfig();
 
-var E_NO_CONNECTION_WS = "WSRPCC::connect() failed ";
+var E_NO_CONNECTION_WS = "WSRPCC::connect failed ";
 var E_NO_CONNECTION_CODE_WS = "ws1";
 
 new SpaceifyUtility().extendClass(new RPC(self), self);					// Make methods from the handler class available to this class
@@ -35,7 +35,7 @@ self.connect = function(opts, callback)
 	options.persistent = opts.persistent || false;						// Reduce overhead by keeping connection open between calls
 
 	uri = (!options.is_secure ? "ws" : "wss") + "://" + options.hostname + ":" + options.port + "/";
-	logger.info("WSRPCC::connect() " + uri);
+	logger.info("WSRPCC::connect " + uri);
 
 	socket = new WebSocket(uri, config.WS_JSON_RPC);
 	socket.binaryType = "arraybuffer";
@@ -46,7 +46,7 @@ self.connect = function(opts, callback)
 			connectionListener();
 
 		callback(null, true);
-		};
+		}
 
 	socket.onclose = function()
 		{ 
@@ -54,7 +54,7 @@ self.connect = function(opts, callback)
 
 		if(typeof disconnectionListener == "function")
 			disconnectionListener();
-		};
+		}
 
 	socket.onerror = function(evt)
 		{
@@ -86,7 +86,7 @@ self.sendMessage = function(message)
 	try {
 		message = (typeof message == "string" ? message : JSON.stringify(message));
 
-		logger.info("WSRPCC::sendMessage() " + message);
+		logger.info("WSRPCC::sendMessage " + message);
 
 		socket.send(message);
 		}
@@ -99,7 +99,7 @@ self.sendBinary = function(buffer)
 	try {
 		// Make ArrayBuffer?
 
-		logger.info("WSRPCC::sendBinary() length: " + buffer.byteLength);
+		logger.info("WSRPCC::sendBinary length: " + buffer.byteLength);
 
 		connection.send(buffer);
 		}

@@ -20,11 +20,15 @@ var callSequence = 1;
 var callbacks = new Object();
 var rpcMethods = new Object();
 
+// http://stackoverflow.com/questions/1007981/how-to-get-function-parameter-names-values-dynamically-from-javascript
+var ARGUMENT_NAMES = /([^\s,]+)/g;
+var STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
+
 var isNodeJs = (typeof exports !== "undefined" ? true : false);
 
 if(isNodeJs)
 	{
-	var isApplication = process.env.PORT_80;
+	var isApplication = process.env.IS_REAL_SPACEIFY;
 
 	var api_path = isApplication ? "/api/" : "/var/lib/spaceify/code/";
 
@@ -39,7 +43,23 @@ else
 
 self.exposeRpcMethod = function(name, object, method)
 	{
-	rpcMethods[name] = {object: object, method: method};
+	var fnStr = method.toString().replace("fibrous(", "");
+
+	// Get count of parameters in the method
+	fnStr = fnStr.replace(STRIP_COMMENTS, "");
+	var result = fnStr.slice(fnStr.indexOf("(") + 1, fnStr.indexOf(")")).match(ARGUMENT_NAMES);
+	if(result === null)
+		result = [];
+
+	// Is connObj, serviceObj or rpcObj explicitly defined in the parameters and is it the last parameter. =>
+	// Exposed method has named the connection object and the "real" parameter count must be one less
+	// for this to be secure. The option to name the connection object is implemented for understandability 
+	// and convenience reasons. If connection object (connObj/serviceObj/rpcObj) is not named it can be acquired 
+	// only from arguments[arguments.length - 1].
+	var objStr = (result.length > 0 ? result[result.length - 1] : "");
+	var sco = (result.length > 0 && (objStr == "connObj" || objStr == "serviceObj" || objStr == "rpcObj")) ? 1 : 0;
+
+	rpcMethods[name] = {object: object, method: method, params_length: result.length - sco};
 	}
 
 /**
@@ -57,7 +77,7 @@ self.callRpc = function(methods, params, object)
 	var connobj_or_id = null, listener;
 
 	try {
-		if(arguments.length == 4)														// Calls from client implementations pass only listener in the arguments
+		if(arguments.length <= 4)														// Calls from client implementations pass only listener in the arguments
 			{
 			listener = arguments[arguments.length - 1];
 
@@ -152,7 +172,7 @@ var onRPC = function(message)
 		}
 	catch(err)
 		{
-		parent.sendMessage({jsonrpc: "2.0", error: {code: -32700, message: "Invalid JSON."}, id: null});
+		parent.sendMessage({jsonrpc: "2.0", error: {code: -32700, message: "Parse error (JSON-RPC)."}, id: null});
 
 		return;
 		}
@@ -187,13 +207,13 @@ var handleRequests = function(requests, is_batch, connobj_or_parent)
 
 		if(!requests[r].jsonrpc || requests[r].jsonrpc != "2.0" || !requests[r].method)	// Invalid JSON-RPC
 			{
-			responses.push({jsonrpc: "2.0", error: {code: -32600, message: "Invalid JSON-RPC."}, id: null});
+			responses.push({jsonrpc: "2.0", error: {code: -32600, message: "Invalid Request (JSON-RPC)."}, id: null});
 			continue;
 			}
 
 		if (Object.prototype.toString.call(requests[r].params) !== "[object Array]" )	
 			{
-			responses.push({jsonrpc: "2.0", error: {code: -32600, message: "Parameters must be sent inside an array."}, id: requests[r].id});
+			responses.push({jsonrpc: "2.0", error: {code: -32602, message: "Invalid params (JSON-RPC - parameters must be sent inside an array)."}, id: requests[r].id});
 			continue;
 			}
 
@@ -205,9 +225,17 @@ var handleRequests = function(requests, is_batch, connobj_or_parent)
 				unknown_result = parent.onUnknownMethod(requests[r], connobj_or_parent);
 
 			if(requests[r].id != null)
-				unknown_result = {jsonrpc: "2.0", error: {code: -32601, message: "Method " + requests[r].method + " not found."}, id: requests[r].id};
+				unknown_result = {jsonrpc: "2.0", error: {code: -32601, message: "Method not found (JSON-RPC - " + requests[r].method + ")."}, id: requests[r].id};
 
 			responses.push(unknown_result);
+
+			continue;
+			}
+
+		if(rpcMethods[requests[r].method].params_length != requests[r].params.length)
+			{
+			if(requests[r].id != null)
+				responses.push({jsonrpc: "2.0", error: {code: -32000, message: "Invalid number of parameters (JSON-RPC)."}, id: requests[r].id});
 
 			continue;
 			}

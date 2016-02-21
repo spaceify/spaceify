@@ -96,10 +96,38 @@ self.makeGET = function(obj_get)
 
 self.parseURL = function(url)
 	{
-	var parser = document.createElement("a");
+	/*var parser = document.createElement("a");
 	parser.href = url;
+	return parser;*/
 
-	return parser;
+	// parseUri 1.2.2
+	// (c) Steven Levithan <stevenlevithan.com>
+	// MIT License
+	var	o	=
+		{
+		strictMode: false,
+		key: ["source","protocol","authority","userInfo","user","password","host","port","relative","path","directory","file","query","anchor"],
+		q:	{
+			name:   "queryKey",
+			parser: /(?:^|&)([^&=]*)=?([^&]*)/g
+			},
+		parser: {
+			strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+			loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+			}
+		},
+		m	= o.parser[o.strictMode ? "strict" : "loose"].exec(url),
+		uri	= {},
+		i	= 14;
+
+	while (i--) uri[o.key[i]] = m[i] || "";
+
+	uri[o.q.name] = {};
+	uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
+		if ($1) uri[o.q.name][$1] = $2;
+	});
+
+	return uri;
 	}
 
 self.implementsWebServer = function(manifest)

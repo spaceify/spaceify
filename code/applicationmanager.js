@@ -218,10 +218,8 @@ var coreConnectionsListener = function(connection)
 	}
 
 	// EXPOSED JSON-RPC -- -- -- -- -- -- -- -- -- -- //
-var installApplication = fibrous( function(package, username, password, cwd, session_id, is_spm)
+var installApplication = fibrous( function(package, username, password, cwd, session_id, is_spm, connObj/*Added by Spaceify*/)
 	{
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-
 	var packages = [];
 	var is_installed = false;
 	var is_suggested = false;
@@ -229,7 +227,7 @@ var installApplication = fibrous( function(package, username, password, cwd, ses
 
 	try {
 		// Preconditions for performing this operation
-		if(!checkAuthentication.sync(connobj.remoteAddress, session_id, is_spm))
+		if(!checkAuthentication.sync(connObj.remoteAddress, session_id, is_spm))
 			throw utility.error(language.E_AUTHENTICATION_FAILED.p("ApplicationManager::installApplication"));
 
 		removeTemporaryFiles.sync();
@@ -264,7 +262,7 @@ var installApplication = fibrous( function(package, username, password, cwd, ses
 			if(errors)
 				{
 				for(var j=0; j<errors.length; j++)
-					sendMessage.sync(utility.replace(language.SERVICE_ALREADY_REGISTERED, {":name": errors[j]["service_name"], ":name": errors[j]["unique_name"]}));
+					sendMessage.sync(utility.replace(language.SERVICE_ALREADY_REGISTERED, {":service_name": errors[j]["service_name"], ":unique_name": errors[j]["unique_name"]}));
 
 				throw utility.error(language.E_SERVICE_ALREADY_REGISTERED.p("ApplicationManager::installApplication"));
 				}
@@ -299,11 +297,11 @@ var installApplication = fibrous( function(package, username, password, cwd, ses
 
 					// ----- No suggested application defined and no registered service by the name found -> this application might not work as intented
 					if(required_service.suggested_application == "" && !existing_service)
-						sendMessage.sync("", utility.replace(language.REQUIRED_SERVICE_NOT_AVAILABLE, {":name": required_service.service_name, ":url": config.REGISTRY_URL}));
+						sendMessage.sync("", utility.replace(language.REQUIRED_SERVICE_NOT_AVAILABLE, {":service_name": required_service.service_name, ":url": config.REGISTRY_URL}));
 
 					// ----- No suggested service but registered service name found -> using the existing application/service
 					else if(required_service.suggested_application == "" && existing_service)
-						sendMessage.sync("", utility.replace(language.REQUIRED_SERVICE_ALREADY_REGISTERED, {":name": existing_service.service_name, ":name": existing_service.unique_name, ":version": existing_service.version}));
+						sendMessage.sync("", utility.replace(language.REQUIRED_SERVICE_ALREADY_REGISTERED, {":service_name": existing_service.service_name, ":unique_name": existing_service.unique_name, ":version": existing_service.version}));
 
 					// ----- Suggested application is defined .....
 					else
@@ -311,7 +309,7 @@ var installApplication = fibrous( function(package, username, password, cwd, ses
 						// .... and service not already registered -> try to install the suggested application
 						if(!existing_service)
 							{
-							sendMessage.sync("", utility.replace(language.REQUIRED_SERVICE_INSTALL_SA, {":name": required_service.service_name, ":name": required_service.suggested_application}));
+							sendMessage.sync("", utility.replace(language.REQUIRED_SERVICE_INSTALL_SA, {":service_name": required_service.service_name, ":unique_name": required_service.suggested_application}));
 							suggested_applications.push(required_service.suggested_application);
 							}
 
@@ -322,11 +320,11 @@ var installApplication = fibrous( function(package, username, password, cwd, ses
 
 							// ----- Suggested and installed applications are different -> using the existing application/service
 							if(existing_service.unique_name != required_package[0])
-								sendMessage.sync("", utility.replace(language.REQUIRED_SERVICE_DIFFERENT_APPS, {":name": required_service.service_name, ":name": existing_service.unique_name, ":version": existing_service.version, ":sapp": required_service.suggested_application}));
+								sendMessage.sync("", utility.replace(language.REQUIRED_SERVICE_DIFFERENT_APPS, {":service_name": required_service.service_name, ":unique_name": existing_service.unique_name, ":version": existing_service.version, ":sapp": required_service.suggested_application}));
 
 							// ----- Suggested application is same as the installed application -> using the existing application@version
 							else
-								sendMessage.sync("", utility.replace(language.REQUIRED_SERVICE_SAME_APPS, {":name": required_service.service_name, ":name": existing_service.unique_name, ":version": existing_service.version, ":sapp": required_service.suggested_application}));
+								sendMessage.sync("", utility.replace(language.REQUIRED_SERVICE_SAME_APPS, {":service_name": required_service.service_name, ":unique_name": existing_service.unique_name, ":version": existing_service.version, ":sapp": required_service.suggested_application}));
 							}
 						}
 					}
@@ -356,13 +354,11 @@ var installApplication = fibrous( function(package, username, password, cwd, ses
 	return is_installed;
 });
 	
-var removeApplication = fibrous( function(unique_name, session_id, is_spm)
+var removeApplication = fibrous( function(unique_name, session_id, is_spm, connObj/*Added by Spaceify*/)
 	{
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-
 	try {
 		// Preconditions for performing this operation
-		if(!checkAuthentication.sync(connobj.remoteAddress, session_id, is_spm))
+		if(!checkAuthentication.sync(connObj.remoteAddress, session_id, is_spm))
 			throw utility.error(language.E_AUTHENTICATION_FAILED.p("ApplicationManager::removeApplication"));
 
 		var app = database.sync.getApplication(unique_name);
@@ -392,13 +388,11 @@ var removeApplication = fibrous( function(unique_name, session_id, is_spm)
 	return true;
 	});
 
-var startApplication = fibrous( function(unique_name, session_id, is_spm)
+var startApplication = fibrous( function(unique_name, session_id, is_spm, connObj/*Added by Spaceify*/)
 	{
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-
 	try {
 		// Preconditions for performing this operation
-		if(!checkAuthentication.sync(connobj.remoteAddress, session_id, is_spm))
+		if(!checkAuthentication.sync(connObj.remoteAddress, session_id, is_spm))
 			throw utility.error(language.E_AUTHENTICATION_FAILED.p("ApplicationManager::startApplication"));
 
 		var app = database.sync.getApplication(unique_name);
@@ -428,13 +422,11 @@ var startApplication = fibrous( function(unique_name, session_id, is_spm)
 	return true;
 	});
 
-var stopApplication = fibrous( function(unique_name, session_id, is_spm)
+var stopApplication = fibrous( function(unique_name, session_id, is_spm, connObj/*Added by Spaceify*/)
 	{
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-
 	try {
 		// Preconditions for performing this operation
-		if(!checkAuthentication.sync(connobj.remoteAddress, session_id, is_spm))
+		if(!checkAuthentication.sync(connObj.remoteAddress, session_id, is_spm))
 			throw utility.error(language.E_AUTHENTICATION_FAILED.p("ApplicationManager::stopApplication"));
 
 		var app = database.sync.getApplication(unique_name);
@@ -462,13 +454,11 @@ var stopApplication = fibrous( function(unique_name, session_id, is_spm)
 		}
 	});
 
-var restartApplication = fibrous( function(unique_name, session_id, is_spm)
+var restartApplication = fibrous( function(unique_name, session_id, is_spm, connObj/*Added by Spaceify*/)
 	{
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-
 	try {
 		// Preconditions for performing this operation
-		if(!checkAuthentication.sync(connobj.remoteAddress, session_id, is_spm))
+		if(!checkAuthentication.sync(connObj.remoteAddress, session_id, is_spm))
 			throw utility.error(language.E_AUTHENTICATION_FAILED.p("ApplicationManager::restartApplication"));
 
 		var app = database.sync.getApplication(unique_name);
@@ -498,8 +488,6 @@ var restartApplication = fibrous( function(unique_name, session_id, is_spm)
 
 var getApplications = fibrous( function(types)
 	{
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-
 	var applications;
 
 	try {
@@ -523,8 +511,6 @@ var getApplications = fibrous( function(types)
 
 var sourceCode = fibrous( function(package, username, password, cwd)
 	{
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-
 	try {
 		removeTemporaryFiles.sync();
 
@@ -558,15 +544,13 @@ var sourceCode = fibrous( function(package, username, password, cwd)
 		}
 	});
 
-var requestMessages = fibrous( function(session_id, is_spm)
+var requestMessages = fibrous( function(session_id, is_spm, connObj/*Added by Spaceify*/)
 	{ // Somebody wants to start following the messages
 	  // See methods: messageServerConnectionListener, messageServerDisconnectionListener, messageServerMessageListener, carbageCollection, messages
-	var connobj = arguments[arguments.length - 1];										// Connection object is added by Spaceify core as the last argument
-
 	var message_id = null;
 
 	try {
-		if(!checkAuthentication.sync(connobj.remoteAddress, session_id, is_spm))
+		if(!checkAuthentication.sync(connObj.remoteAddress, session_id, is_spm))
 			throw utility.error(language.E_AUTHENTICATION_FAILED.p("ApplicationManager::requestMessages"));
 
 		message_id = utility.randomString(64, true);

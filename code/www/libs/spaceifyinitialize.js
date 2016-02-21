@@ -7,14 +7,19 @@
  */
 
 var _srows = [];
+var edge_ip = "10.0.0.1";
+var edge_url = "edge.spaceify.net";
 var _suri = window.location.protocol + "//10.0.0.1/";
 
 // STARTING POINT - WAIT FOR EVERYTHING ELSE ON THE PAGE TO BE LOADED AND READY BEFORE INJECTING
 window.addEventListener("load", function()
 	{
 	// Accept connection only from 10.0.0.1 to make html cookie sessions actually work
-	if(window.location.hostname == "edge.spaceify.net")
-		window.location.assign(window.location.protocol + "//10.0.0.1" + window.location.pathname);
+	if(window.location.hostname == edge_url)
+		{
+		var new_url = window.location.href.replace(edge_url, edge_ip);
+		window.location.assign(new_url);
+		}
 	else
 		_sinitLoad(_suri + "libs/inject/spaceify.csv", "application/text", function(str)
 		{

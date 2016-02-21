@@ -10,7 +10,7 @@ function Server(type)
 {
 var self = this;
 
-var api_path = process.env.PORT_80 ? "/api/" : "/var/lib/spaceify/code/";
+var api_path = process.env.IS_REAL_SPACEIFY ? "/api/" : "/var/lib/spaceify/code/";
 
 var config = require(api_path + "config")();
 var utility = require(api_path + "utility");
@@ -23,8 +23,8 @@ if(type == config.WEBSOCKETRPCS)
 else if(type == config.ENGINEIORPCS)
 	server = new EngineIoRPCServer();
 
-utility.extendClass(server, self);								// Make methods from the handler class available to this class
-	
+utility.extendClass(server, self);
+
 self.connect = function(opts, callback)
 	{
 	if(!server)

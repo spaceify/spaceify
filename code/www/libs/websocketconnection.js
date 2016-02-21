@@ -20,7 +20,7 @@ var socket = { readyState: 0 };
 
 var config = new SpaceifyConfig();
 
-var E_NO_CONNECTION_WS = "WSC::connect() failed ";
+var E_NO_CONNECTION_WS = "WSC::connect failed ";
 var E_NO_CONNECTION_CODE_WS = "ws1";
 
 // The callback is a standard node-type callback with error as its first parameter
@@ -33,7 +33,7 @@ self.connect = function(opts, callback)
 	options.persistent = opts.persistent || false;						// Reduce overhead by keeping connection open between calls
 
 	uri = (!options.is_secure ? "ws" : "wss") + "://" + options.hostname + ":" + options.port + "/";
-	logger.info("WSC::connect() " + uri);
+	logger.info("WSC::connect " + uri);
 
 	socket = new WebSocket(uri, config.WS_JSON_RPC);
 	socket.binaryType = "arraybuffer";
@@ -63,7 +63,7 @@ self.connect = function(opts, callback)
 
 	socket.onmessage = function(evt)
 		{ // The data is expected to be a string
-		logger.info("WSC::onMessage() " + evt.data);
+		logger.info("WSC::onMessage " + evt.data);
 		onMessage(evt.data);
 		}
 
@@ -85,7 +85,7 @@ self.sendMessage = function(message)
 	try {
 		message = (typeof message == "string" ? message : JSON.stringify(message));
 
-		logger.info("WSC::sendMessage() " + message);
+		logger.info("WSC::sendMessage " + message);
 
 		socket.send(message);
 		}
@@ -98,7 +98,7 @@ self.sendBinary = function(buffer)
 	try {
 		// Make ArrayBuffer?
 
-		logger.info("WSC::sendBinary() length: " + buffer.byteLength);
+		logger.info("WSC::sendBinary length: " + buffer.byteLength);
 
 		socket.send(buffer);
 		}
@@ -108,7 +108,7 @@ self.sendBinary = function(buffer)
 
 var onMessage = function(message)
 	{
-	logger.info("WSC::onMessage() " + message);
+	logger.info("WSC::onMessage " + message);
 
 	if(messageListener)
 		messageListener(message);

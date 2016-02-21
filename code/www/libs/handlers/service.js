@@ -14,7 +14,7 @@ var isNodeJS = (typeof exports !== "undefined" ? true : false);
 
 if(isNodeJS)
 	{
-	var api_path = process.env.PORT_80 ? "/api/" : "/var/lib/spaceify/code/";
+	var api_path = process.env.IS_REAL_SPACEIFY ? "/api/" : "/var/lib/spaceify/code/";
 	var config = require(api_path + "config")();
 	var utility = require(api_path + "utility");
 	}
@@ -85,7 +85,8 @@ self.reconnect = function(callback)
 	{
 	parent.reconnectService(service_name, function(service)
 		{
-		callback(service);
+		if(typeof callback == "function")
+			callback(service);
 		});
 	}
 

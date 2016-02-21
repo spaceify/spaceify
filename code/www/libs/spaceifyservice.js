@@ -1,7 +1,7 @@
 /**
  * Spaceify Service by Spaceify Inc. 29.7.2015
  *
- * Implementation for required service. Both applications and web pages can use this. For Spaceifys internal use.
+ * Implementation for required and provided services. Intended to be used by applications and web pages.
  *
  * @class SpaceifyService
  */
@@ -22,7 +22,7 @@ var isNodeJS = (typeof exports !== "undefined" ? true : false);
 
 if(isNodeJS)
 	{
-	var api_path = process.env.PORT_80 ? "/api/" : "/var/lib/spaceify/code/";
+	var api_path = process.env.IS_REAL_SPACEIFY ? "/api/" : "/var/lib/spaceify/code/";
 
 	var fibrous = require("fibrous");
 	var Server = require(api_path + "server");
@@ -47,11 +47,16 @@ else
 var core = new _SpaceifyCore();
 var communicator = new _Communicator();
 
+	// -- -- -- -- -- -- -- -- -- //
+	// -- -- -- -- -- -- -- -- -- //
 	// CLIENT SIDE - THE REQUIRED SERVICES -- -- -- -- -- -- -- -- -- -- //
-var getService = function(service_name, callback)
+var connectServices = function(service_name, callback)
 	{ // Get provided service and try to connect to it
 	core.getService(service_name, "", function(err, service)
 		{
+		if(!service)
+			return callback();
+
 		if(!required[service_name])
 			required[service_name] = new _Service(self);
 
@@ -132,7 +137,7 @@ self.connectServices = function(service_names, callback)
 	else
 		{
 		latest_service_name = service_names.pop();
-		getService(latest_service_name, function()								// SpaceifyService only connects, Service handles the connection
+		connectServices(latest_service_name, function()							// SpaceifyService only connects, Service handles the connection
 			{
 			self.connectServices(service_names, callback);						// Get next service
 			});
@@ -183,6 +188,8 @@ self.getRequiredServiceSecure = function(service_name)
 	return null;
 	}
 
+	// -- -- -- -- -- -- -- -- -- //
+	// -- -- -- -- -- -- -- -- -- //
 	// SERVER SIDE - THE PROVIDED SERVICES (= SERVERS) -- -- -- -- -- -- -- -- -- -- //
 self.connectProvided = fibrous( function(service_names, isRealSpaceify, ca_crt, key, crt)
 	{

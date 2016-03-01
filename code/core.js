@@ -29,8 +29,6 @@ var self = this;
 var owner = "Core";
 var accept_ip = "";
 var settings = null;
-var servers_count = 0;
-var servers_up_counter = 0;
 var isLoggedInToSpaceifyNet = false;
 
 var dhcpdlog = new DHCPDLog();
@@ -54,13 +52,14 @@ self.connect = fibrous( function(opts)
 	{
 	options = opts;
 
-	servers_count = Object.keys(options.servers).length;
+	// ? ConnectionHub.setup.sync(options.servers);								// Connnection hub uses the same servers as core
 
-	ConnectionHub.setup.sync(options.servers);								// Connnection hub uses the same servers as core
-
-	for(o in options.servers)												// Handle all the supported server types
+	for(o in options.servers)												// Open all the supported server types
 		{
-		var server = options.servers[o].server;
+		// Connect
+		var server = connectServer.sync(o);
+
+		//var server = options.servers[o].server;
 
 		// Set listeners - keep servers open
 		server.setServerUpListener(serverUpListener);
@@ -84,7 +83,7 @@ self.connect = fibrous( function(opts)
 		server.exposeRpcMethod("connectTo", self, connectTo);
 		server.exposeRpcMethod("updateSettings", self, updateSettings);
 
-		// THESE ARE EXPOSED ONLY OVER SECURE CONNECTION!!!
+		// THESE ARE EXPOSED ONLY OVER A SECURE CONNECTION!!!
 		if(options.servers[o].is_secure)
 			{
 			server.exposeRpcMethod("adminLogIn", self, adminLogIn);
@@ -93,11 +92,19 @@ self.connect = fibrous( function(opts)
 			server.exposeRpcMethod("saveOptions", self, saveOptions);
 			server.exposeRpcMethod("loadOptions", self, loadOptions);
 			}
-
-		// Connect
-		connectServer.sync(o);
 		}
 
+	// Build and/or start applications
+	try {
+		sandboxedManager.sync.start(null, false);
+		spaceletManager.sync.start(null, false, false);
+		//nativeManager.sync.start(null, false);
+		}
+	catch(err)
+		{
+		logger.printErrors(err, true, true, 0);
+		}
+		
 	// Get settings from the database
 	settings = database.sync.getSettings();
 	securityModel.setSettings(settings);
@@ -106,7 +113,7 @@ self.connect = fibrous( function(opts)
 var connectServer = fibrous( function(server_type)
 	{
 	var sobj = options.servers[server_type];
-	sobj.server.sync.connect({hostname: null, port: sobj.port, is_secure: sobj.is_secure, key: key, crt: crt, ca_crt: ca_crt, owner: owner});
+	return sobj.server.sync.connect({hostname: null, port: sobj.port, is_secure: sobj.is_secure, key: key, crt: crt, ca_crt: ca_crt, owner: owner});
 	});
 
 self.close = fibrous( function()
@@ -115,27 +122,13 @@ self.close = fibrous( function()
 	sandboxedManager.sync.removeAll(true);
 	//nativeManager.sync.removeAll(true);
 
-	for(o in options.servers)												// Handle all the supported server types
-		options.servers[o].server.close();
+	for(o in options.servers)												// Close all the supported server types
+		options.servers[o].server.getServer().close();
 	});
 
 var serverUpListener = function(server)
 	{
-	if(++servers_up_counter == servers_count)								// Initialization phase: set applications running when all servers are listening
-		{
-		fibrous.run( function()
-			{
-			try {
-				sandboxedManager.sync.start(null, false);
-				spaceletManager.sync.start(null, false, false);
-				//nativeManager.sync.start(null, false);
-				}
-			catch(err)
-				{
-				logger.printErrors(err, true, true, 0);
-				}
-			}, function(err, data) { } );
-		}
+
 	}
 
 var serverDownListener = function(server)

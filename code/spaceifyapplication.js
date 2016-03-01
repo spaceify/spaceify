@@ -157,24 +157,6 @@ self.getRequiredServiceSecure = function(service_name)
 	return spaceifyService.getRequiredServiceSecure(service_name);
 	}
 
-self.exposeRpcMethodRequired = function(name, object, method, service_name)
-	{
-	spaceifyService.getRequiredService(service_name).exposeRpcMethod(name, object, method);
-	spaceifyService.getRequiredServiceSecure(service_name).exposeRpcMethod(name, object, method);
-	}
-
-self.setConnectionListenersRequired = function(listener, service_name)
-	{
-	spaceifyService.getRequiredService(service_name).setConnectionListener(listener);
-	spaceifyService.getRequiredServiceSecure(service_name).setConnectionListener(listener);
-	}
-
-self.setDisconnectionListenersRequired = function(listener, service_name)
-	{
-	spaceifyService.getRequiredService(service_name).setDisconnectionListener(listener);
-	spaceifyService.getRequiredServiceSecure(service_name).setDisconnectionListener(listener);
-	}
-
 	// PROVIDED (= SERVICE) -- -- -- -- -- -- -- -- -- -- //	
 self.getProvidedService = function(service_name)
 	{
@@ -184,24 +166,6 @@ self.getProvidedService = function(service_name)
 self.getProvidedServiceSecure = function(service_name)
 	{
 	return spaceifyService.getProvidedServiceSecure(service_name);
-	}
-
-self.exposeRpcMethodProvided = function (name, object, method, service_name)
-	{
-	spaceifyService.getProvidedService(service_name).exposeRpcMethod(name, object, method);
-	spaceifyService.getProvidedServiceSecure(service_name).exposeRpcMethod(name, object, method);
-	}
-
-self.setConnectionListenersProvided = function(listener, service_name)
-	{
-	spaceifyService.getProvidedService(service_name).setConnectionListener(listener);
-	spaceifyService.getProvidedServiceSecure(service_name).setConnectionListener(listener);
-	}
-
-self.setDisconnectionListenersProvided = function(listener, service_name)
-	{
-	spaceifyService.getProvidedService(service_name).setDisconnectionListener(listener);
-	spaceifyService.getProvidedServiceSecure(service_name).setDisconnectionListener(listener);
 	}
 
 }

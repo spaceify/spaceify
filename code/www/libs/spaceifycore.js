@@ -17,14 +17,14 @@ if(isNodeJS)
 	var api_path = process.env.IS_REAL_SPACEIFY ? "/api/" : "/var/lib/spaceify/code/";
 
 	var config = require(api_path + "config")();
-	var _Communicator = require(api_path + "www/libs/communicator.js");
+	var communicator = require(api_path + "www/libs/communicator.js");
 
 	var ca_crt = api_path + "www/" + config.SPACEIFY_CRT;
 	}
 else
 	{
 	var config = new SpaceifyConfig();
-	var _Communicator = Communicator;
+	var communicator = Communicator;
 
 	var ca_crt = "";
 	}
@@ -198,8 +198,8 @@ var connect = function(is_secure, callback)
 	else
 		port = !is_secure ? config.CORE_PORT_ENGINEIO : config.CORE_PORT_ENGINEIO_SECURE;
 
-	var communicator = new _Communicator();
-	communicator.connect({hostname: config.EDGE_IP, port: port, is_secure: is_secure, ca_crt: ca_crt}, config.WEBSOCKETRPCC, function(err, data, id, ms)
+	var communigator = new communicator(config.WEBSOCKET_RPC_COMMUNICATOR);
+	communigator.connect({hostname: config.EDGE_IP, port: port, is_secure: is_secure, ca_crt: ca_crt}, function(err, data, id, ms)
 		{
 		!is_secure ? connection = data : secure_connection = data;
 

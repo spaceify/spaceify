@@ -33,7 +33,7 @@ function ApplicationManager()
 var self = this;
 
 var options = {};
-var is_locked = false;
+var isLocked = false;
 var lock_errors = [];
 var database = new Database();
 var coreClient = null;
@@ -138,13 +138,13 @@ var RPCServerDownListener = function(server)
 // RPCServerConnectionListener + RPCServerDisconnectionListener + RPCServerAccessListener = allow one connection at a time
 var RPCServerConnectionListener = function(server)
 	{
-	is_locked = true;
+	isLocked = true;
 	lock_errors = [];
 	}
 
 var RPCServerDisconnectionListener = function(server)
 	{
-	is_locked = false;
+	isLocked = false;
 	lock_errors = [];
 	}
 
@@ -156,7 +156,7 @@ var RPCServerAccessListener = function(remoteAddress, remotePort, origin, server
 	if(!securityModel.isLocalIP(remoteAddress))
 		return {message: language.REMOTE_DENIED, granted: false};
 
-	if(is_locked)
+	if(isLocked)
 		return {message: language.APPMAN_LOCKED, granted: false};
 
 	return {message: "", granted: true};
@@ -218,16 +218,16 @@ var coreConnectionsListener = function(connection)
 	}
 
 	// EXPOSED JSON-RPC -- -- -- -- -- -- -- -- -- -- //
-var installApplication = fibrous( function(package, username, password, cwd, session_id, is_spm, connObj/*Added by Spaceify*/)
+var installApplication = fibrous( function(package, username, password, currentWorkingDirectory, session_id, isSpm, connObj/*Added by Spaceify*/)
 	{
 	var packages = [];
-	var is_installed = false;
-	var is_suggested = false;
+	var isInstalled = false;
+	var isSuggested = false;
 	var suggested_applications = [];
 
 	try {
 		// Preconditions for performing this operation
-		if(!checkAuthentication.sync(connObj.remoteAddress, session_id, is_spm))
+		if(!checkAuthentication.sync(connObj.remoteAddress, session_id, isSpm))
 			throw utility.error(language.E_AUTHENTICATION_FAILED.p("ApplicationManager::installApplication"));
 
 		removeTemporaryFiles.sync();
@@ -246,7 +246,7 @@ var installApplication = fibrous( function(package, username, password, cwd, ses
 
 			// Try to get the package
 			var registry_url = config.REGISTRY_INSTALL_URL + "?package=" + package + "&release=" + settings["release_name"] + "&username=" + username + "&password=" + password;
-			if(!getPackage.sync(package, is_suggested, true, username, password, registry_url, cwd))
+			if(!getPackage.sync(package, isSuggested, true, username, password, registry_url, currentWorkingDirectory))
 				throw utility.ferror(language.E_FAILED_TO_PROCESS_PACKAGE.p("ApplicationManager::installApplication"), {":package": package});
 
 			// Validate the package for any errors
@@ -287,7 +287,7 @@ var installApplication = fibrous( function(package, username, password, cwd, ses
 			// Check does the package have suggested applications in required_services.
 			if(manifest.requires_services)
 				{
-				is_suggested = true;
+				isSuggested = true;
 				suggested_applications = [];
 
 				for(var s=0; s<manifest.requires_services.length; s++)								// Get suggested application that meet these criterion
@@ -338,7 +338,7 @@ var installApplication = fibrous( function(package, username, password, cwd, ses
 
 			} // <----------
 
-			is_installed = true;
+			isInstalled = true;
 		}
 	catch(err)
 		{
@@ -351,14 +351,14 @@ var installApplication = fibrous( function(package, username, password, cwd, ses
 		sendEnd.sync();
 		}
 
-	return is_installed;
+	return isInstalled;
 });
 	
-var removeApplication = fibrous( function(unique_name, session_id, is_spm, connObj/*Added by Spaceify*/)
+var removeApplication = fibrous( function(unique_name, session_id, isSpm, connObj/*Added by Spaceify*/)
 	{
 	try {
 		// Preconditions for performing this operation
-		if(!checkAuthentication.sync(connObj.remoteAddress, session_id, is_spm))
+		if(!checkAuthentication.sync(connObj.remoteAddress, session_id, isSpm))
 			throw utility.error(language.E_AUTHENTICATION_FAILED.p("ApplicationManager::removeApplication"));
 
 		var app = database.sync.getApplication(unique_name);
@@ -388,11 +388,11 @@ var removeApplication = fibrous( function(unique_name, session_id, is_spm, connO
 	return true;
 	});
 
-var startApplication = fibrous( function(unique_name, session_id, is_spm, connObj/*Added by Spaceify*/)
+var startApplication = fibrous( function(unique_name, session_id, isSpm, connObj/*Added by Spaceify*/)
 	{
 	try {
 		// Preconditions for performing this operation
-		if(!checkAuthentication.sync(connObj.remoteAddress, session_id, is_spm))
+		if(!checkAuthentication.sync(connObj.remoteAddress, session_id, isSpm))
 			throw utility.error(language.E_AUTHENTICATION_FAILED.p("ApplicationManager::startApplication"));
 
 		var app = database.sync.getApplication(unique_name);
@@ -422,11 +422,11 @@ var startApplication = fibrous( function(unique_name, session_id, is_spm, connOb
 	return true;
 	});
 
-var stopApplication = fibrous( function(unique_name, session_id, is_spm, connObj/*Added by Spaceify*/)
+var stopApplication = fibrous( function(unique_name, session_id, isSpm, connObj/*Added by Spaceify*/)
 	{
 	try {
 		// Preconditions for performing this operation
-		if(!checkAuthentication.sync(connObj.remoteAddress, session_id, is_spm))
+		if(!checkAuthentication.sync(connObj.remoteAddress, session_id, isSpm))
 			throw utility.error(language.E_AUTHENTICATION_FAILED.p("ApplicationManager::stopApplication"));
 
 		var app = database.sync.getApplication(unique_name);
@@ -454,11 +454,11 @@ var stopApplication = fibrous( function(unique_name, session_id, is_spm, connObj
 		}
 	});
 
-var restartApplication = fibrous( function(unique_name, session_id, is_spm, connObj/*Added by Spaceify*/)
+var restartApplication = fibrous( function(unique_name, session_id, isSpm, connObj/*Added by Spaceify*/)
 	{
 	try {
 		// Preconditions for performing this operation
-		if(!checkAuthentication.sync(connObj.remoteAddress, session_id, is_spm))
+		if(!checkAuthentication.sync(connObj.remoteAddress, session_id, isSpm))
 			throw utility.error(language.E_AUTHENTICATION_FAILED.p("ApplicationManager::restartApplication"));
 
 		var app = database.sync.getApplication(unique_name);
@@ -509,7 +509,7 @@ var getApplications = fibrous( function(types)
 	return applications;
 	});
 
-var sourceCode = fibrous( function(package, username, password, cwd)
+var sourceCode = fibrous( function(package, username, password, currentWorkingDirectory)
 	{
 	try {
 		removeTemporaryFiles.sync();
@@ -519,13 +519,13 @@ var sourceCode = fibrous( function(package, username, password, cwd)
 
 		// Get sources
 		var registry_url = config.REGISTRY_INSTALL_URL + "?package=" + package + "&release=" + settings["release_name"] + "&username=" + username + "&password=" + password;
-		if(!getPackage.sync(package, false, false, username, password, registry_url, cwd))
+		if(!getPackage.sync(package, false, false, username, password, registry_url, currentWorkingDirectory))
 			throw utility.ferror(language.E_FAILED_TO_PROCESS_PACKAGE.p("ApplicationManager::sourceCode"), {":package": package});
 
 		var dest = package.replace(/[^0-9a-zA-Z-_]/g, "_");
 		dest = dest.replace(/_{2,}/g, "_");
 		dest = dest.replace(/^_*|_*$/g, "");
-		dest = cwd + "/" + config.SOURCES_DIRECTORY + dest;
+		dest = currentWorkingDirectory + "/" + config.SOURCES_DIRECTORY + dest;
 
 		utility.sync.deleteDirectory(dest);															// Remove previous files
 		utility.sync.copyDirectory(config.WORK_PATH, dest);											// Copy files to sources directory
@@ -544,13 +544,13 @@ var sourceCode = fibrous( function(package, username, password, cwd)
 		}
 	});
 
-var requestMessages = fibrous( function(session_id, is_spm, connObj/*Added by Spaceify*/)
+var requestMessages = fibrous( function(session_id, isSpm, connObj/*Added by Spaceify*/)
 	{ // Somebody wants to start following the messages
 	  // See methods: messageServerConnectionListener, messageServerDisconnectionListener, messageServerMessageListener, carbageCollection, messages
 	var message_id = null;
 
 	try {
-		if(!checkAuthentication.sync(connObj.remoteAddress, session_id, is_spm))
+		if(!checkAuthentication.sync(connObj.remoteAddress, session_id, isSpm))
 			throw utility.error(language.E_AUTHENTICATION_FAILED.p("ApplicationManager::requestMessages"));
 
 		message_id = utility.randomString(64, true);
@@ -574,7 +574,7 @@ var test = fibrous( function()
 	});
 
 	// THESE METHODS ARE NOT PUBLISHED AND ARE AVAILABLE ONLY FROM THE COMMAND LINE TOOL -- -- -- -- -- -- -- -- -- -- //
-self.publishPackage = fibrous( function(package, username, password, github_username, github_password, cwd)
+self.publishPackage = fibrous( function(package, username, password, github_username, github_password, currentWorkingDirectory)
 	{
 	try {
 		removeTemporaryFiles.sync();
@@ -587,25 +587,25 @@ self.publishPackage = fibrous( function(package, username, password, github_user
 		purl.pathname = purl.pathname.replace(/^\/|\/$/g, "");
 		var gitoptions = purl.pathname.split("/");
 
-		var cwd_package = cwd + "/" + package;
+		var currentWorkingDirectoryPackage = currentWorkingDirectory + "/" + package;
 
 		// --- 1.1 --- Try local directory <package>
 		if(utility.sync.isLocal(package, "directory"))
 			package = getLocalPublishDirectory.sync(package);
 
-		// --- 1.2 --- Try local directory <cwd/package>
-		else if(utility.sync.isLocal(cwd_package, "directory"))
-			package = getLocalPublishDirectory.sync(cwd_package);
+		// --- 1.2 --- Try local directory <currentWorkingDirectory/package>
+		else if(utility.sync.isLocal(currentWorkingDirectoryPackage, "directory"))
+			package = getLocalPublishDirectory.sync(currentWorkingDirectoryPackage);
 
 		// --- 2.1 --- Try local <package>.zip
 		else if(utility.sync.isLocal(package, "file") && package.search(/\.zip$/i) != -1)
 			sendMessage.sync(utility.replace(language.TRYING_TO_PUBLISH, {":where": language.LOCAL_ARCHIVE, ":package": package}));
 
-		// --- 2.2 --- Try local <cwd/package>.zip
-		else if(utility.sync.isLocal(cwd_package, "file") && package.search(/\.zip$/i) != -1)
+		// --- 2.2 --- Try local <currentWorkingDirectory/package>.zip
+		else if(utility.sync.isLocal(currentWorkingDirectoryPackage, "file") && package.search(/\.zip$/i) != -1)
 			{
 			sendMessage.sync(utility.replace(language.TRYING_TO_PUBLISH, {":where": language.LOCAL_ARCHIVE, ":package": package}));
-			package = cwd_package;
+			package = currentWorkingDirectoryPackage;
 			}
 
 		// --- 3.1 --- Try GitHub repository <package>
@@ -713,41 +713,44 @@ self.register = fibrous( function()
 	});
 
 	// PRIVATE -- -- -- -- -- -- -- -- -- -- //
-var getPackage = fibrous( function(package, is_suggested, try_local, username, password, registry_url, cwd)
-	{ // Get package by (unique name|directory|archive|url|git url), if is suggested than try only registry, if local try local directories
+var getPackage = fibrous( function(package, isSuggested/*try only registry*/, try_local/*try local directories*/, username, password, registry_url, currentWorkingDirectory)
+	{ // Get package by (unique name|directory|archive|url|git url), isSuggested=, try_local=
+	// Check whteher package is a GitHub URL
 	var purl = url.parse(package, true);
 	purl.pathname = purl.pathname.replace(/^\/|\/$/g, "");
 	var gitoptions = purl.pathname.split("/");
+	var isGithub = (purl.hostname && purl.hostname.match(/(github\.com)/i) != null && gitoptions.length == 2 ? true : false);
 
-	var cwd_package = cwd + "/" + package;
-
+	var currentWorkingDirectoryPackage = currentWorkingDirectory + "/" + package;
+		
 	// --- Try local directory <package>
 	sendMessage.sync(utility.replace(language.CHECKING_FROM, {":where": language.LOCAL_DIRECTORY}));
-	if(!is_suggested && try_local && utility.sync.isLocal(package, "directory"))	
+	if(!isSuggested && try_local && utility.sync.isLocal(package, "directory"))	
 		return getLocalInstallDirectory.sync(package, false);
 
-	// --- Try local directory <cwd/package>
+	// --- Try local directory <currentWorkingDirectory/package>
 	sendMessage.sync(utility.replace(language.CHECKING_FROM, {":where": language.WORKING_DIRECTORY}));
-	if(!is_suggested && try_local && utility.sync.isLocal(cwd_package, "directory"))
-		return getLocalInstallDirectory.sync(cwd_package, true);
+	if(!isSuggested && try_local && utility.sync.isLocal(currentWorkingDirectoryPackage, "directory"))
+		return getLocalInstallDirectory.sync(currentWorkingDirectoryPackage, true);
 
 	// --- Try local <package>.zip
 	sendMessage.sync(utility.replace(language.CHECKING_FROM, {":where": language.LOCAL_ARCHIVE}));
-	if(!is_suggested && try_local && utility.sync.isLocal(package, "file") && package.search(/\.zip$/i) != -1)
+	if(!isSuggested && try_local && utility.sync.isLocal(package, "file") && package.search(/\.zip$/i) != -1)
 		return getLocalInstallZip.sync(package, false);
 
-	// --- Try local <cwd/package>.zip
+	// --- Try local <currentWorkingDirectory/package>.zip
 	sendMessage.sync(utility.replace(language.CHECKING_FROM, {":where": language.WORKING_DIRECTORY_ARCHIVE}));
-	if(!is_suggested && try_local && utility.sync.isLocal(cwd_package, "file") && package.search(/\.zip$/i) != -1)
-		return getLocalInstallZip.sync(cwd_package, true);
+	if(!isSuggested && try_local && utility.sync.isLocal(currentWorkingDirectoryPackage, "file") && package.search(/\.zip$/i) != -1)
+		return getLocalInstallZip.sync(currentWorkingDirectoryPackage, true);
 
 	// --- Try <unique_name>[@<version>] from the registry - suggested applications can be tried from the registry!!!
 	sendMessage.sync(utility.replace(language.CHECKING_FROM, {":where": language.SPACEIFY_REGISTRY}));
-	if(utility.sync.loadRemoteFileToLocalFile(registry_url, config.WORK_PATH, config.PACKAGE_ZIP))
-		{
-		is_einstl100 = false;
 
-		var is_package = utility.unZip(config.WORK_PATH + config.PACKAGE_ZIP, config.WORK_PATH, true);		
+	if(!isGithub && utility.sync.loadRemoteFileToLocalFile(registry_url, config.WORK_PATH, config.PACKAGE_ZIP))
+		{
+		isEINSTL100 = false;
+
+		var isPackage = utility.unZip(config.WORK_PATH + config.PACKAGE_ZIP, config.WORK_PATH, true);		
 
 		// CHECK FOR ERRORS BEFORE ACCEPTING "PACKAGE"
 		if(utility.sync.isLocal(config.WORK_PATH + config.SPM_ERRORS_JSON, "file"))
@@ -763,10 +766,10 @@ var getPackage = fibrous( function(package, is_suggested, try_local, username, p
 				errors.push(utility.makeError(e, str, ""));
 
 				if(e == "EINSTL100")
-					is_einstl100 = true;
+					isEINSTL100 = true;
 				}
 
-			if(!is_einstl100)														// Package not found is not an error!!!
+			if(!isEINSTL100)														// Package not found is not an error!!!
 				{
 				sendMessage.sync(language.PACKAGE_INSTALL_ERROR);
 				throw errors;
@@ -776,13 +779,13 @@ var getPackage = fibrous( function(package, is_suggested, try_local, username, p
 			{
 			sendMessage.sync(utility.replace(language.PACKAGE_FOUND, {":where": language.SPACEIFY_REGISTRY, ":package": package}));
 
-			return is_package;
+			return isPackage;
 			}
 		}
 
 	// --- Try GitHub repository <package>
 	sendMessage.sync(utility.replace(language.CHECKING_FROM, {":where": language.GIT_REPOSITORY}));
-	if(!is_suggested && purl.hostname && purl.hostname.match(/(github\.com)/i) != null && gitoptions.length == 2)
+	if(!isSuggested && isGithub)
 		{
 		sendMessage.sync(utility.replace(language.PACKAGE_FOUND, {":where": language.GIT_REPOSITORY, ":package": package}));
 
@@ -791,7 +794,7 @@ var getPackage = fibrous( function(package, is_suggested, try_local, username, p
 
 	// --- Try remote <package>.zip (remote url)
 	sendMessage.sync(utility.replace(language.CHECKING_FROM, {":where": language.REMOTE_ARCHIVE}));
-	if(!is_suggested && utility.sync.loadRemoteFileToLocalFile(package, config.WORK_PATH, config.PACKAGE_ZIP))
+	if(!isSuggested && utility.sync.loadRemoteFileToLocalFile(package, config.WORK_PATH, config.PACKAGE_ZIP))
 		{
 		sendMessage.sync(utility.replace(language.PACKAGE_FOUND, {":where": language.REMOTE_ARCHIVE, ":package": package}));
 
@@ -802,23 +805,23 @@ var getPackage = fibrous( function(package, is_suggested, try_local, username, p
 	throw utility.ferror(language.E_FAILED_TO_RESOLVE_PACKAGE.p("ApplicationManager::getPackage"), {":package": package});
 	});
 
-var getLocalInstallDirectory = fibrous( function(package, is_cwd)
+var getLocalInstallDirectory = fibrous( function(package, isCurrentWorkingDirectory)
 	{
 	package += (package.search(/\/$/) == -1 ? "/" : "");
 
 	if(package + config.PACKAGE_PATH == config.WORK_PATH)				// Prevent infinite recursion
 		return false;
 
-	sendMessage.sync(utility.replace(language.PACKAGE_FOUND, {":where": (is_cwd ? language.WORKING_DIRECTORY : language.LOCAL_DIRECTORY), ":package": package}));
+	sendMessage.sync(utility.replace(language.PACKAGE_FOUND, {":where": (isCurrentWorkingDirectory ? language.WORKING_DIRECTORY : language.LOCAL_DIRECTORY), ":package": package}));
 
 	utility.sync.copyDirectory(package, config.WORK_PATH, true);
 
 	return true;
 	});
 
-var getLocalInstallZip = fibrous( function(package, is_cwd)
+var getLocalInstallZip = fibrous( function(package, isCurrentWorkingDirectory)
 	{
-	sendMessage.sync(utility.replace(language.PACKAGE_FOUND, {":where": (is_cwd ? language.WORKING_DIRECTORY_ARCHIVE : language.LOCAL_ARCHIVE), ":package": package}));
+	sendMessage.sync(utility.replace(language.PACKAGE_FOUND, {":where": (isCurrentWorkingDirectory ? language.WORKING_DIRECTORY_ARCHIVE : language.LOCAL_ARCHIVE), ":package": package}));
 
 	return utility.unZip(package, config.WORK_PATH, false);
 	});
@@ -1023,14 +1026,14 @@ var git = fibrous( function(gitoptions, username, password)
 	return true;
 	});
 
-var checkAuthentication = fibrous( function(ip, session_id, is_spm)
+var checkAuthentication = fibrous( function(ip, session_id, isSpm)
 	{
 	var authenticated = false;
 
-	var is_local = securityModel.isLocalIP(ip);
-	if(is_local && is_spm && !session_id)															// The call comes from spm
+	var isLocal = securityModel.isLocalIP(ip);
+	if(isLocal && isSpm && !session_id)																// The call comes from spm
 		authenticated = true;
-	else if(is_local && !is_spm && coreClient.sync.callRpc("isAdminLoggedIn", [session_id], self))	// The call comes from the action Kiwi view
+	else if(isLocal && !isSpm && coreClient.sync.callRpc("isAdminLoggedIn", [session_id], self))	// The call comes from the action Kiwi view
 		authenticated = true;
 	else
 		throw utility.error(language.E_ADMIN_NOT_LOGGED_IN.p("ApplicationManager::checkAuthentication"));

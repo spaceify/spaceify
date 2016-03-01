@@ -13,10 +13,10 @@ var self = this;
 var latest_service_name = "";
 
 var required = {};									// <= Clients
-var requireds = {};
+var requiredSecure = {};
 
 var provided = {};									// <= Servers
-var provideds = {};
+var providedSecure = {};
 
 var isNodeJS = (typeof exports !== "undefined" ? true : false);
 
@@ -27,9 +27,12 @@ if(isNodeJS)
 	var fibrous = require("fibrous");
 	var Server = require(api_path + "server");
 	var config = require(api_path + "config")();
-	var _Service = require(api_path + "www/libs/handlers/service.js");
-	var _SpaceifyCore = require(api_path + "www/libs/spaceifycore.js");
-	var _Communicator = require(api_path + "www/libs/communicator.js");
+	var ServiceH = require(api_path + "www/libs/handlers/service.js");
+	var core = require(api_path + "www/libs/spaceifycore.js");
+	var communicator = require(api_path + "www/libs/communicator.js");
+
+	core = new core();
+	communicator = new communicator(config.WEBSOCKET_RPC_COMMUNICATOR);
 
 	var ca_crt = api_path + "www/" + config.SPACEIFY_CRT;
 	}
@@ -37,15 +40,12 @@ else
 	{
 	var fibrous = function(code) {};
 	var config = new SpaceifyConfig();
-	var _Service = Service;
-	var _SpaceifyCore = SpaceifyCore;
-	var _Communicator = Communicator;
+	var ServiceH = Service;
+	var core = new SpaceifyCore();
+	var communicator = new Communicator(config.WEBSOCKET_RPC_COMMUNICATOR);
 
 	var ca_crt = "";
 	}
-
-var core = new _SpaceifyCore();
-var communicator = new _Communicator();
 
 	// -- -- -- -- -- -- -- -- -- //
 	// -- -- -- -- -- -- -- -- -- //
@@ -58,10 +58,10 @@ var connectServices = function(service_name, callback)
 			return callback();
 
 		if(!required[service_name])
-			required[service_name] = new _Service(self);
+			required[service_name] = new ServiceH(self);
 
-		if(!requireds[service_name])
-			requireds[service_name] = new _Service(self);
+		if(!requiredSecure[service_name])
+			requiredSecure[service_name] = new ServiceH(self);
 
 		var status_required = required[service.service_name].getStatus();
 		var status_requireds = required[service.service_name].getStatus();
@@ -73,7 +73,7 @@ var connectServices = function(service_name, callback)
 				if(status_required != config.CONNECTED)
 					{
 					try {
-						connection = communicator.sync.connect({hostname: config.EDGE_IP, port: service.port, is_secure: false, persistent: true}, config.WEBSOCKETRPCC);
+						connection = communicator.sync.connect({hostname: config.EDGE_IP, port: service.port, is_secure: false, persistent: true});
 						required[service.service_name].init(service.service_name, false, connection, err);
 						}
 					catch(err)
@@ -85,12 +85,12 @@ var connectServices = function(service_name, callback)
 				if(status_requireds != config.CONNECTED)
 					{
 					try {
-						connection = communicator.sync.connect({hostname: config.EDGE_IP, port: service.secure_port, is_secure: true, ca_crt: ca_crt, persistent: true}, config.WEBSOCKETRPCC);
-						requireds[service.service_name].init(service.service_name, true, connection, err);
+						connection = communicator.sync.connect({hostname: config.EDGE_IP, port: service.secure_port, is_secure: true, ca_crt: ca_crt, persistent: true});
+						requiredSecure[service.service_name].init(service.service_name, true, connection, err);
 						}
 					catch(err)
 						{
-						requireds[service.service_name].init(service.service_name, true, null, err);
+						requiredSecure[service.service_name].init(service.service_name, true, null, err);
 						}
 					}
 
@@ -113,9 +113,9 @@ var connect = function(service_name, port, is_secure, status, callback)
 	{
 	if(status != config.CONNECTED)
 		{
-		communicator.connect({hostname: config.EDGE_IP, port: port, is_secure: is_secure, persistent: true}, config.WEBSOCKETRPCC, function(err, connection, id)
+		communicator.connect({hostname: config.EDGE_IP, port: port, is_secure: is_secure, persistent: true}, function(err, connection, id)
 			{
-			(!is_secure ? required[service_name] : requireds[service_name]).init(service_name, is_secure, connection, err);
+			(!is_secure ? required[service_name] : requiredSecure[service_name]).init(service_name, is_secure, connection, err);
 			callback();
 			});
 		}
@@ -161,10 +161,10 @@ self.disconnectServices = function(service_names, callback)
 			delete required[service_name];
 			}
 
-		if(requireds[service_name])
+		if(requiredSecure[service_name])
 			{
-			requireds[service_name].disconnect();
-			delete requireds[service_name];
+			requiredSecure[service_name].disconnect();
+			delete requiredSecure[service_name];
 			}
 		}
 
@@ -182,8 +182,8 @@ self.getRequiredService = function(service_name)
 
 self.getRequiredServiceSecure = function(service_name)
 	{
-	if(requireds[service_name])
-		return requireds[service_name];
+	if(requiredSecure[service_name])
+		return requiredSecure[service_name];
 
 	return null;
 	}
@@ -201,17 +201,17 @@ self.connectProvided = fibrous( function(service_names, isRealSpaceify, ca_crt, 
 		{
 		var service_name = service_names[i];
 
-		// INSECURE SERVERS -- -- -- -- --
-		server = new Server(config.WEBSOCKETRPCS)
+		// UNSECURE SERVERS -- -- -- -- --
+		server = new Server(config.WEBSOCKET_RPC_SERVER)
 		server.sync.connect({hostname: null, port: port, is_secure: false, key: key, crt: crt, ca_crt: ca_crt, user_object: {name: "service_name", value: service_name}, owner: "provSer: " + service_name});
 
-		provided[service_name] = server;
+		provided[service_name] = server.getServer();
 
 		// SECURE SERVERS -- -- -- -- --
-		server = new Server(config.WEBSOCKETRPCS)
+		server = new Server(config.WEBSOCKET_RPC_SERVER)
 		server.sync.connect({hostname: null, port: secure_port, is_secure: true, key: key, crt: crt, ca_crt: ca_crt, user_object: {name: "service_name", value: service_name}, owner: "provSerSec: " + service_name});
 
-		provideds[service_name] = server;
+		providedSecure[service_name] = server.getServer();
 
 		// -- -- -- -- --
 		if(isRealSpaceify)
@@ -230,14 +230,14 @@ self.closeProvided = function(service_names)
 
 		if(provided[service_name])
 			{
-			provided[service_name].close();
+			provided[service_name].getServer().close();
 			delete provided[service_name];
 			}
 
-		if(provideds[service_name])
+		if(providedSecure[service_name])
 			{
-			provideds[service_name].close();
-			delete provideds[service_name];
+			providedSecure[service_name].getServer().close();
+			delete providedSecure[service_name];
 			}
 		}
 	}
@@ -257,8 +257,8 @@ self.getProvidedService = function(service_name)
 
 self.getProvidedServiceSecure = function(service_name)
 	{
-	if(provideds[service_name])
-		return provideds[service_name];
+	if(providedSecure[service_name])
+		return providedSecure[service_name];
 
 	return null;
 	}

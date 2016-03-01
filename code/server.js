@@ -13,30 +13,33 @@ var self = this;
 var api_path = process.env.IS_REAL_SPACEIFY ? "/api/" : "/var/lib/spaceify/code/";
 
 var config = require(api_path + "config")();
-var utility = require(api_path + "utility");
 var EngineIoRPCServer = require(api_path + "engineiorpcserver");
 var WebSocketRPCServer = require(api_path + "websocketrpcserver");
 
 var server = null;
-if(type == config.WEBSOCKETRPCS)
-	server = new WebSocketRPCServer();
-else if(type == config.ENGINEIORPCS)
-	server = new EngineIoRPCServer();
-
-utility.extendClass(server, self);
 
 self.connect = function(opts, callback)
 	{
-	if(!server)
-		callback(true, null);
+	if(type == config.WEBSOCKET_RPC_SERVER)
+		server = new WebSocketRPCServer();
+	else if(type == config.ENGINEIO_RPC_SERVER)
+		server = new EngineIoRPCServer();
 
-	server.connect(opts, function(err, data)
-		{
-		if(err)
-			callback(err, null);
-		else
-			callback(null, server);
-		});
+	if(server)
+	{
+		server.connect(opts, function(err, data)
+			{
+			if(err)
+				callback(err, null);
+			else
+				callback(null, server);
+			});
+	}
+	}
+
+self.getServer = function()
+	{
+	return server;
 	}
 
 }

@@ -38,8 +38,8 @@ self.getData = fibrous( function(IP, URL, GET, POST, user_data, is_secure, langu
 	try {
 		if(is_secure && user_data)												// Accept only secure connections
 			{
-			var communicator = new Communicator();
-			coreRPC = communicator.sync.connect({hostname: null, port: config.CORE_PORT_WEBSOCKET_SECURE, is_secure: true, ca_crt: ca_crt, persistent: true}, config.WEBSOCKETRPCC);
+			var communicator = new Communicator(config.WEBSOCKET_RPC_COMMUNICATOR);
+			coreRPC = communicator.sync.connect({hostname: null, port: config.CORE_PORT_WEBSOCKET_SECURE, is_secure: true, ca_crt: ca_crt, persistent: true);
 
 			is_logged_in = coreRPC.sync.callRpc("isAdminLoggedIn", [user_data.session_id || ""], self);
 			}

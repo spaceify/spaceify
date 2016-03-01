@@ -6,11 +6,13 @@
  * class @Communicator
  */
 
-function Communicator()
+function Communicator(type)
 {
 var self = this;
 
 var id = 0;
+
+var communicator = null;
 
 var isNodeJS = (typeof exports !== "undefined" ? true : false);
 
@@ -20,32 +22,30 @@ if(isNodeJS)
 
 	var utility = require(api_path + "utility");
 	var config = require(api_path + "config")();
-	var _WebSocketConnection = require(api_path + "websocketconnection");
-	//var _EngineIORPCConnection = require(api_path + "engineiorpcconnection");
-	var _WebSocketRPCConnection = require(api_path + "websocketrpcconnection");
+	var webSocketConnection = require(api_path + "websocketconnection");
+	//var engineIORPCConnection = require(api_path + "engineiorpcconnection");
+	var webSocketRPCConnection = require(api_path + "websocketrpcconnection");
 	}
 else
 	{
 	var utility = new SpaceifyUtility();
 	var config = new SpaceifyConfig();
-	var _WebSocketConnection = WebSocketConnection;
-	var _EngineIORPCConnection = EngineIORPCConnection;
-	var _WebSocketRPCConnection = WebSocketRPCConnection;
+	var webSocketConnection = WebSocketConnection;
+	var engineIORPCConnection = EngineIORPCConnection;
+	var webSocketRPCConnection = WebSocketRPCConnection;
 	}
 
-self.connect = function(opts, type, callback)
+self.connect = function(opts, callback)
 	{
-	var communicator = null;
-
-	if(type == config.WEBSOCKETRPCC)
+	if(type == config.WEBSOCKET_RPC_COMMUNICATOR)
 		{
 		if(isNodeJS)
-			communicator = new _WebSocketRPCConnection();
+			communicator = new webSocketRPCConnection();
 		else
-			communicator = window.WebSocket ? new _WebSocketRPCConnection() : new _EngineIORPCConnection();
+			communicator = window.WebSocket ? new webSocketRPCConnection() : new engineIORPCConnection();
 		}
-	else if(type == config.WEBSOCKETC)
-		communicator = new _WebSocketConnection();
+	else if(type == config.WEBSOCKET_COMMUNICATOR)
+		communicator = new webSocketConnection();
 
 	if(communicator)
 		{
@@ -59,6 +59,11 @@ self.connect = function(opts, type, callback)
 		}
 	else
 		callback({code: "comm1000", message: "Creating communicator failed."}, null, -1);
+	}
+
+self.getCommunicator = function()
+	{
+	return communicator;	
 	}
 
 }

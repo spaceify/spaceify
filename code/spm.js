@@ -28,7 +28,6 @@ var self = this;
 var exit_code = 0;
 var appManConnection = null;
 var appManMessageConnection = null;
-var communicator = new Communicator();
 var securityModel = new SecurityModel();
 
 // Update commands and options also to command completion script data/spmc!!!
@@ -181,17 +180,21 @@ self.start = fibrous( function()
 var connectApplicationManager = fibrous( function()
 	{
 	try {
-		appManConnection = communicator.sync.connect({hostname: null, port: config.APPMAN_PORT_WEBSOCKET_SECURE, is_secure: true, ca_crt: ca_crt, persistent: true, owner: options.owner}, config.WEBSOCKETRPCC);
+		communicator = new Communicator(config.WEBSOCKET_RPC_COMMUNICATOR);
+		appManConnection = communicator.sync.connect({hostname: null, port: config.APPMAN_PORT_WEBSOCKET_SECURE, is_secure: true, ca_crt: ca_crt, persistent: true, owner: options.owner});
 
 		var message_id = appManConnection.sync.callRpc("requestMessages", [null, true], self);			// Request a message_id
 
-		appManMessageConnection = communicator.sync.connect({hostname: null, port: config.APPMAN_PORT_WEBSOCKET_MESSAGE_SECURE, is_secure: true, ca_crt: ca_crt, persistent: true, owner: options.owner}, config.WEBSOCKETC);
+		communicator = new Communicator(config.WEBSOCKET_COMMUNICATOR);
+		appManMessageConnection = communicator.sync.connect({hostname: null, port: config.APPMAN_PORT_WEBSOCKET_MESSAGE_SECURE, is_secure: true, ca_crt: ca_crt, persistent: true, owner: options.owner});
+
 		appManMessageConnection.setMessageListener(messageListener);
 
 		appManMessageConnection.sendMessage(JSON.stringify({message_id: message_id }));					// Confirm that we are listening
 		}
 	catch(err)
 		{
+console.log(err);
 		if(appManConnection)
 			{
 			appManConnection.close();

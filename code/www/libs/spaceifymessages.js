@@ -11,11 +11,11 @@ function SpaceifyMessages()
 var self = this
 
 var errors = [];
-var communicator = null;
+var messageCommunicator = null;
 
 var config = new SpaceifyConfig();
 var network = new SpaceifyNetwork();
-var _communicator = new Communicator();
+var communicator = new Communicator(config.WEBSOCKET_COMMUNICATOR);
 var readyCallback = null;
 var messageCallback = null;
 
@@ -40,8 +40,8 @@ self.connect = function(_readyCallback, _messageCallback, callback)
 					if(err)
 						throw "";
 
-					communicator.setMessageListener(receive);											// Confirm that we are listening
-					communicator.sendMessage(JSON.stringify({message_id: message_id}));
+					messageCommunicator.setMessageListener(receive);									// Confirm that we are listening
+					messageCommunicator.sendMessage(JSON.stringify({message_id: message_id}));
 
 					callback(null, true);
 					});
@@ -62,9 +62,9 @@ self.connect = function(_readyCallback, _messageCallback, callback)
 var connect = function(callback)
 	{
 	var port = config.APPMAN_PORT_WEBSOCKET_MESSAGE_SECURE;
-	_communicator.connect({hostname: config.EDGE_IP, port: port, is_secure: true, persistent: true}, config.WEBSOCKETC, function(err, data, id, ms)
+	communicator.connect({hostname: config.EDGE_IP, port: port, is_secure: true, persistent: true}, function(err, data, id, ms)
 		{
-		communicator = data;
+		messageCommunicator = data;
 		callback(err, data, id, ms);
 		});
 	}
@@ -91,8 +91,8 @@ var receive = function(message)
 		if(err !== "")
 			messageCallback("Exception: SpaceifyMessages::receive - Malformed message");
 
-		communicator.close();
-		communicator = null;
+		messageCommunicator.close();
+		messageCommunicator = null;
 
 		readyCallback();
 		}

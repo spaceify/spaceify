@@ -174,8 +174,8 @@ self.getData = fibrous( function(IP, URL, GET, POST, user_data, is_secure, langu
 
 var connect = fibrous( function(port)
 	{
-	var communicator = new Communicator();
-	srvRPC = communicator.sync.connect({hostname: null, port: port, is_secure: true, ca_crt: ca_crt, persistent: true}, config.WEBSOCKETRPCC);
+	var communicator = new Communicator(config.WEBSOCKET_RPC_COMMUNICATOR);
+	srvRPC = communicator.sync.connect({hostname: null, port: port, is_secure: true, ca_crt: ca_crt, persistent: true});
 	});
 
 }

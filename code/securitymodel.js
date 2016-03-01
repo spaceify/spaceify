@@ -122,8 +122,8 @@ self.isAdminLoggedIn = fibrous( function(session_id)
 	var is_logged_in = false;
 
 	try {
-		var communicator = new Communicator();
-		coreRPC = communicator.sync.connect({hostname: null, port: config.CORE_PORT_WEBSOCKET_SECURE, is_secure: true, ca_crt: ca_crt, persistent: true}, config.WEBSOCKETRPCC);
+		var communicator = new Communicator(config.WEBSOCKET_RPC_COMMUNICATOR);
+		coreRPC = communicator.sync.connect({hostname: null, port: config.CORE_PORT_WEBSOCKET_SECURE, is_secure: true, ca_crt: ca_crt, persistent: true});
 
 		if(!(is_logged_in = coreRPC.sync.callRpc("isAdminLoggedIn", [session_id], self)))
 			throw utility.error(language.E_ADMIN_NOT_LOGGED_IN.p("Security"));

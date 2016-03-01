@@ -31,10 +31,10 @@ self.start = fibrous( function()
 	try	{
 		// START CORE RUNNING - CORE LISTENS ALL THE SUPPORTED SERVER TYPES
 		var servers = {};
-		servers[config.WEBSOCKET_S]		= {server: new Server(config.WEBSOCKETRPCS), "port": config.CORE_PORT_WEBSOCKET, "is_secure": false};
-		servers[config.WEBSOCKET_SS]	= {server: new Server(config.WEBSOCKETRPCS), "port": config.CORE_PORT_WEBSOCKET_SECURE, "is_secure": true};
-		servers[config.ENGINE_IO_S]		= {server: new Server(config.ENGINEIORPCS), "port": config.CORE_PORT_ENGINEIO, "is_secure": false};
-		servers[config.ENGINE_IO_SS]	= {server: new Server(config.ENGINEIORPCS), "port": config.CORE_PORT_ENGINEIO_SECURE, "is_secure": true};
+		servers[config.WEBSOCKET_SERVER]			= {server: new Server(config.WEBSOCKET_RPC_SERVER), "port": config.CORE_PORT_WEBSOCKET, "is_secure": false};
+		servers[config.WEBSOCKET_SECURE_SERVERS]	= {server: new Server(config.WEBSOCKET_RPC_SERVER), "port": config.CORE_PORT_WEBSOCKET_SECURE, "is_secure": true};
+		servers[config.ENGINEIO_SERVER]				= {server: new Server(config.ENGINEIO_RPC_SERVER), "port": config.CORE_PORT_ENGINEIO, "is_secure": false};
+		servers[config.ENGINEIO_SECURE_SERVER]		= {server: new Server(config.ENGINEIO_RPC_SERVER), "port": config.CORE_PORT_ENGINEIO_SECURE, "is_secure": true};
 
 		core.sync.connect({hostname: null, servers: servers});
 

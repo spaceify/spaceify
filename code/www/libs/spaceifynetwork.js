@@ -1,53 +1,39 @@
+"use strict";
+
 /**
- * Spaceify Network by Spaceify Inc. 29.7.2015
+ * Spaceify Network, 29.7.2015 Spaceify Oy
  *
  * @class SpaceifyNetwork
  */
 
 function SpaceifyNetwork()
 {
+// NODE.JS / REAL SPACEIFY - - - - - - - - - - - - - - - - - - - -
+var isNodeJs = (typeof exports !== "undefined" ? true : false);
+var isRealSpaceify = (typeof process !== "undefined" ? process.env.IS_REAL_SPACEIFY : false);
+var apiPath = (isNodeJs && isRealSpaceify ? "/api/" : "/var/lib/spaceify/code/");
+
+var classes = 	{
+				SpaceifyConfig: (isNodeJs ? require(apiPath + "spaceifyconfig") : SpaceifyConfig),
+				SpaceifyUtility: (isNodeJs ? require(apiPath + "spaceifyutility") : SpaceifyUtility)
+				};
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	
 var self = this;
 
-var config = new SpaceifyConfig();
+var config = new classes.SpaceifyConfig();
+var utility = new classes.SpaceifyUtility();
 
 // Get the URL to the Spaceify Core
-self.getEdgeURL = function()
+self.getEdgeURL = function(forceSecure, withPort)
 	{
-	return location.protocol + "//" + config.EDGE_IP;
-	}
-
-// Get secure or insecure URL
-self.getWebServer = function(port, secure_port, is_secure)
-	{
-	return location.protocol + "//" + config.EDGE_IP + ":" + self.getPort(port, secure_port, is_secure);
-	}
-
-self.getEdgeWebServer = function(is_secure)
-	{
-	return self.getWebServer(config.EDGE_PORT_HTTP, config.EDGE_PORT_HTTPS, is_secure);
+	return (forceSecure ? "https:" : location.protocol) + "//" + config.EDGE_HOSTNAME + (withPort ? ":" : "");
 	}
 
 // Get secure or insecure port based on web pages protocol or requested security
-self.getPort = function(port, secure_port, is_secure)
+self.getPort = function(port, securePort, isSecure)
 	{
-	return (!self.isSecure() && !is_secure ? port : secure_port);
-	}
-
-self.getCorePort = function(is_secure)
-	{
-	var port;
-
-	//if(window.WebSocket)
-		port = self.getPort(config.CORE_PORT_WEBSOCKET, config.CORE_PORT_WEBSOCKET_SECURE, is_secure);
-	//else
-	//	port = self.getPort(config.CORE_PORT_ENGINEIO, config.CORE_PORT_ENGINEIO_SECURE, is_secure);
-
-	return port;
-	}
-
-self.getApplicationManagerPort = function()
-	{
-	return config.APPMAN_PORT_WEBSOCKET_SECURE;
+	return (!self.isSecure() && !isSecure ? port : securePort);
 	}
 
 // Return true if current web page is encrypted
@@ -62,36 +48,42 @@ self.getProtocol = function(withScheme)
 	return (location.protocol == "http:" ? "http" : "https") + (withScheme ? "://" : "");
 	}
 	
-// Parse GET from the url. Add origin part of the url to the returned object if requested.
-self.parseGET = function(url, bOrigin)
+// Parse URL query
+self.parseQuery = function(url)
 	{
-	var obj_get = {};
+	var query = {}, parts, pairs;
 	var regx = new RegExp("=", "i");
 
-	var getsplit = url.split("?");
-	if(getsplit.length == 2)
+	if((parts = url.split("?")).length != 2)
+		return query;
+
+	pairs = parts[1].split("&");
+
+	for(var i = 0; i < pairs.length; i++)
 		{
-		var getparts = getsplit[1].split("&");
-		for(gpi in getparts)
-			{
-			regx.exec(getparts[gpi]);
-			obj_get[RegExp.leftContext] = RegExp.rightContext;
-			}
+		if(regx.exec(pairs[i]))													// Name and value
+			query[RegExp.leftContext] = RegExp.rightContext;
+		else																	// Only name
+			query[pairs[i]] = null;
 		}
 
-	if(bOrigin)
-		obj_get.origin = getsplit[0];
-
-	return obj_get;
+	return query;
 	}
 
-self.makeGET = function(obj_get)
-	{ // Make object of GET parameters to GET string.
-	var get = "";
-	for(g in obj_get)
-		get += (get != "" ? "&" : "") + g + "=" + obj_get[g];
+self.remakeQueryString = function(query, exclude, include, path)
+	{ // exclude=remove from query, include=add to query, [path=appended before ?]. Exclude and include can be used in combination to replace values.
+	var search = "", i;
 
-	return (get != "" ? "?" : "") + get;
+	for(i in query)
+		{
+		if(!exclude.indexOf(i))
+			search += (search != "" ? "&" : "") + i + (query[i] ? "=" + query[i] : "");		// Name-value or name
+		}
+
+	for(i in include)
+		search += (search != "" ? "&" : "") + i + "=" + include[i];
+
+	return (Object.keys(query).length > 0 ? (path ? path : "") + "?" + search : "");
 	}
 
 self.parseURL = function(url)
@@ -136,88 +128,60 @@ self.implementsWebServer = function(manifest)
 	}
 
 	// XMLHttp -- -- -- -- -- -- -- -- -- -- //
-self.GET = function(url, callback, rtype)
+self.GET = function(url, callback, responseType)
 	{
+	var ms = Date.now();
+	var id = utility.randomString(16, true);
 	var xmlhttp = createXMLHTTP();
-	xmlhttp.onreadystatechange = function() { onReadyState(xmlhttp, callback); };
+	xmlhttp.onreadystatechange = function() { onReadyState(xmlhttp, id, ms, callback); };
 
 	xmlhttp.open("GET", url, true);
-	xmlhttp.responseType = (rtype ? rtype : "");
+	xmlhttp.responseType = (responseType ? responseType : "");
 	xmlhttp.send();
 	}
 
-self.POST = function(url, post, rtype, callback)
+self.POST_FORM = function(url, post, responseType, callback)
 	{
-	var boundary = "b---------------------------" + Date.now().toString(16);
-	var eboundary = "\r\n--" + boundary + "--\r\n";
+	var boundary = "---------------------------" + Date.now().toString(16);
 
 	var content = "";
-	for(var i=0; i<post.length; i++)
+	for(var i = 0; i < post.length; i++)
 		{
-		if(!post[i].filename)														// post.data name-parameter pairs
-			{
-			content += "--" + boundary + "\r\n";
-			content += 'Content-Disposition: form-data; name="' + post[i].name + '"\r\n\r\n';
-			content += post[i].data + "\r\n";
-			}
-		/*else if(post[i].type == "form-data")										// post.data contains an array of values having values [0,255] = a file
-			{
-			content += 'Content-Disposition: form-data; name="' + post[i].name + '";  filename="' + post[i].filename + '"\r\n';
-			content += 'Content-Type: "application/octet-stream"\r\n';
-			content += "Content-Transfer-Encoding: binary\r\n\r\n"
+		content += "--" + boundary + "\r\n";
 
-			for(var j=0; j<post[i].data.length; j++)
-				content += String.fromCharCode(post[i].data[j]);
-			}*/
+		content += post[i].content;
+		content += "\r\n\r\n" + post[i].data + "\r\n";
 		}
-	content += "--" + boundary + "--\r\n";
+	content += "\r\n--" + boundary + "--";
 
+	var ms = Date.now();
+	var id = utility.randomString(16, true);
 	var xmlhttp = createXMLHTTP();
-	xmlhttp.onreadystatechange = function() { onReadyState(xmlhttp, callback); };
+	xmlhttp.onreadystatechange = function() { onReadyState(xmlhttp, id, ms, callback); };
 	xmlhttp.open("POST", url, true);
-	xmlhttp.responseType = (rtype ? rtype : "");
+	xmlhttp.responseType = (responseType ? responseType : "text/plain");
 	xmlhttp.setRequestHeader("Content-Type", "multipart\/form-data; boundary=" + boundary);
 	xmlhttp.setRequestHeader("Content-Length", content.length);
 	xmlhttp.send(content);
 	}
-
-var createXMLHTTP = function()
-	{
-	return (window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP"));		// IE7+, Firefox, Chrome, Opera, Safari : IE6, IE5
-	}
-
-var onReadyState = function(xmlhttp, callback)
-	{
-	if(xmlhttp.readyState == 4)
-		callback( (xmlhttp.status != 200 ? xmlhttp.status : null), (xmlhttp.status == 200 ? xmlhttp.response : null) );
-	}
-
-self.POST_JSON = function(url, json_data, callback)
+	
+self.POST_JSON = function(url, jsonData, callback)
 	{
 	try {
-		var json_str = JSON.stringify(json_data);
+		var content = "Content-Disposition: form-data; name=data;\r\nContent-Type: application/json; charset=utf-8";
 
-		var xmlhttp = createXMLHTTP();
-		xmlhttp.open("POST", url, true);
-		xmlhttp.setRequestHeader("Content-type", "application/json; charset=utf-8");
-		xmlhttp.setRequestHeader("Content-length", json_str.length);
-		xmlhttp.setRequestHeader("Connection", "close");
-		xmlhttp.onreadystatechange = function()
+		self.POST_FORM(config.OPERATION_URL, [{content: content, data: JSON.stringify(jsonData)}], "application/json", function(err, response, id, ms)
 			{
-			if(xmlhttp.readyState == 4)
-				{
-				if(xmlhttp.status != 200 && xmlhttp.status != 304)
-					callback(xmlhttp.status, null);
-				else if(xmlhttp.status == 200)
-					{
-					var result = JSON.parse(xmlhttp.responseText.replace(/&quot;/g,'"'));
-					callback(result.err, result.data);
-					}
-				else
-					callback(null, null);
-				}
-			}
-		xmlhttp.send(json_str);
+			var result = JSON.parse(response.replace(/&quot;/g,'"'));
+
+			var error = null;
+			if(result.err)
+				error = result.err;
+			else if(result.error)
+				error = result.error;
+
+			callback(error, result.data, id, ms);
+			});
 		}
 	catch(err)
 		{
@@ -225,4 +189,18 @@ self.POST_JSON = function(url, json_data, callback)
 		}
 	}
 
+var createXMLHTTP = function()
+	{
+	return (window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP"));		// IE7+, Firefox, Chrome, Opera, Safari : IE5, IE6
+	}
+
+var onReadyState = function(xmlhttp, id, ms, callback)
+	{
+	if(xmlhttp.readyState == 4)
+		callback( (xmlhttp.status != 200 ? xmlhttp.status : null), (xmlhttp.status == 200 ? xmlhttp.response : null), id, Date.now() - ms );
+	}
+
 }
+
+if(typeof exports !== "undefined")
+	module.exports = SpaceifyNetwork;

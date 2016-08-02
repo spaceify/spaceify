@@ -1,30 +1,37 @@
-#!/usr/bin/env node
 /**
- * Web Server, 29.11.2013 Spaceify Inc.
+ * Web Server, 29.11.2013 Spaceify Oy
  * 
  * @class WebServer
  */
 
 var fs = require("fs");
 var url = require("url");
-var crypto = require("crypto");
-var kiwi = require("kiwi");
 var http = require("http");
 var https = require("https");
+var crypto = require("crypto");
 var qs = require("querystring");
 var fibrous = require("fibrous");
-var logger = require("./www/libs/logger");
 var reload = require("./reload");
-var config = require("./config")();
-var utility = require("./utility");
+var Logger = require("./logger");
 var language = require("./language");
 var contentTypes = require("./contenttypes");
+var WebOperation = require("./weboperation");
+var SpaceifyError = require("./spaceifyerror");
+var SpaceifyConfig = require("./spaceifyconfig");
+var SpaceifyUtility = require("./spaceifyutility");
 
 function WebServer()
 {
 var self = this;
 
+var logger = new Logger();
+var errorc = new SpaceifyError();
+var config = new SpaceifyConfig();
+var utility = new SpaceifyUtility();
+var webOperation = new WebOperation();
+
 var options = {};
+var isOpen = false;
 var webServer = null;
 
 var serverUpListener = null;
@@ -32,148 +39,151 @@ var serverDownListener = null;
 var externalRequestListener = null;
 
 var sessions = {};
-var SESSIONTOKEN = "sessiontoken";
+var SESSIONTOKEN = "";
 
-var layout = null;
-var languages = {};
+var locales = [];
 
 var isSpaceify = (typeof process.env.IS_REAL_SPACEIFY == "undefined" ? true : false);
 
+var regxHTML = /<html.*>/i;
+var regxAngularJSHead = /<head.*>/i;
+
+var requests = [];
+var processingRequest = false;
+var events = require('events');
+var eventEmitter = new events.EventEmitter();
+
+var CARBAGE_INTERVAL = 600000;
+var SESSION_INTERVAL = 3600 * 24;
+
 self.connect = function(opts, callback)
 	{
-	options.hostname = opts.hostname || "";
+	options.hostname = opts.hostname || config.ALL_IPV4_LOCAL;
 	options.port = opts.port || 80;
 
-	options.is_secure = opts.is_secure || false;
+	options.isSecure = opts.isSecure || false;
 	options.key = opts.key || config.SPACEIFY_TLS_PATH + config.SERVER_KEY;
 	options.crt = opts.crt || config.SPACEIFY_TLS_PATH + config.SERVER_CRT;
-	options.ca_crt = opts.ca_crt || config.SPACEIFY_WWW_PATH + config.SPACEIFY_CRT;
+	options.caCrt = opts.caCrt || config.SPACEIFY_WWW_PATH + config.SPACEIFY_CRT;
 
-	options.index_file = opts.index_file || config.INDEX_FILE;
-	options.www_path = opts.www_path || config.SPACEIFY_WWW_PATH;
-	options.kiwi_used = opts.kiwi_used || false;
+	options.indexFile = opts.indexFile || config.INDEX_HTML;
+
+	options.wwwPath = opts.wwwPath || config.SPACEIFY_WWW_PATH;
+	options.wwwErrorsPath = opts.wwwErrorsPath || config.SPACEIFY_WWW_ERRORS_PATH;
 
 	options.locale = options.locale || config.DEFAULT_LOCALE;
-	options.template_path = opts.template_path || config.TEMPLATES_PATH;
-	options.layout_pathname = opts.layout_pathname || config.LAYOUT_PATHNAME;
-	options.language_path = opts.language_path || config.LANGUAGES_PATH;
 
-	options.owner = opts.owner || "-";
-	options.server_name = opts.server_name || config.SERVER_NAME;
+	options.localesPath = opts.localesPath || config.LOCALES_PATH;
 
-	options.protocol = (!options.is_secure ? "http" : "https");
+	options.serverName = opts.serverName || config.SERVER_NAME;
 
-	options.carbage_collect_interval = (opts.carbage_collect_interval || 600) * 1000;	// Execute carbage collection every ten minutes
-	options.session_delete_interval = (opts.session_delete_interval || 3600) * 1000;	// Session expires after one hour of inactivity
+	options.protocol = (!options.isSecure ? "http" : "https");
 
-	options.debug = opts.debug || true;
-	logger.setOptions({write_to_console: options.debug});
-	
+	options.AdminIndexURL = opts.AdminIndexURL || config.ADMIN_INDEX_URL;
+	options.AdminlogInURL = opts.AdminlogInURL || config.ADMIN_LOGIN_URL;
+
+	options.debug = ("debug" in opts ? opts.debug : false);
+
+	//
+	logger.setOptions({output: options.debug});
+
 	// -- --
+	options.carbageCollectInterval = (opts.carbageCollectInterval || CARBAGE_INTERVAL);
+	options.carbageIntervalId = setInterval(carbageCollection, options.carbageCollectInterval);
 
-	options.carbage_interval_id = setInterval(carbageCollection, options.carbage_collect_interval);
+	options.sessionDeleteInterval = (opts.sessionDeleteInterval || SESSION_INTERVAL) * 1000;
 
-	// -- -- KiWi for Spaceify
+	// -- --
+	SESSIONTOKEN = (!options.isSecure ? "sessiontoken" : "sessiontoken_secure");
+
+	// -- -- Locales
 	if(isSpaceify)
 		{
-		language_utility = reload.require(options.language_path + "languageutility.js");	// Get languages (en_US, fi_FI, fi_SE, ...)
-
-		fs.sync.readdir(options.language_path).forEach(function(file, index)				// Create language object for each language file
+		fs.sync.readdir(options.localesPath).forEach(function(file, index)					// Create language object for each locale file
 			{
-			if(fs.sync.stat(options.language_path + file).isDirectory())
-				return;
-
-			files = file.split(".");														// Process only .json files
-			if(files.length != 2 || files[1] != "json")
-				return;
-
-			var language_file = fs.sync.readFile(options.language_path + file, {"encoding": "utf8"});
-					
-			var sections = JSON.parse(language_file);
-			var globale = (sections && sections.global ? sections.global : null);
-			var locale = (globale && globale.locale ? globale.locale : null);
-
-			if(sections && globale && locale)												// Separate sections as individual objects (index, admin/login, ...)
-				{
-				languages[locale] = {};
-
-				for(var section in sections)
-					{
-					if(section.toLowerCase() != "global")
-						languages[locale][section] = language_utility.make(sections[section], section, globale);
-					}
-				}
+			files = file.split(".");
+			locales.push(files[0]);
 			});
 		}
 
 	// -- --
-
-	if(utility.sync.isLocal(options.layout_pathname, "file"))							// Layout
-		{
-		var layout_file = fs.sync.readFile(options.layout_pathname, {"encoding": "utf8"});
-		layout = new kiwi.Template(layout_file);
-		}
+	logger.info(utility.replace(language.WEBSERVER_CONNECTING, {"~protocol": options.protocol, "~hostname": options.hostname, "~port": options.port}));
 
 	// -- --
-
-	logger.info(utility.replace(language.WEBSERVER_CONNECTING, {":owner": options.owner, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port}));
+	eventEmitter.on("processRequest", processRequest);					// Request events, process one page at a time
 
 	// -- --
-	if(!options.is_secure)												// Start a http server
+	if(!options.isSecure)												// Start a http server
 		{
-		webServer = http.createServer( function(request, response)
-			{
-			var body = "";
-			request.on("data", function(chunk) { body += chunk; });
-			request.on("end", function() { getWebPage(request, response, body); });
-			});
+		webServer = http.createServer();
 		}
 	else																// Start a https server
 		{
 		var key = fs.sync.readFile(options.key);
 		var crt = fs.sync.readFile(options.crt);
-		var ca_crt = fs.sync.readFile(options.ca_crt);
+		var caCrt = fs.sync.readFile(options.caCrt);
 
-		webServer = https.createServer({ key: key, cert: crt, ca: ca_crt }, function(request, response)
-			{
-			var body = "";
-			request.on("data", function(chunk) { body += chunk; });
-			request.on("end", function() { getWebPage(request, response, body); });
-			});
+		webServer = https.createServer({ key: key, cert: crt, ca: caCrt });
 		}
 
 	webServer.listen(options.port, options.hostname, 511, function()
 		{
+		isOpen = true;
+
 		if(serverUpListener)
-			serverUpListener({is_secure: options.is_secure});
+			serverUpListener({isSecure: options.isSecure});
 
 		callback(null, true);
 		});
 
+	webServer.on("request", function(request, response)
+			{
+			var body = "";
+			request.on("data", function(chunk)
+				{
+				body += chunk;
+				});
+
+			request.on("end", function()
+				{
+				requests.push({request: request, response: response, body: body});
+				eventEmitter.emit("processRequest");
+				});
+			});
+
 	webServer.on("error", function(err)
 		{
-		if(serverDownListener)
-			serverDownListener({is_secure: options.is_secure});
+		isOpen = false;
 
-		callback(utility.ferror(language.E_WEBSERVER_FATAL_ERROR.p("WebServer()::connect"), {":hostname": options.hostname, ":port": options.port, ":err": err.toString()}), null);
+		if(serverDownListener)
+			serverDownListener({isSecure: options.isSecure});
+
+		callback(language.E_WEBSERVER_FATAL_ERROR.preFmt("WebServer()::connect", {"~hostname": options.hostname, "~port": options.port, "~err": err.toString()}), null);
 		});
 
 	webServer.on("close", function()
 		{
 		if(serverDownListener)
-			serverDownListener({is_secure: options.is_secure});
+			serverDownListener({isSecure: options.isSecure});
 		});
 	};
 
 self.close = function()
 	{
+	isOpen = false;
+
 	if(webServer != null)
 		{
-		logger.info(utility.replace(language.WEBSERVER_CLOSING, {":owner": options.owner, ":protocol": options.protocol, ":hostname": options.hostname, ":port": options.port}));
-		
+		logger.info(utility.replace(language.WEBSERVER_CLOSING, {"~protocol": options.protocol, "~hostname": options.hostname, "~port": options.port}));
+
 		webServer.close();
 		webServer = null;
 		}
+	}
+
+self.getIsOpen = function()
+	{
+	return isOpen;
 	}
 
 self.setServerUpListener = function(listener)
@@ -191,194 +201,264 @@ self.setExternalRequestListener = function(listener)
 	externalRequestListener = (typeof listener == "function" ? listener : null);
 	}
 
-// // // // // // // // // // // // // // // // // // // // // // // // //
-var getWebPage = function(request, response, body)
+// -- -- -- -- -- -- -- -- -- -- //
+var processRequest = function()
 	{
-	var content = "", location = "";
-
-	var purl = url.parse(request.url, true);
-
-	addSlash = (purl.pathname.search(/\/$/) != -1 ? "" : "/");												// already ends with a forward slash?
-
-	if(purl.pathname != "/")																				// remove forward slash from the beginning
-		purl.pathname = purl.pathname.replace(/^\//, "");
-	
-	// Try to load a page - from templates or from www
-	fibrous.run( function()
+	if(!processingRequest && requests.length > 0)
 		{
-		var ok = false;
-
-		try {
-			if(externalRequestListener)
+		fibrous.run( function()
 			{
-				var rs = externalRequestListener.sync(request, body, options.is_secure, options.protocol);
-
-				if(rs.type == "kiwi")
-					ok = kiwiRender.sync(rs.pathname, rs.query, request, response, body, rs.responseCode);
-				else if(rs.type == "load")
-					ok = load.sync(rs.www_path, rs.pathname, request, response, body, rs.responseCode);
-				else if(rs.type == "write")
-					ok = write.sync(rs.content, rs.contentType, request, response, rs.responseCode, rs.location, []);
-			}
-
-			if(!ok)																							// kiwi templates
-				ok = kiwiRender.sync(purl.pathname, purl.query, request, response, body);
-
-			if(!ok)																							// kiwi templates + index file
-				ok = kiwiRender.sync(purl.pathname + addSlash + options.index_file, purl.query, request, response, body);
-
-			if(addSlash == "/" && utility.sync.isLocal(options.www_path + purl.pathname, "directory"))		// redirect browser permanently to pathname + /
-				{
-				location = options.protocol + "://" + request.headers["host"] + "/" + purl.pathname + "/";
-				content = utility.replace(language.E_MOVED_PERMANENTLY.message, {":location": location, ":server_name": options.server_name, ":hostname": options.hostname, ":port": options.port});
-				ok = write(content, "html", request, response, 301, location, []);
-				}
-
-			if(!ok)																							// www
-				ok = load.sync(options.www_path, purl.pathname, request, response, body);
-
-			if(!ok)																							// www + index file
-				ok = load.sync(options.www_path, purl.pathname + addSlash + options.index_file, request, response, body);
-
-			if(!ok)																							// kiwi templates + 404
-				ok = kiwiRender.sync("404", purl.query, request, response, body, 404);
-
-			if(!ok)
-				throw 500;
-			}
-		catch(err)
-			{
-			if(err == 500)
-				content = utility.replace(language.E_INTERNAL_SERVER_ERROR.message, {":server_name": options.server_name, ":hostname": options.hostname, ":port": options.port});
-			write(content, "html", request, response, err, location, []);
-			}
-		}, function(err, data) { } );
+			var rrb = requests.shift();
+			loadContent.sync(rrb.request, rrb.response, rrb.body);
+			}, function(err, data) { } );
+		}
 	}
 
-var kiwiRender = fibrous(function(pathname, query, request, response, body, responseCode)
+var loadContent = fibrous( function(request, response, body)
 	{
+	processingRequest = true;
+
+	// ToDo: check request.method?
+
+	var urlObj = urlObjUnmodified = url.parse(request.url, true);
+
+	urlObj.pathname = urlObj.pathname.replace(/^\/*|\/*$/g, "");					// remove forward slash from the beginning and end
+
+	var POST = parsePost(request, body);
+	var cookies = parseCookies(request);
+
+	var status = false;
+
 	try {
-		if(!options.kiwi_used || !layout)
-			throw false;
+		if(externalRequestListener)
+			{
+			var rs = externalRequestListener.sync(request, body, options.isSecure);
 
-		// Get base name from the url - remove the content type, Load files.
-		pathname = checkURL("", pathname);
+			if(rs.type == "load")
+				status = load(rs.wwwPath, rs.pathname, request, response, urlObjUnmodified, urlObj.query, POST, cookies, rs.responseCode);
+			else if(rs.type == "write")
+				status = write(rs.content, rs.contentType, request, response, rs.responseCode, rs.location, []);
+			}
 
-		var basename = pathname.replace(/\.[^.]*$/, "");
-		basename = basename.replace(/^\//, "");
-		basename = basename.toLowerCase();
+		if(status === false)															// Redirect back to directory if / is not at the end of the directory
+			{
+			var wwwPath = checkURL(options.wwwPath, urlObj.pathname);
+			var wwwPathType = utility.sync.getPathType(wwwPath);
 
-		var template_pathname = options.template_path + basename + ".html";
-		var view_pathname = options.template_path + basename + ".js";
-		if(	!utility.sync.isLocal(template_pathname, "file") ||
-			!utility.sync.isLocal(view_pathname, "file"))
-			throw false;
+			var requestUrl = request.url;
+			if(urlObj.search)
+				requestUrl = requestUrl.replace(urlObj.search, "");
+			if(urlObj.hash)
+				requestUrl = requestUrl.replace(urlObj.hash, "");
 
-		// Parse POST parameters as object
-		var post = parsePost(request, body);
+			if(wwwPathType == "directory" && requestUrl.match(/[^\/]$/))
+				{
+				var location = options.protocol + "://" + config.EDGE_HOSTNAME + (urlObj.port ? ":" + urlObj.port : "") + requestUrl + "/";
+				if(urlObj.search)
+					location += urlObj.search;
+				if(urlObj.hash)
+					location += urlObj.hash;
+				status = redirect(request, response, 301, location, []);
+				}
+			}
 
-		// KiWi templates have sessions
-		var headers = setSession(request, []);
+		if(status === false)															// www
+			status = load(options.wwwPath, urlObj.pathname, request, response, urlObjUnmodified, urlObj.query, POST, cookies);
 
-		var user_data = null, session = null, sessiontoken = parseCookie(request, SESSIONTOKEN);
-		if(sessiontoken)
-			session = getSession(sessiontoken);
-		if(session)
-			user_data = session.user_data;
+		if(status === false)															// www + index file
+			status = load(options.wwwPath, urlObj.pathname + "/" + options.indexFile, request, response, urlObjUnmodified, urlObj.query, POST, cookies);
 
-		// Get the language for the current session. Order of preference: GET, POST, session, default
-		var locale = "";
-		if(query && query.locale)
-			locale = query.locale;
-		else if(post.locale)
-			locale = post.locale;
-		else if(session && session.locale)
-			locale = session.locale;
-		else if(options.locale)
-			locale = options.locale;
+		if(status === false)															// Not Found
+			status = redirect(request, response, 404, "", []);
 
-		if(!languages[locale])
-			locale = config.DEFAULT_LOCALE;
-
-		language_section = languages[locale][basename];
-
-/*if(session)
-{
-console.log("UDB: ", user_data);
-console.log("ST: ", sessiontoken);
-console.log("SE: ", session);
-console.log("UDA: ", session.user_data, "\n\n");
-}*/
-
-		// Render
-		var template_file = fs.sync.readFile(template_pathname, {"encoding": "utf8"});
-		var view = reload.require(view_pathname);
-
-		var url = request.url;
-		var ip = request.connection.remoteAddress;				// Proxy? -> request.headers["x-forwarded-for"]
-		
-		var data = view.sync.getData(ip, url, query, post, user_data, options.is_secure, language_section);
-		data.parent = layout;									// Template
-		data.host_protocol = options.protocol;					// Host
-		data.host_get = query;
-		data.host_post = post;
-		data.host_ip = ip;
-		data.edge_url_current = options.protocol + "://" + config.EDGE_IP + "/";
-		data.edge_url_http = "http://" + config.EDGE_IP + "/";
-		data.edge_url_https = "https://" + config.EDGE_IP + "/";
-		data.is_secure = options.is_secure;
-		data.section = language_section.section;				//  Language
-		data.locale = language_section.locale;
-		data.language = language_section.language;
-		data.language_smarty = language_section.language_smarty;
-
-		if(sessiontoken && data.user_data)						// Update sessions user data
-			updateSession(sessiontoken, data.user_data);
-
-		var kiwit = new kiwi.Template(template_file);	
-		var rendered = kiwit.sync.render(data);
-
-		write(rendered.toString(), "html", request, response, responseCode, "", headers);
-
-		return true;
+		if(typeof status !== "boolean" || status === false)
+			throw status;
 		}
 	catch(err)
 		{
-//if(err != false) console.log("RENDER ERROR:", err.toString());
-		return false;
+		redirect(request, response, 500, "", []);										// Internal Server Error
+		}
+	finally
+		{
+		processingRequest = false;
+		eventEmitter.emit("processRequest");
 		}
 	});
 
-var load = fibrous(function(www_path, pathname, request, response, body, responseCode)
+var load = function(wwwPath, pathname, request, response, urlObj, GET, POST, cookies, responseCode)
 	{
-	try {
-		www_file = checkURL(www_path, pathname);
+	var status = false;
 
-		if(!utility.sync.isLocal(www_file, "file"))									// Test is the file in the www folder
+	try {
+		wwwPath = checkURL(wwwPath, pathname);										// Check URL validity
+
+		if(!utility.sync.isLocal(wwwPath, "file"))									// Return if file is not found
 			throw false;
 
-		var file = fs.sync.readFile(www_path + pathname);
+		var file = fs.sync.readFile(wwwPath);										// Get the file content
 
-		var i = pathname.lastIndexOf(".");
+		var i = pathname.lastIndexOf(".");											// Get content type of the file
 		var contentType = pathname.substr(i + 1, pathname.length - i - 1);
 
-		write(file, contentType, request, response, responseCode, "", []);
+		var isAngularJS = isOperationPage = isSecurePage = isLogInPage = false;		// Determine the page type
 
-		return true;
+		var html = file.toString().match(regxHTML);									// The <head ...> tag has the required information
+
+		if(html)																	// Reqular or AngularJS webpage
+			{ // e.g., <html ng-app spaceify-secure spaceify-is-login> -> ['html', 'ng-app', 'spaceify-secure', 'spaceify-is-login']
+			if(html[0].indexOf("ng-app") != -1 || html[0].indexOf("ng-app-spaceify") != -1)
+				isAngularJS = true;
+
+			if(html[0].indexOf("spaceify-secure") != -1)
+				isSecurePage = true;
+
+			if(html[0].indexOf("spaceify-is-login") != -1)
+				isLogInPage = isSecurePage = true;
+
+			if(html[0].indexOf("spaceify-operation") != -1)
+				isOperationPage = true;
+			}
+
+		if(isOperationPage)
+			status = renderOperationPage.sync(request, response, GET, POST, cookies);
+		else if(isAngularJS)														// The web page contains AngularJS
+			status = renderAngularJS(file, contentType, pathname, isSecurePage, isLogInPage, request, response, urlObj, GET, POST, cookies, responseCode);
+		else																		// Regular web page
+			status = renderHTML.sync(file, contentType, request, response, responseCode);
 		}
 	catch(err)
 		{
-		return false;
 		}
+
+	return status;
+	}
+
+var renderHTML = fibrous( function(file, contentType, request, response, responseCode)
+	{
+	return write(file, contentType, request, response, responseCode, "", []);
 	});
+
+var renderOperationPage = fibrous( function(request, response, GET, POST, cookies)
+	{
+	var error = null, data = null, operation, headers = [];
+
+	if(!POST["data"])
+		error = errorc.errorFromObject(language.E_INVALID_DATA_POST);
+	else
+		{
+		// SESSION
+		var sessiontoken = manageSessions(cookies, request.connection.remoteAddress, "/");
+
+		// HEADERS
+		headers.push["Set-Cookie", sessions[sessiontoken].cookie];
+
+		// OPERATION
+		operation = utility.parseJSON(POST["data"].body, true);
+
+		var userData = sessions[sessiontoken].userData;
+
+		var operationData = webOperation.sync.getData(operation, userData, options.isSecure);
+
+		//if(operationData.error && operationData.error.code == 2)								// Admin is not logged in
+		//	return redirect(request, response, 301, config.ADMIN_LOGIN_URL, []);
+
+		data = operationData.data;
+		error = operationData.error;
+		}
+
+	return write(JSON.stringify({err: error, data: data}), "json", request, response, null, "", headers);
+	});
+
+var renderAngularJS = function(file, contentType, pathname, isSecurePage, isLogInPage, request, response, urlObj, GET, POST, cookies, responseCode)
+	{
+	// SESSIONS -- -- -- -- -- -- -- -- -- -- //
+	var ip = request.connection.remoteAddress;				// Proxy? -> request.headers["x-forwarded-for"]
+
+	var sessiontoken = manageSessions(cookies, ip, "/");
+
+	// GET THE LOCALE / LANGUAGE FOR THE CURRENT SESSION
+	var locale = config.DEFAULT_LOCALE;
+	if(GET && GET.locale)
+		locale = GET.locale;
+	else if(POST.locale)
+		locale = POST.locale;
+	else if(cookies.locale)
+		locale = cookies.locale.value;
+	else if(options.locale)
+		locale = options.locale;
+
+	// HEADER -- -- -- -- -- -- -- -- -- -- //
+	var headers = [];
+	headers.push(["Set-Cookie", "locale=" + locale]);
+	headers.push(["Set-Cookie", sessions[sessiontoken].cookie]);
+
+	// SECURITY CHECK - REDIRECTIONS -- -- -- -- -- -- -- -- -- -- //
+	if(!options.isSecure && isSecurePage)												// Redirect secure pages to secure server
+		return redirect(request, response, 301, utility.parseURLFromURLObject(urlObj, config.EDGE_HOSTNAME, "https", urlObj.port), headers);
+	else if(options.isSecure && isSecurePage)
+		{
+		var operationData = webOperation.sync.getData({ type: "isAdminLoggedIn" }, sessions[sessiontoken].userData, options.isSecure);
+
+		if(operationData.error)															// Internal Server Error
+			return redirect(request, response, 500, "", headers);
+		else if(!operationData.isLoggedIn && !isLogInPage)								// Redirect to log in if not logged in
+			return redirect(request, response, 301, config.ADMIN_LOGIN_URL, headers);
+		else if(operationData.isLoggedIn && isLogInPage)								// Redirect to index if already logged in
+			return redirect(request, response, 301, config.ADMIN_INDEX_URL, headers);
+		}
+
+	var section = pathname.replace(/\.[^.]*$/, "");
+	section = section.replace(/^\//, "");
+	section = section.toLowerCase();
+
+	// INJECT JAVASCRIPT -- -- -- -- -- -- -- -- -- -- //
+	var head = file.toString().match(regxAngularJSHead);
+
+	if(head)
+		{
+		var script = "\t\tvar spaceifyPage = " + JSON.stringify({
+						ip: ip,
+						locale: locale,
+						locales, locales,
+						section: section,
+						protocol: options.protocol,
+						isSecure: options.isSecure,
+						urlHttp: "http://" + config.EDGE_HOSTNAME + "/",
+						urlHttps: "https://" + config.EDGE_HOSTNAME + "/",
+						url: options.protocol + "://" + config.EDGE_HOSTNAME + "/"
+						}) + ";\r\n";
+
+		script = "\r\n\r\n\t\t<script>\r\n" + script + "\t\t</script>\r\n";
+
+		file = file.slice(0, head.index) + head[0] + script + file.slice(head[0].length + head.index);
+		}
+
+	// RETURN PAGE -- -- -- -- -- -- -- -- -- -- //
+	return write(file, contentType, request, response, responseCode, "", headers);
+	}
+
+var redirect = function(request, response, responseCode, location, headers)
+	{
+	var content = "";
+
+	if(responseCode == 301)
+		content = utility.replace(language.E_MOVED_PERMANENTLY.message, {"~location": location, "~serverName": options.serverName, "~hostname": options.hostname, "~port": options.port});
+	else if(responseCode == 302)
+		content = utility.replace(language.E_MOVED_FOUND.message, {"~location": location, "~serverName": options.serverName, "~hostname": options.hostname, "~port": options.port});
+	else if(responseCode == 404 || responseCode == 500)
+		content = fs.sync.readFile(options.wwwErrorsPath + responseCode + ".html");
+
+	return write(content, "html", request, response, responseCode, location, headers);
+	}
 
 var write = function(content, contentType, request, response, responseCode, location, headers)
 	{
 	var now = new Date();
+
 	headers.push(["Content-Type", (contentTypes[contentType] ? contentTypes[contentType] : "text/plain"/*application/octet-stream*/) + "; charset=utf-8"]);
 	headers.push(["Accept-Ranges", "bytes"]);
 	headers.push(["Content-Length", content.length]);
-	headers.push(["Server", options.server_name]);
+	headers.push(["Server", options.serverName]);
 	headers.push(["Date", now.toUTCString()]);
 	headers.push(["Access-Control-Allow-Origin", "*"]);//request.headers.origin ? request.headers.origin : "*";//request.headers.host;
 	//headers.push(["X-Frame-Options", "SAMEORIGIN"]);
@@ -394,20 +474,20 @@ var write = function(content, contentType, request, response, responseCode, loca
 var parsePost = function(request, body)
 	{ // Simple parsing of POST body
 	var post = {};
-
-	try
-		{
-		if(!request.headers["content-type"])
-			throw "";
-
-		var content_type = request.headers["content-type"].toLowerCase();
+	var contentType;
+	try {
 		if(request.method.toLowerCase() != "post")
 			throw "";
 
-		if(content_type.indexOf("application/x-www-form-urlencoded") != -1)
+		if(!request.headers["content-type"])
+			throw "";
+
+		contentType = request.headers["content-type"].toLowerCase();
+
+		if(contentType.indexOf("application/x-www-form-urlencoded") != -1)
 			post = qs.parse(body);
-		else if(content_type.indexOf("application/json") != -1)
-			post = JSON.parse(body);
+		else if(contentType.indexOf("multipart/form-data") != -1)
+			post = utility.parseMultiPartData(contentType, body, true);
 		}
 	catch(err)
 		{}
@@ -415,9 +495,9 @@ var parsePost = function(request, body)
 	return post;
 	}
 
-var checkURL = function(www_path, pathname)
+var checkURL = function(wwwPath, pathname)
 	{
-	// The pathname must be checked so that loading is possible only from supplied www_path	
+	// The pathname must be checked so that loading is possible only from the supplied wwwPath
 	pathname = pathname.replace(/\.\./g, "");							// prevent ../ attacks, e.g. displaying /../../../../../../../../../../../../../../../etc/shadow
 	pathname = pathname.replace(/\/{2,}/g, "");
 
@@ -425,105 +505,69 @@ var checkURL = function(www_path, pathname)
 
 	pathname = pathname.replace(/[~*^|?$\[\]{}\\]/g, "");				// characters
 
-	www_path = www_path + pathname;										// Can not have something//something
-	www_path = www_path.replace(/\/{2,}/g, "/");
+	wwwPath = wwwPath + pathname;										// Can not have something//something
+	wwwPath = wwwPath.replace(/\/{2,}/g, "/");
 
-	return www_path;
+	return wwwPath;
 	}
 
 	// SERVER SIDE SESSIONS - IMPLEMENTED USING HTTP COOKIES -- -- -- -- -- -- -- -- -- -- //
-var setSession = function(request, headers)
+var manageSessions = function(cookies, domain, path)
 	{
-	var session = null, sessiontoken = parseCookie(request, SESSIONTOKEN);
-	if(sessiontoken)
-		session = getSession(sessiontoken);
+	var sessiontoken = (cookies[SESSIONTOKEN] ? cookies[SESSIONTOKEN].value : null);
+	var session = sessions.hasOwnProperty(sessiontoken) ? sessions[sessiontoken] : null;
 
 	if(!session)														// Create a session if it doesn't exist yet
-		headers = createSession(headers, "/", request.connection.remoteAddress, request);
+		sessiontoken = createSession(domain, path);
 	else																// Update an existing session
-		headers = refreshSession(headers, sessiontoken, request);
+		sessions[sessiontoken].timestamp = Date.now();
 
-	return headers;
+	return sessiontoken;
 	}
 
-var createSession = function(headers, Path, Domain, request)
+var createSession = function(Domain, Path)
 	{
 	shasum = crypto.createHash("sha512");
 	var result = utility.bytesToHexString(crypto.randomBytes(16));
 	shasum.update(result);
 	var sessiontoken = shasum.digest("hex").toString();
 
-	var session = SESSIONTOKEN + "=" + sessiontoken + "; HttpOnly";
-	if(options.is_secure)
-		session += "; Secure";
-	if(Path)
-		session += "; Path=" + Path;
-	if(Domain)
-		session += "; Domain=" + Domain;
-	headers.push(["Set-Cookie", session]);
+	var cookie = SESSIONTOKEN + "=" + sessiontoken + "; Path=" + Path + "; Domain=" + Domain + "; HttpOnly; session";
+	if(options.isSecure)
+		cookie += "; Secure";
 
-	sessions[sessiontoken] = { timestamp: Date.now(), user_data: {} };
-//console.log("CREATE SESSION:\n", (options.is_secure ? "HTTPS " : "HTTP"), request.url, request.connection.remoteAddress, "\n", session, "\n\n");
-	return headers;
+	sessions[sessiontoken] = {userData: {}, timestamp: Date.now(), "cookie": cookie}
+
+	return sessiontoken;
 	}
 
-var refreshSession = function(headers, sessiontoken, request)
-	{ // Refresh session and send sessiontoken back to the web browser
-	if(sessions.hasOwnProperty(sessiontoken))
-		{
-		sessions[sessiontoken].timestamp = Date.now();
-		headers.push([SESSIONTOKEN, sessiontoken]);
-		}
-//console.log("REFRESH SESSION:\n", (options.is_secure ? "HTTPS " : "HTTP"), request.url, request.connection.remoteAddress, "\n", sessiontoken, "\n\n");
-	return headers;
-	}
-
-var getSession = function(sessiontoken)
+self.destroySessions = function()
 	{
-	return (sessions.hasOwnProperty(sessiontoken) ? sessions[sessiontoken] : null);
+	sessions = {};
 	}
-
-var updateSession = function(sessiontoken, user_data)
-	{ // Updates user_data and refreshes the session
-	if(sessions.hasOwnProperty(sessiontoken))
-		{
-		sessions[sessiontoken].user_data = user_data;
-		sessions[sessiontoken].timestamp = Date.now();
-		}
-	}
-
-var parseCookie = function(request, search)
+	
+var parseCookies = function(request)
 	{
-	var namevalues, namevalue, nam, val;
-
-	namevalues = (!search ? [] : null);									// Return an array of name-value pairs or a value
-
-	var cookies = (request.headers.cookie || request.headers.Cookie || "").split(";");
-	for(var i=0; i<cookies.length; i++)
+	var cookies = {};
+	var cookie = (request.headers.cookie || request.headers.Cookie || "").split(";");
+	for(var i = 0; i < cookie.length; i++)
 		{
-		var namevalue = cookies[i].split("=");
-		if(namevalue.length == 2)
-			{
-			nam = namevalue[0].trim();
-			val = namevalue[1].trim();
-
-			if(!search)														// Get them all
-				namevalues.push({name: nam, value: val});
-			else if(search == nam) {										// Search for a specific name-value pair
-				namevalues = val; break; }
-			}
+		var name_value = cookie[i].split("=");
+		if(name_value.length == 2)
+			cookies[name_value[0].trim()] = {value: name_value[1].trim(), cookie: cookie[i]};
 		}
 
-	return namevalues;													// Empty if no cookies found / null if search fails
+	return cookies;
 	}
 
 	// CARBAGE COLLECTION -- -- -- -- -- -- -- -- -- -- //
 var carbageCollection = function()
 	{
-	for(token in sessions)														// Remove expired sessions
+	var sts = Object.keys(sessions);									// Remove expired sessions
+	for(var i = 0; i < sts.length; i++)
 		{
-		if(Date.now() - sessions[token].timestamp >= options.session_delete_interval)
-			delete sessions[token];
+		if(Date.now() - sessions[sts[i]].timestamp >= options.sessionDeleteInterval)
+			delete sessions[sts[i]];
 		}
 	}
 

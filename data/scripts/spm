@@ -1,5 +1,6 @@
 #!/bin/bash
-## Spaceify Package Manager, 5.6.2013 Spaceify Inc.
+# Spaceify Package Manager
+# Spaceify Oy 5.6.2013
 
 args=""
 for arg in "$@"; do

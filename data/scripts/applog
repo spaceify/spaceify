@@ -1,27 +1,39 @@
 #!/bin/bash
 # Outputs STDOUT and STDERR texts from inside applications Docker container. Takes applications unique name as a parameter (e.g. applog spaceify/bigscreen).
-# Spaceify Inc. 15.4.2015
+# Spaceify Oy 15.4.2015
 
 if [[ "$1" == "" ]]; then
-	printf "\nUsage: applog unique_name\nwhere unique_name is the unique name of an application to restart.\n\n"
+	printf "\nUsage: applog unique_name\nwhere unique_name is the unique name of an application.\n\n"
 	exit 1
 fi
 
-dops=$(docker ps)								# Get running containers from Docker
-
-aline=""										# Get the line with the applications unique name
+imline=""										# Get the line with the applications unique name from the images
+doim=$(docker images)
 while read -r line;
 do
 	line=$( echo "$line" | grep -i "$1" )
 	if [[ "$line" != "" ]]; then
-		aline=$line
+		imline=$line
+		break
+	fi
+done <<< "$doim"
+if [[ $imline == "" ]]; then exit 0; fi
+
+psline=""										# Get the line with the images id from the containers
+dops=$(docker ps)
+IFS=' ' read -ra array <<< "$imline"
+while read -r line;
+do
+	line=$( echo "$line" | grep -i "${array[2]}" )
+	if [[ "$line" != "" ]]; then
+		psline=$line
 		break
 	fi
 done <<< "$dops"
 
-if [[ $aline != "" ]]; then						# Get the log of the application
-	IFS=' ' read -ra array <<< "$aline"
-	printf "\n\nSTDOUT and STDERR for application '$1'\n\n"
+if [[ $psline != "" ]]; then
+	IFS=' ' read -ra array <<< "$psline"
+	printf "\nSTDOUT and STDERR of '$1'\n\n"
 	docker logs "${array[0]}"
 	printf "\n\n"
 fi

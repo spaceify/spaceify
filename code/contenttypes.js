@@ -1,9 +1,8 @@
-#!/usr/bin/env node
 /**
- * contentTypes, 3.12.2013 Spaceify Inc.
+ * contentTypes, 3.12.2013 Spaceify Oy
  */
 
-var contentTypes = 
+var contentTypes =
 	{
 	"x3d": "application/vnd.hzn-3d-crossword",
 	"3gp": "video/3gpp",

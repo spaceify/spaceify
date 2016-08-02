@@ -1,12 +1,12 @@
 /**
- * PubSub, 19.5.2014, Spaceify Inc.
+ * PubSub, 19.5.2014 Spaceify Oy
  * 
  * @class PubSub
  */
 
 var rebus = require("./lib/rebus");
 
-function PubSub(path)
+function PubSub()
 {
 var self = this;
 
@@ -43,7 +43,7 @@ self.publish = function(prop, obj, path, callback)
 		self.close()
 		self.open(path);
 		}
-		
+
 	rbus.publish(prop, obj, callback);
 
 	if(path)
@@ -68,7 +68,6 @@ self.value = function(prop, path)
 		}
 	catch(err)
 		{
-console.log(err);
 		}
 
 	return rvalue;

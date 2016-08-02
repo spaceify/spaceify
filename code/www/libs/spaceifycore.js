@@ -1,55 +1,61 @@
+"use strict";
+
 /**
- * Spaceify core by Spaceify Inc. 29.7.2015
- *
+ * Spaceify core, 29.7.2015 Spaceify Oy
+ * 
  * @class SpaceifyCore
  */
 
 function SpaceifyCore()
 {
+// NODE.JS / REAL SPACEIFY - - - - - - - - - - - - - - - - - - - -
+var isNodeJs = (typeof exports !== "undefined" ? true : false);
+var isRealSpaceify = (typeof process !== "undefined" ? process.env.IS_REAL_SPACEIFY : false);
+var apiPath = (isNodeJs && isRealSpaceify ? "/api/" : "/var/lib/spaceify/code/");
+
+var classes = 	{
+				SpaceifyNetwork: (isNodeJs ? function() {} : SpaceifyNetwork),
+				SpaceifyConfig: (isNodeJs ? require(apiPath + "spaceifyconfig") : SpaceifyConfig),
+				WebSocketRpcConnection: (isNodeJs ? require(apiPath + "websocketrpcconnection") : WebSocketRpcConnection)
+				};
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 var self = this;
 
-var isNodeJS = (typeof exports !== "undefined" ? true : false);
-var isWindow = (typeof window !== "undefined" ? true : false);
-var secureState = (isWindow ? new SpaceifyNetwork().isSecure() : false);
-
-if(isNodeJS)
-	{
-	var api_path = process.env.IS_REAL_SPACEIFY ? "/api/" : "/var/lib/spaceify/code/";
-
-	var config = require(api_path + "config")();
-	var communicator = require(api_path + "www/libs/communicator.js");
-
-	var ca_crt = api_path + "www/" + config.SPACEIFY_CRT;
-	}
-else
-	{
-	var config = new SpaceifyConfig();
-	var communicator = Communicator;
-
-	var ca_crt = "";
-	}
+var config = new classes.SpaceifyConfig();
+var network = new classes.SpaceifyNetwork();
 
 var connection = null;
-var secure_connection = null;
+var secureConnection = null;
+
+var useSecure = (isNodeJs ? true : network.isSecure());
+var caCrt = (isNodeJs ? apiPath + config.SPACEIFY_CRT_WWW : "");
 
 self.startSpacelet = function(unique_name, callback)
 	{
-	call("startSpacelet", [unique_name], (isWindow ? secureState : false), function(err, services, id, ms)
+	call("startSpacelet", [unique_name], useSecure, function(err, services, id, ms)
 		{
 		if(err)
 			callback(err, null);
 		else
 			{
-			var service_names = [];
-			for(var s=0; s<services.length; s++)								// Make service names array for convenience
-				{
-				if(services[s].service_type == config.OPEN)
-					service_names.push(services[s].service_name);
-				}
+			var serviceNames = [];
+			for(var s = 0; s < services.length; s++)							// Make service names array for convenience
+				serviceNames.push(services[s].service_name);
 
-			callback(null, {services: services, service_names: service_names});
+			callback(null, {services: services, serviceNames: serviceNames}, id, ms);
 			}
 		});
+	}
+
+self.registerService = function(service_name, callback)
+	{
+	call("registerService", [service_name], useSecure, callback);
+	}
+
+self.unregisterService = function(service_name, callback)
+	{
+	call("unregisterService", [service_name], useSecure, callback);
 	}
 
 self.getService = function(service_name, unique_name, callback)
@@ -59,7 +65,7 @@ self.getService = function(service_name, unique_name, callback)
 	if(service)
 		callback(null, service, -1, 0);
 	else
-		call("getService", [service_name, unique_name], (isWindow ? secureState : false), function(err, data, id, ms)
+		call("getService", [service_name, unique_name], useSecure, function(err, data, id, ms)
 			{
 			if(!err && isCache())
 				getCache().setService(data, unique_name);
@@ -68,9 +74,9 @@ self.getService = function(service_name, unique_name, callback)
 			});
 	}
 
-self.getServices = function(unique_names, callback)
+self.getOpenServices = function(unique_names, callback)
 	{
-	call("getServices", [unique_names], (isWindow ? secureState : false), callback);
+	call("getOpenServices", [unique_names], useSecure, callback);
 	}
 
 self.getManifest = function(unique_name, callback)
@@ -80,7 +86,7 @@ self.getManifest = function(unique_name, callback)
 	if(manifest)
 		callback(null, manifest, -1, 0);
 	else
-		call("getManifest", [unique_name], (isWindow ? secureState : false), function(err, data, id, ms)
+		call("getManifest", [unique_name, true], useSecure, function(err, data, id, ms)
 			{
 			if(!err && isCache())
 				getCache().setManifest(unique_name, data);
@@ -89,34 +95,39 @@ self.getManifest = function(unique_name, callback)
 			});
 	}
 
-self.isAdminLoggedIn = function(session_id, callback)
+self.isAdminLoggedIn = function(callback)
 	{
-	call("isAdminLoggedIn", [session_id], true, callback);
+	network.POST_JSON(config.OPERATION_URL, {type: "isAdminLoggedIn"}, function(err, data, id, ms)
+		{
+		callback((err ? err : null), (err ? false : data), id, ms);
+		});
 	}
 
-self.saveOptions = function(session_id, unique_name, directory, filename, data, callback)
+self.isApplicationRunning = function(unique_name, callback)
 	{
-	call("saveOptions", [session_id, unique_name, directory, filename, data], true, callback);
+	call("isApplicationRunning", [unique_name], useSecure, callback);
 	}
 
-self.loadOptions = function(session_id, unique_name, directory, filename, callback)
+self.getServiceRuntimeStates = function(unique_name, callback)
 	{
-	call("loadOptions", [session_id, unique_name, directory, filename], true, callback);
+	call("getServiceRuntimeStates", [unique_name], useSecure, callback);
 	}
 
 self.getApplicationData = function(callback)
 	{
-	call("getApplicationData", [], (isWindow ? secureState : false), function(err, data, id, ms)
+	var i;
+
+	call("getApplicationData", [], useSecure, function(err, data, id, ms)
 		{
 		if(!err && isCache())
 			{
-			for(var i=0; i<data.spacelets.length; i++)
-				getCache().setApplication(data.spacelets[i]);
+			for(i = 0; i < data.spacelet.length; i++)
+				getCache().setApplication(data.spacelet[i]);
 
-			for(var i=0; i<data.sandboxed.length; i++)
+			for(i = 0; i < data.sandboxed.length; i++)
 				getCache().setApplication(data.sandboxed[i]);
 
-			/*for(var i=0; i<data.native.length; i++)
+			/*for(i = 0; i < data.native.length; i++)
 				getCache().setApplication(data.native[i]);*/
 			}
 
@@ -131,7 +142,7 @@ self.getApplicationURL = function(unique_name, callback)
 	if(urls)
 		callback(null, urls, -1, 0);
 	else
-		call("getApplicationURL", [unique_name], (isWindow ? secureState : false), function(err, data, id, ms)
+		call("getApplicationURL", [unique_name], useSecure, function(err, data, id, ms)
 			{
 			if(!err && isCache())
 				getCache().setApplicationURL(unique_name, data);
@@ -140,77 +151,62 @@ self.getApplicationURL = function(unique_name, callback)
 			});
 	}
 
-self.isApplicationRunning = function(unique_name, callback)
-	{
-	var is_running = (isCache() ? getCache().isRunning(unique_name) : false);
-
-	if(is_running === null)
-		callback(null, true, -1, 0);
-	else
-		call("isApplicationRunning", [unique_name], (isWindow ? secureState : false), function(err, data, id, ms)
-			{
-			if(!err && isCache())
-				getCache().setRunning(unique_name, data);
-
-			callback(err, data, id, ms);
-			});
-	}
-
 self.setSplashAccepted = function(callback)
 	{
-	call("setSplashAccepted", [], (isWindow ? secureState : false), callback);
+	call("setSplashAccepted", [], useSecure, callback);
 	}
 
-self.registerService = function(service_name, callback)
+/*self.saveOptions = function(unique_name, directory, filename, data, callback)
 	{
-	call("registerService", [service_name], true, callback);
+	var post = {unique_name: unique_name, directory: directory, filename: filename, data: data};
+	network.POST_JSON(config.OPERATION_URL, post, callback);
 	}
+
+self.loadOptions = function(unique_name, directory, filename, callback)
+	{
+	var post = {unique_name: unique_name, directory: directory, filename: filename};
+	network.POST_JSON(config.OPERATION_URL, post, callback);
+	}*/
 
 	// CONNECTION -- -- -- -- -- -- -- -- -- -- //
-var call = function(method, params, is_secure, callback)
-	{ // Open only one insecure and secure connection for each SpaceifyCore instance
-	if((!is_secure && !connection) || (is_secure && !secure_connection))
+var call = function(method, params, isSecure, callback)
+	{ // Open only one secure and unsecure connection for each SpaceifyCore instance
+	if((!isSecure && !connection) || (isSecure && !secureConnection))
 		{
-		connect(is_secure, function(err, data, id, ms)
+		connect(isSecure, function(err, data, id, ms)
 			{
 			if(!err)
-				callRpc(method, params, is_secure, callback);
+				callRpc(method, params, isSecure, callback);
 			else
 				callback(err, data, id, ms);
 			});
 		}
 	else
-		callRpc(method, params, is_secure, callback);
+		callRpc(method, params, isSecure, callback);
 	}
 
-var callRpc = function(method, params, is_secure, callback)
+var callRpc = function(method, params, isSecure, callback)
 	{
-	(!is_secure ? connection : secure_connection).callRpc(method, params, self, function(err, data, id, ms)
+	(!isSecure ? connection : secureConnection).callRpc(method, params, self, function(err, data, id, ms)
 		{
 		callback(err, data, id, ms);
 		});
 	}
 
-var connect = function(is_secure, callback)
+var connect = function(isSecure, callback)
 	{
-	if(isNodeJS || (isWindow && window.WebSocket))
-		port = !is_secure ? config.CORE_PORT_WEBSOCKET : config.CORE_PORT_WEBSOCKET_SECURE;
-	else
-		port = !is_secure ? config.CORE_PORT_ENGINEIO : config.CORE_PORT_ENGINEIO_SECURE;
+	var port = !isSecure ? config.CORE_PORT : config.CORE_PORT_SECURE;
 
-	var communigator = new communicator(config.WEBSOCKET_RPC_COMMUNICATOR);
-	communigator.connect({hostname: config.EDGE_IP, port: port, is_secure: is_secure, ca_crt: ca_crt}, function(err, data, id, ms)
-		{
-		!is_secure ? connection = data : secure_connection = data;
+	var connection_ = new classes.WebSocketRpcConnection();
+	!isSecure ? connection = connection_ : secureConnection = connection_;
 
-		callback(err, data, id, ms);
-		});
+	connection_.connect({hostname: config.EDGE_HOSTNAME, port: port, isSecure: isSecure, caCrt: caCrt}, callback);
 	}
 
 	// CACHE -- -- -- -- -- -- -- -- -- -- //
 var getCache = function()
 	{
-	return (isWindow && window.spaceifyCache ? window.spaceifyCache : null);
+	return (!isNodeJs && window && window.spaceifyCache ? window.spaceifyCache : null);
 	}
 
 var isCache = function()

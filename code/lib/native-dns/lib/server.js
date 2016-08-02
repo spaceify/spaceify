@@ -74,7 +74,7 @@ Server.prototype.handleMessage = function(msg, remote, address) {
 var UDPServer = function(opts) {
   var self = this;
 
-  this._socket = dgram.createSocket(opts.dgram_type || 'udp4');
+  this._socket = dgram.createSocket(opts);
 
   this._socket.on('message', function(msg, remote) {
     self.handleMessage(msg, new UDPSocket(self._socket, remote), remote);

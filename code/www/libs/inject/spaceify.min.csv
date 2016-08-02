@@ -1,0 +1,3 @@
+json	libs/config.json	-	application/json	sconfig
+css	css/spaceify.min.css	-	text/css	all
+javascript	js/spaceify.min.js	-	application/javascript	-

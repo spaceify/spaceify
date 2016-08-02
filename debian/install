@@ -9,10 +9,13 @@ data/scripts/spm usr/bin
 data/scripts/rsapp usr/bin
 data/scripts/applog usr/bin
 data/scripts/spmc etc/bash_completion.d
+data/scripts/spaceifylog etc/cron.hourly
 data/docs/* var/lib/spaceify/data/docs
 data/db/create.sql var/lib/spaceify/data/db
 data/manifest/manifest.rules var/lib/spaceify/data/manifest
-data/docker/* var/lib/spaceify/data/docker
+data/docker/Dockerfile var/lib/spaceify/data/docker
+data/docker/image_versions var/lib/spaceify/data/docker
+data/logs/readme.txt var/lib/spaceify/data/logs
 
 upstart/* var/lib/spaceify/data/upstart
 

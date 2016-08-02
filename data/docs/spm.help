@@ -8,10 +8,13 @@
             stop
             restart
             list
+            states
             register
+            version
             help
   
   options: authenticate | -a
+           force | -f
            spacelet | -s
            sandboxed | -S
            native | -n
@@ -19,32 +22,45 @@
   
   package: URL, directory, zip archive, Spaceify registry, GitHub repository or unique_name
            (unique name of an application or a spacelet) depending of the command.
-
+  
   TAB key can be used for command line completion. Completion can be used for both commands
   and options. Double-tapping shows available commands or options for a command.
 @verbose
-Commands and options they accept.
+Commands and options the commands accept.
 %help%
   help [command]
   
     Displays help text of the command. If command is not defined the whole
     help text is displayed.
 %%
-%install%
-  install [authenticate | -a] package
+%version%
+  version
   
-    Installs a package to the Spaceify core.
+    Displays Spaceify edge version information.
+%%
+%install%
+  install [authenticate | -a, force | -f] package
+  
+    Installs a package to the edge node.
   
     The authenticate option can be used for authenticating to GitHub repository. The username
     and password will be prompted if this option is set.
   
+    The force option can be used to skip the security questions. Packages are installed
+    without asking are the services they require allowed for them. Notice that the questions
+    are not asked for the packages the packages require either.
+    USE THIS OPTION ONLY IF YOU ARE SURE THE PACKAGES ARE SAFE.
+  
     The package can be a local directory, local or remote zip archive, GitHub repository or a
     unique name in the Spaceify registry. Path to a local package can be an absolute path to
-    the file systen or a relative path to the current working directory. When loading remote
-    zip archives any url can be given as long as the response is a valid zip archive. Packages
-    from GitHub can be loaded using html, git or clone url.
+    the file systen or a relative path to the current working directory. The spm install
+    command can be used without a package defined. In this case the current working directory
+    is searched for the application directory. When loading remote zip archives any url can be
+    given as long as the response is a valid zip archive. Packages from GitHub can be loaded
+    using html, git or clone url.
   
     Local directory or zip archive:
+      spm install
       spm install <directory>
       spm install <zip archive>
   
@@ -55,6 +71,8 @@ Commands and options they accept.
       spm install spacelets/star
       spm install spacelets/star.zip
   
+      spm install
+
     Remote zip archive:
       spm install <zip archive url>
   
@@ -165,9 +183,9 @@ Commands and options they accept.
 %remove%
   remove unique_name
   
-    Removes a package from the Spaceify core. Packages can be removed only by using
+    Removes a package from the edge node. Packages can be removed only by using
     their unique name. When a package is removed all the files and database entries are removed
-    from the Spaceify core.
+    from the edge node.
   
       spm remove unique_name
 %%
@@ -209,12 +227,22 @@ Commands and options they accept.
       spm list verbose
       spm list -s verbose
 %%
+%list%
+  state
+  
+    Lists runtime status information of the spacelets and applications. The
+    status contains such information as port mappings.
+  
+    spm states
+%%
 %register%
   register
   
-    Spaceify core requires edge computers to be registred for some of its
-    functionalities to work. The registration process is done automatically when
+    Spaceify core requires edge node to be registered so that some of its
+    functionalities would work. The registration process is done automatically when
     Spaceify is installed. However, sometimes the registration fails and this command
     is provided to finish the registration. It is highly recommended to finish the
     registration if it failed during installation.
+  
+    spm register
 %%

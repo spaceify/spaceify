@@ -22,7 +22,7 @@ else
 
 	vsdate=$( LANG=EN_US date +"%a, %d %b %Y %H:%M:%S %z" )
 
-	vss="spaceify (${vs}) unstable; urgency=low\n\n  * Release ${vs} ${ts}\n\n -- Spaceify Inc. <admin@spaceify.net>  ${vsdate}\n\n"
+	vss="spaceify (${vs}) unstable; urgency=low\n\n  * Release ${vs} ${ts}\n\n -- Spaceify Oy <admin@spaceify.net>  ${vsdate}\n\n"
 
 	changelog=$(< debian/changelog)
 	changelog="${vss}${changelog}"

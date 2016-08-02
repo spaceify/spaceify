@@ -1,5 +1,7 @@
+"use strict";
+
 /**
- * Spaceify Synchronous by Spaceify Inc. 29.7.2015
+ * Spaceify Synchronous, 29.7.2015 Spaceify Oy
  *
  * @class SpaceifySynchronous
  */
@@ -8,13 +10,14 @@ function SpaceifySynchronous()
 {
 var self = this;
 
-var method_id = 0;
+var methodId = 0;
 var methods = [];
 var results = {};
-var _finally = null;
 var waiting = null;
+var finally_ = null;
 
-// Setup an arbitrary amount of method calls and start traversing them in the order they are defined.
+// Start traversing functions in the order they are defined. Functions are executed independently and results are not passed to the next function.
+// The results of operations are stored in the results object in the same order as the functions were executed.
 self.waterFall = function(_methods, callback)
 	{
 	if((!_methods || _methods.length == 0) && typeof callback == "function")
@@ -22,47 +25,58 @@ self.waterFall = function(_methods, callback)
 	else if(!_methods || _methods.length == 0 || typeof callback != "function")
 		return;
 
-	_finally = callback;
+	finally_ = callback;
 
 	methods = _methods;
 
 	next();
 	}
 
-// Call the methods one after other recursively when previous call has returned.
+// Call the methods one after another recursively
 var next = function()
 	{
 	if(methods.length == 0)
-		return _finally();
+		return finally_();
 
 	var calling = methods.shift();
 
-	// Call a method that has a callback. Store the original callback and replace it with ours. It's assumed that
-	// the original callback is the last parameter. After our callback returns call the original callback.
-	if(calling.type == "sync")
+	// Call a method that is asynchronous. Store the original callback and replace it with ours. It's assumed that
+	// the original callback is the last parameter. After our callback returns call the original callback, if it is defined (not null).
+	if(calling.type == "async")
 		{
 		waiting = calling.params[calling.params.length - 1];
 		calling.params[calling.params.length - 1] = wait;
 		calling.method.apply(calling.object, calling.params);
 		}
-	// Call a method that doesn't have callback processing inside it.
+	// Call a method that is synchronous.
 	else
 		{
-		results[++method_id] = calling.method.apply(calling.object, calling.params);
+		results[++methodId] = calling.method.apply(calling.object, calling.params);
 		next();
 		}
 	}
 
 var wait = function()
 	{
-	results[++method_id] = arguments;
-	waiting.apply(this, arguments);
+	results[++methodId] = Array.prototype.slice.call(arguments);			// Array of return values rather than the arguments object
+
+	if(typeof waiting == "function")
+		waiting.apply(this, arguments);
+
 	next();
 	}
 
-self.getResult = function(mid)
+self.getResult = function(methodId)
 	{
-	return (results[mid] ? results[mid] : null);
+	return (results[methodId] ? results[methodId] : null);
+	}
+
+self.getResults = function()
+	{
+	return results;
 	}
 
 }
+
+if(typeof exports !== "undefined")
+	module.exports = SpaceifySynchronous;

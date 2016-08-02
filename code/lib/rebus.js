@@ -1,5 +1,5 @@
 ﻿/**
- * rebus adaptation, 20.5.2014, Spaceify Inc.
+ * rebus adaptation, 20.5.2014 Spaceify Oy
  * 
  * Adapted from original by anodejs - https://github.com/anodejs/node-rebus - v0.4.8
  * 

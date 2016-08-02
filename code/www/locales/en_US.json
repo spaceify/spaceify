@@ -1,0 +1,66 @@
+{
+  "global":
+  {
+    "locale": "en_US",
+    "encoding": "UTF-8",
+    "description": "American English",
+
+    "title": "Spaceify",
+    "loading": "Loading...",
+    "version": "v"
+  },
+
+  "index":
+  {
+    "title": "Welcome to Spaceify",
+
+    "splash_welcome": "Welcome to Spaceify powered wireless network.",
+    "splash_info": "1. Insert Terms of use, privacy policy or anything here for your splash page. See index.html for details of how this page is generated and how to customize it for your purposes. 2. Add 'Accept' button for your site. Users can continue only if they agree with the rules of your edge node. 3. Add 'Install certificate' button. Allow user to load and install the Spaceify CA root certificate to their list of trusted certificates. Encrypted pages can be loaded only if the certificate is installed.",
+
+    "splash_accept_action": "Accept",
+    "splash_certificate_action": "Install certificate",
+
+    "spacelets": "Spacelets",
+    "sandboxed": "Applications",
+    "native": "Native",
+    "user_utilities": "Utilities",
+    "admin_utilities": "Administration",
+
+    "admin_tile_title": "Show Admin Interface",
+    "install_certificate_title": "Install Spaceify's certificate."
+  },
+
+  "admin/index":
+  {
+  "title": "Spaceify - Admin",
+
+  "logout": "Log Out"
+  },
+
+  "admin/login":
+  {
+    "title": "Spaceify - Admin Log In",
+
+    "admin_login": "Admin Log In",
+    "password": "Password",
+    "login": "Log In"
+  },
+
+  "appstore/index":
+  {
+    "title": "Spaceify - AppStore"
+  },
+
+  "404":
+  {
+    "title": "Spaceify - 404",
+    "body": "Web server returned response code 404 - Not Found."
+  },
+
+  "500":
+  {
+    "title": "Spaceify - 500",
+    "body": "Web server returned response code 500 - Internal Server Error."
+  }
+
+}

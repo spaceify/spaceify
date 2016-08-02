@@ -1,8 +1,7 @@
 #!/bin/bash
-# Spaceify Inc. 6.7.2015
-#
 # Process input gathered during install process. Debconf was locked in postinst and spawned scripts
 # were not allowed to use it. This phase was therefore separated to its own script.
+# Spaceify Oy 6.7.2015
 
 # ----- Get input: source debconf/confmodule ----- #
 . /usr/share/debconf/confmodule
@@ -26,6 +25,8 @@ admin_password="$RET"
 admin_salt=$(openssl rand -hex 64)
 admin_hash=$(echo -n "${admin_password}${admin_salt}" | openssl dgst -sha512 -hex | awk '{print $2}')
 db_set spaceify/admin_password ""
+
+db_purge
 
 db_stop
 

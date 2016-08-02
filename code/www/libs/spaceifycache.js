@@ -1,5 +1,7 @@
+"use strict";
+
 /**
- * Spaceify Cache by Spaceify Inc. 29.7.2015
+ * Spaceify Cache, 29.7.2015 Spaceify Oy
  *
  * A cache class to reduce unnecessary RPC calls by storing application data.
  * For Spaceify's internal use.
@@ -24,7 +26,7 @@ self.setApplication = function(application)
 		applications[application.unique_name] = {};
 
 	applications[application.unique_name].manifest = application;
-	applications[application.unique_name].is_running = application.is_running;
+	applications[application.unique_name].isRunning = application.isRunning;
 	}
 
 self.getApplication = function(unique_name)
@@ -35,7 +37,7 @@ self.getApplication = function(unique_name)
 	// SERVICES -- -- -- -- -- -- -- -- -- -- //
 self.setService = function(service, unique_name)
 	{
-	if(service != config.HTTP_SERVICE && service != config.HTTPS_SERVICE)
+	if(service.service_type != config.HTTP)
 		return;
 
 	if(!applications[unique_name])
@@ -49,16 +51,16 @@ self.setService = function(service, unique_name)
 
 self.getService = function(service_name, unique_name)
 	{ // Get service either by service name (when unique_name is not set) or by service name and unique_name.
-	for(aun in applications)															// Iterate all applications
+	for(var aun in applications)														// Iterate all applications
 		{
 		var services = (applications[aun].services ? applications[aun].services : []);	// Find from the services they have
-		for(var s=0; s<services.length; s++)
+		for(var s = 0; s < services.length; s++)
 			{
 			var asn = services[s].service_name;
 
-			// First condition = all applications have http and https services and they can be requested only by defining unique name. Otherwise return the requested service.
-			// Second condition = only this rule can return http and https services. otherwise this rule is nonrelevant, because service names are unique in appliciations.
-			if( (!unique_name && service_name == asn && service_name != "http" && service_name != "https") || 
+			// First condition = all applications have http services and they can be requested only by defining unique name. Otherwise return the requested service.
+			// Second condition = only this rule can return http service. otherwise this rule is not relevant, because service names are unique in appliciations.
+			if( (!unique_name && service_name == asn && service_name != config.HTTP) ||
 			    (unique_name && unique_name == aun && service_name == asn) )
 				return services[s];
 			}
@@ -82,22 +84,22 @@ self.getManifest = function(unique_name)
 	}
 
 	// RUNNING STATUS -- -- -- -- -- -- -- -- -- -- //
-self.setRunning = function(unique_name, is_running)
+self.setRunning = function(unique_name, isRunning)
 	{
 	if(!applications[unique_name])
 		applications[unique_name] = {};
 
-	applications[unique_name].is_running = is_running;
-	applications[unique_name].is_running_start = Date.now();
+	applications[unique_name].isRunning = isRunning;
+	applications[unique_name].isRunningStart = Date.now();
 	}
 
 self.isRunning = function(unique_name)
 	{
-	if(!applications[unique_name] || !applications[unique_name].hasOwnProperty("is_running"))
+	if(!applications[unique_name] || !applications[unique_name].hasOwnProperty("isRunning"))
 		return null;
 
-	var run_time = Date.now() - applications[unique_name].is_running_start;			// Running status expires after the expiration time
-	return (run_time > EXPIRATION_TIME ? null : applications[unique_name].is_running);
+	var run_time = Date.now() - applications[unique_name].isRunningStart;			// Running status expires after the expiration time
+	return (run_time > EXPIRATION_TIME ? null : applications[unique_name].isRunning);
 	}
 
 	// APPLICATION URLS -- -- -- -- -- -- -- -- -- -- //

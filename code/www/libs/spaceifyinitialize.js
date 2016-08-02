@@ -1,35 +1,34 @@
+"use strict";
+
 /**
- * Dynamic Spaceify initialization by Spaceify Inc. 29.7.2015
+ * SpaceifyInitalize, 29.7.2015 Spaceify Oy
  *
- * Loads scripts, stylesheets and json files defined in libs/inject/spaceify.csv.
- * Based on them creates script and link tags and sets up variables for json.
+ * Loads scripts, stylesheets and json files defined in the libs/inject/spaceify.min.csv file.
  *
+ * @class SpaceifyInitalize
  */
 
-var _srows = [];
-var edge_ip = "10.0.0.1";
-var edge_url = "edge.spaceify.net";
-var _suri = window.location.protocol + "//10.0.0.1/";
+function SpaceifyInitalize()
+{
+var self = this;
 
-// STARTING POINT - WAIT FOR EVERYTHING ELSE ON THE PAGE TO BE LOADED AND READY BEFORE INJECTING
-window.addEventListener("load", function()
+var rows = [];
+var edgeURL = window.location.protocol + "//edge.spaceify.net/";
+
+self.start = function(getjQuery)
 	{
-	// Accept connection only from 10.0.0.1 to make html cookie sessions actually work
-	if(window.location.hostname == edge_url)
+	load(edgeURL + "libs/inject/spaceify.min.csv", "application/text", function(str)
 		{
-		var new_url = window.location.href.replace(edge_url, edge_ip);
-		window.location.assign(new_url);
-		}
-	else
-		_sinitLoad(_suri + "libs/inject/spaceify.csv", "application/text", function(str)
-		{
-		var text = "", inject_type, parameter;
-		_sinitCSVSplit(str);
-		_sinitNext();
-		});
-	});
+		if(getjQuery && typeof jQuery === "undefined")
+			str = "javascript\tjs/jquery.min.js\t-\tapplication/javascript\t-\n" + str;
 
-function _sinitLoad(url, mime, callback)
+		csvSplit(str);
+
+		next();
+		});
+	}
+
+var load = function(url, mime, callback)
 	{
 	var xobj = new XMLHttpRequest();
 
@@ -47,16 +46,17 @@ function _sinitLoad(url, mime, callback)
 	xobj.send(null);
 	}
 
-function _sinitCSVSplit(spaceify_csv)
+var csvSplit = function(csv)
 	{
 	var lines, tokens;
 
-	lines = spaceify_csv.split("\n");
-	for(var i=0; i<lines.length; i++)
+	lines = csv.split("\n");
+
+	for(var i = 0; i<lines.length; i++)
 		{
 		lines[i] = lines[i].trim();
 
-		if(lines[i] == "" || lines[i] == "#" || lines[i].charAt(0) == "#")
+		if(lines[i] == "" || lines[i].charAt(0) == "#")
 			continue;
 
 		tokens = lines[i].split("\t");
@@ -64,59 +64,94 @@ function _sinitCSVSplit(spaceify_csv)
 		if(tokens.length != 5)
 			continue;
 
-		_srows.push(tokens);
+		rows.push(tokens);
 		}
 	}
 
-var _sinitNext = function()
+var next = function()
 	{
-	if(_srows.length == 0)
-		_sinitReady();
+	if(rows.length == 0)
+		ready();
 	else
 		{
-		var row = _srows.shift();
+		var row = rows.shift();
 		var inject_type = row[0].trim();
 		var url = row[1].trim();
 		var mime = row[3].trim();
 		var parameter = row[4].trim();
 
-		_sinitLoad(_suri + url, mime, function(str)
+		load(edgeURL + url, mime, function(str)
 			{
 			if(inject_type == "javascript")
-				_sinitCreateTag("script", {type: "text/javascript"}, str);
+				createTag("script", {type: "text/javascript"}, str);
 			else if(inject_type == "css")
-				_sinitCreateTag("style", {rel: "stylesheet", type: "text/css", media: parameter}, str);
+				createTag("style", {rel: "stylesheet", type: "text/css", media: parameter}, str);
 			else if(inject_type == "text")
 				{}
 			else if(inject_type == "json")
 				window[parameter] = JSON.parse(str);
 
-			_sinitNext();
+			next();
 			});
 		}
 	}
 
-	function _sinitCreateTag(tag, properties, text)
+var createTag = function(tag, properties, text)
 	{
 	var element = document.createElement(tag);
-	for(i in properties)
+	for(var i in properties)
 		element.setAttribute(i, properties[i]);
 
-    try {
+	try {
 		element.appendChild(document.createTextNode(text));
-		document.head.appendChild(element);
+		document.body.appendChild(element);
 		}
 	catch(e)
 		{
 		element.text = text;
-		document.head.appendChild(element);
+		document.body.appendChild(element);
 		}
 	}
 
-function _sinitReady()
-	{
-	// Send ready event
+var ready = function()
+	{ // Send ready event
 	var evt = document.createEvent("Event");
 	evt.initEvent("spaceifyReady", true, true);
 	window.dispatchEvent(evt);
 	}
+
+}
+
+// WAIT UNTIL EVERYTHING ON THE PAGE IS LOADED AND READY BEFORE INJECTING
+window.addEventListener("load", function()
+	{
+	// start is called manually from somewhere and
+	if(document.getElementById("CUSTOMONLOAD"))
+		return;
+
+	// Get initialization parameters
+	var query = {},  parts, pairs, regx = /=/i, scripts = document.getElementsByTagName("script");
+	for(var i = 0; i < scripts.length; i++)
+		{
+		if(!scripts[i].src.match(/spaceifyinitialize\.js/))
+			continue;
+
+		if((parts = scripts[i].src.split("?")).length != 2)
+			break;
+
+		pairs = parts[1].split("&");
+
+		for(var i = 0; i < pairs.length; i++)
+			{
+			if(regx.exec(pairs[i]))													// Name and value
+				query[RegExp.leftContext] = RegExp.rightContext;
+			else																	// Only name
+				query[pairs[i]] = null;
+			}
+
+		break;
+		}
+
+	var spaceifyInitalize = new SpaceifyInitalize();
+	spaceifyInitalize.start("jquery" in query ? true : false);
+	});

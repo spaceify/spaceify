@@ -1,5 +1,6 @@
 #!/bin/bash
-# Bash TAB key completion script for Spaceify's spm command, 5.5.2015 Spaceify Inc.
+# Bash TAB key completion script for Spaceify's spm command
+# Spaceify Oy 5.5.2015
 # Location: /etc/bash_completion.d/
 
 _default ()																		# For displaying default possibilities
@@ -23,10 +24,11 @@ _spm ()
 			i*) COMPREPLY=( $( compgen -W 'install' $cur ) ) ;;
 			p*) COMPREPLY=( $( compgen -W 'publish' $cur ) ) ;;
 			r*) COMPREPLY=( $( compgen -W 'remove restart register' $cur ) ) ;;
-			s*) COMPREPLY=( $( compgen -W 'source start stop' $cur ) ) ;;
+			s*) COMPREPLY=( $( compgen -W 'source start stop states' $cur ) ) ;;
 			l*) COMPREPLY=( $( compgen -W 'list' $cur ) ) ;;
 			h*) COMPREPLY=( $( compgen -W 'help' $cur ) ) ;;
-			 *) _default "install publish remove restart register source start stop list help" ;;
+			v*) COMPREPLY=( $( compgen -W 'version' $cur ) ) ;;
+			 *) _default "install publish remove restart register source start states stop list help version" ;;
 		esac
 	else																		# Complete options for commands
 		command=${COMP_WORDS[1]}
@@ -35,7 +37,8 @@ _spm ()
 			install | publish | source)
 				case "$cur" in
 					a*) COMPREPLY=( $( compgen -W 'authenticate' $cur ) ) ;;
-					 *) _default "authenticate" ;;
+					f*) COMPREPLY=( $( compgen -W 'force' $cur ) ) ;;
+					 *) _default "authenticate force" ;;
 				esac
 			;;
 			list)
@@ -50,10 +53,11 @@ _spm ()
 				case "$cur" in
 					i*) COMPREPLY=( $( compgen -W 'install' $cur ) ) ;;
 					p*) COMPREPLY=( $( compgen -W 'publish' $cur ) ) ;;
-					s*) COMPREPLY=( $( compgen -W 'source start stop' $cur ) ) ;;
+					s*) COMPREPLY=( $( compgen -W 'source start states stop' $cur ) ) ;;
 					r*) COMPREPLY=( $( compgen -W 'remove restart register' $cur ) ) ;;
 					l*) COMPREPLY=( $( compgen -W 'list' $cur ) ) ;;
-					 *) _default "install publish source start stop remove restart register list" ;;
+					v*) COMPREPLY=( $( compgen -W 'version' $cur ) ) ;;
+					 *) _default "install publish start stop remove restart source register states list version" ;;
 				esac
 			;;
 		esac

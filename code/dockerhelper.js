@@ -1,18 +1,23 @@
 /**
-* DockerHelper, 14.10.2013
+* DockerHelper, 14.10.2013 Spaceify Oy
 *
 * @class DockerHelper
 */
 
 var fs = require("fs");
 var net = require("net");
-var logger = require("./www/libs/logger");
-var utility = require("./utility");
 var language = require("./language");
+var Logger = require("./logger");
+var SpaceifyError = require("./spaceifyerror");
+var SpaceifyUtility = require("./spaceifyutility");
 
 function DockerHelper()
 {
 var self = this;
+
+var logger = new Logger();
+var errorc = new SpaceifyError();
+var utility = new SpaceifyUtility();
 
 var standardInput = null;
 var standardOutput = null;
@@ -23,14 +28,14 @@ self.init = function(container, callback)
 		container.attach({stream: true, stdout: true, stderr: true}, function(err, stream)
 			{
 			if(err)
-				throw utility.ferror(language.E_ATTACH_CONTAINER_OUTPUT.p("DockerHelper::init"), {":err": err.toString()});
+				throw language.E_ATTACH_CONTAINER_OUTPUT.preFmt("DockerHelper::init", {"~err": err.toString()});
 
 			standardOutput = stream;
 
 			container.attach({stream: true, stdin: true}, function(err, stream)
 				{
 				if(err)
-					throw utility.ferror(language.E_ATTACH_CONTAINER_INPUT.p("DockerHelper::init"), {":err": err.toString()});
+					throw language.E_ATTACH_CONTAINER_INPUT.preFmt("DockerHelper::init", {"~err": err.toString()});
 
 				standardInput = stream;
 				callback(err, null);
@@ -39,7 +44,7 @@ self.init = function(container, callback)
 		}
 	catch(err)
 		{
-		callback(utility.error(err), null);
+		callback(errorc.make(err), null);
 		}
 	}
 
@@ -51,15 +56,15 @@ self.getStreams = function()
 self.executeCommand = function(command, waitedStrings, disableInfo, callback)
 	{
 	if(!disableInfo)
-		logger.info(utility.replace(language.EXECUTE_COMMAND, {":command": command}));
+		logger.info(utility.replace(language.EXECUTE_COMMAND, {"~command": command}));
 
-	if(callback)															// only wait for data if callback is given                        
+	if(callback)															// only wait for data if callback is given
 		self.waitForOutput(waitedStrings, callback);
 
 	var write = standardInput.write(command + "\n", "utf8", function(err, data)
 		{
 		if(err)
-			utility.ferror(language.E_GENERAL_ERROR.p("DockerHelper::executeCommand"), {":err": err.toString()});
+			language.E_GENERAL_ERROR.preFmt("DockerHelper::executeCommand", {"~err": err.toString()});
 		});
 	}
 
@@ -72,18 +77,20 @@ self.waitForOutput = function(waitedStrings, callback)
 		if(!waitedStrings)
 			callback(null, "");
 
-		// <Buffer 01 00 00 00 00 00 00 0a ...> What is this 8 byte sequence?
-		var seq = (data.length >= 8 ? seq1 = data.readInt32BE(0) + data.readInt32BE(4) : 0);
-		var tdata = (seq == 16777226 ? data.toString("ascii", 8, data.length - 1) : data.toString("ascii"));
+		// <Buffer 01 00 00 00 00 00 00 ?? ...> What is this 8 byte sequence/preamble?
+		var tdata = data.toString("ascii");
+		var seq = (data.length >= 8 ? data.readInt32BE(0) : 0);
+		if(seq == 16777216)
+			tdata = tdata.substr(tdata.length > 8 ? 8 : 0, data.length - 1);
 
 		logger.info(tdata);
 
 		buf += tdata;
-		for(var i=0; i<waitedStrings.length; i++)
+		for(var i = 0; i < waitedStrings.length; i++)
 			{
 			if(buf.lastIndexOf(waitedStrings[i]) != -1 || (buf.length > 0 && waitedStrings[i] == "*"))
 				{
-				logger.info(utility.replace(language.EXECUTE_COMMAND_RECEIVED, {":code": waitedStrings[i]}), "\n");
+				logger.info(utility.replace(language.EXECUTE_COMMAND_RECEIVED, {"~code": waitedStrings[i]}), "\n");
 
 				standardOutput.removeAllListeners("data");
 				callback(null, [buf, waitedStrings[i]]);

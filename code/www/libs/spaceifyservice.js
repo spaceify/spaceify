@@ -1,266 +1,231 @@
+"use strict";
+
 /**
- * Spaceify Service by Spaceify Inc. 29.7.2015
+ * Spaceify Service, 29.7.2015 Spaceify Oy
  *
- * Implementation for required and provided services. Intended to be used by applications and web pages.
+ * A class for connecting required services and opening servers for provided services.
+ * This class can be used by Node.js applications and web pages.
  *
  * @class SpaceifyService
  */
 
 function SpaceifyService()
 {
+// NODE.JS / REAL SPACEIFY - - - - - - - - - - - - - - - - - - - -
+var isNodeJs = (typeof exports !== "undefined" ? true : false);
+var isRealSpaceify = (typeof process !== "undefined" ? process.env.IS_REAL_SPACEIFY : false);
+var apiPath = (isNodeJs && isRealSpaceify ? "/api/" : "/var/lib/spaceify/code/");
+
+var classes = 	{
+				Service: (isNodeJs ? require(apiPath + "service") : Service),
+				SpaceifyCore: (isNodeJs ? require(apiPath + "spaceifycore") : SpaceifyCore),
+				SpaceifyConfig: (isNodeJs ? require(apiPath + "spaceifyconfig") : SpaceifyConfig),
+				SpaceifyNetwork: (isNodeJs ? require(apiPath + "spaceifynetwork") : SpaceifyNetwork),
+				WebSocketRpcServer: (isNodeJs ? require(apiPath + "websocketrpcserver") : null),
+				WebSocketRpcConnection: (isNodeJs ? require(apiPath + "websocketrpcconnection") : WebSocketRpcConnection)
+				};
+
+var fibrous = (isNodeJs ? require("fibrous") : function(fn) { return fn; });
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 var self = this;
 
-var latest_service_name = "";
+var core = new classes.SpaceifyCore();
+var config = new classes.SpaceifyConfig();
+var network = new classes.SpaceifyNetwork();
 
-var required = {};									// <= Clients
+var required = {};									// <= Clients (required services)
 var requiredSecure = {};
 
-var provided = {};									// <= Servers
+var provided = {};									// <= Servers (provided services)
 var providedSecure = {};
 
-var isNodeJS = (typeof exports !== "undefined" ? true : false);
+var keepServerUp = true;
+var keepConnectionUp = true;
+var keepConnectionUpTimerIds = {};
 
-if(isNodeJS)
+var caCrt = apiPath + config.SPACEIFY_CRT_WWW;
+var key = config.APPLICATION_TLS_PATH + config.SERVER_KEY;
+var crt = config.APPLICATION_TLS_PATH + config.SERVER_CRT;
+
+	// CLIENT SIDE - THE REQUIRED SERVICES - NODE.JS / WEB PAGES -- -- -- -- -- -- -- -- -- -- //
+self.connect = function(service_name, callback)
 	{
-	var api_path = process.env.IS_REAL_SPACEIFY ? "/api/" : "/var/lib/spaceify/code/";
+	// Create the service objects and set their listener only once. Creating service objects even if making
+	// connection to the them fails helps to avoid problems. For example clients can call the getRequiredService
+	// method and a null reference is never returned. Clients can always call the getIsOpen method of the service
+	// object to find out is the service connected.
+	if(!required[service_name])
+		{
+		required[service_name] = new classes.Service(service_name, false, new classes.WebSocketRpcConnection());
+		required[service_name].setConnectionListener(connectionListener);
+		required[service_name].setDisconnectionListener(disconnectionListener);
+		}
 
-	var fibrous = require("fibrous");
-	var Server = require(api_path + "server");
-	var config = require(api_path + "config")();
-	var ServiceH = require(api_path + "www/libs/handlers/service.js");
-	var core = require(api_path + "www/libs/spaceifycore.js");
-	var communicator = require(api_path + "www/libs/communicator.js");
+	if(!requiredSecure[service_name])
+		{
+		requiredSecure[service_name] = new classes.Service(service_name, false, new classes.WebSocketRpcConnection());
+		requiredSecure[service_name].setConnectionListener(connectionListener);
+		requiredSecure[service_name].setDisconnectionListener(disconnectionListener);
+		}
 
-	core = new core();
-	communicator = new communicator(config.WEBSOCKET_RPC_COMMUNICATOR);
-
-	var ca_crt = api_path + "www/" + config.SPACEIFY_CRT;
-	}
-else
-	{
-	var fibrous = function(code) {};
-	var config = new SpaceifyConfig();
-	var ServiceH = Service;
-	var core = new SpaceifyCore();
-	var communicator = new Communicator(config.WEBSOCKET_RPC_COMMUNICATOR);
-
-	var ca_crt = "";
-	}
-
-	// -- -- -- -- -- -- -- -- -- //
-	// -- -- -- -- -- -- -- -- -- //
-	// CLIENT SIDE - THE REQUIRED SERVICES -- -- -- -- -- -- -- -- -- -- //
-var connectServices = function(service_name, callback)
-	{ // Get provided service and try to connect to it
 	core.getService(service_name, "", function(err, service)
 		{
-		if(!service)
-			return callback();
-
-		if(!required[service_name])
-			required[service_name] = new ServiceH(self);
-
-		if(!requiredSecure[service_name])
-			requiredSecure[service_name] = new ServiceH(self);
-
-		var status_required = required[service.service_name].getStatus();
-		var status_requireds = required[service.service_name].getStatus();
-
-		if(!err && isNodeJS)
+		if(!service || err)																// Failed to get the required service
 			{
-			fibrous.run(function()
-				{
-				if(status_required != config.CONNECTED)
-					{
-					try {
-						connection = communicator.sync.connect({hostname: config.EDGE_IP, port: service.port, is_secure: false, persistent: true});
-						required[service.service_name].init(service.service_name, false, connection, err);
-						}
-					catch(err)
-						{
-						required[service.service_name].init(service.service_name, false, null, err);
-						}
-					}
+			if(!required[service_name].getIsOpen())										// Let the automaton try to get the connections up
+				disconnectionListener(-1, service_name, false);
 
-				if(status_requireds != config.CONNECTED)
-					{
-					try {
-						connection = communicator.sync.connect({hostname: config.EDGE_IP, port: service.secure_port, is_secure: true, ca_crt: ca_crt, persistent: true});
-						requiredSecure[service.service_name].init(service.service_name, true, connection, err);
-						}
-					catch(err)
-						{
-						requiredSecure[service.service_name].init(service.service_name, true, null, err);
-						}
-					}
+			if(!requiredSecure[service_name].getIsOpen())
+				disconnectionListener(-1, service_name, true);
 
-				callback();
-				}, function(err, data) {callback} );
+			return callback(null, true);
 			}
-		else if(!err && !isNodeJS)
+
+		connect(required[service.service_name], service.port, false, function()			// Try to open connections to the services
 			{
-			connect(service.service_name, service.port, false, status_required, function()
+			var hasSecure = (isNodeJs ? true : network.isSecure());
+
+			if(hasSecure)																// Unencrypted web pages can't open secure connections
 				{
-				connect(service.service_name, service.secure_port, true, status_requireds, callback);
-				});
-			}
-		else
-			callback();
+				connect(requiredSecure[service.service_name], service.securePort, true, function()
+					{
+					callback(null, {insecure: required[service_name], secure: requiredSecure[service_name]});
+					});
+				}
+			else
+				callback(null, {insecure: required[service_name], secure: requiredSecure[service_name]});
+			});
 		});
 	}
 
-var connect = function(service_name, port, is_secure, status, callback)
+var connect = function(service, port, isSecure, callback)
 	{
-	if(status != config.CONNECTED)
-		{
-		communicator.connect({hostname: config.EDGE_IP, port: port, is_secure: is_secure, persistent: true}, function(err, connection, id)
-			{
-			(!is_secure ? required[service_name] : requiredSecure[service_name]).init(service_name, is_secure, connection, err);
-			callback();
-			});
-		}
-	else
-		callback();
+	if(service.getIsOpen())																// Don't reopen connections!
+		return callback();
+
+	service.getConnection().connect({ hostname: config.EDGE_HOSTNAME, port: port, isSecure: isSecure, caCrt: caCrt, debug: true }, callback);
 	}
 
-	// -- -- -- -- -- -- -- -- -- -- //
-self.connectService = 
-self.reconnectService = function(service_name, callback)
-	{
-	self.connectServices([service_name], callback);
-	}
+self.disconnect = function(service_names, callback)
+	{ // Disconnect one service, listed services or all services
+	var keys;
 
-self.connectServices = function(service_names, callback)
-	{
-	if(service_names.length == 0)												// Done
-		callback(null, self.getRequiredService(latest_service_name));
-	else
+	if(!service_names)																	// All the services
+		keys = Object.keys(required);
+	else if(service_name.constructor !== Array)											// One service (string)
+		keys = [service_names];
+
+	for(var i = 0; i<keys.length; i++)
 		{
-		latest_service_name = service_names.pop();
-		connectServices(latest_service_name, function()							// SpaceifyService only connects, Service handles the connection
-			{
-			self.connectServices(service_names, callback);						// Get next service
-			});
+		if(keys[i] in required)
+			required[keys[i]].getConnection().close();
+
+		if(keys[i] in requiredSecure)
+			requiredSecure[keys[i]].getConnection().close();
 		}
 	}
 
-self.disconnectService = function(service_name, callback)
+var connectionListener = function(id, service_name, isSecure)
 	{
-	self.disconnectServices([service_name], callback);
 	}
 
-self.disconnectServices = function(service_names, callback)
+var disconnectionListener = function(id, service_name, isSecure)
 	{
-	while(service_names.length > 0)
+	if(!keepConnectionUp)
+		return;
+
+	var timerIdName = service_name + (!isSecure ? "F" : "T");							// Services have their own timers and
+	if(timerIdName in keepConnectionUpTimerIds)											// only one timer can be running at a time
+		return;
+
+	var service = (!isSecure ? required[service_name] : requiredSecure[service_name]);
+
+	keepConnectionUpTimerIds[timerIdName] = setTimeout(waitConnectionAttempt, config.RECONNECT_WAIT, id, service_name, isSecure, timerIdName, service);
+	}
+
+var waitConnectionAttempt = function(id, service_name, isSecure, timerIdName, service)
+	{
+	core.getService(service_name, "", function(err, serviceObj)
 		{
-		var service_name = service_names.pop();
+		delete keepConnectionUpTimerIds[timerIdName];									// Timer can now be retriggered
 
-		if(required[service_name])
-			{
-			required[service_name].disconnect();
-			delete required[service_name];
-			}
-
-		if(requiredSecure[service_name])
-			{
-			requiredSecure[service_name].disconnect();
-			delete requiredSecure[service_name];
-			}
-		}
-
-	if(typeof callback == "function")
-		callback();
+		if(serviceObj)
+			connect(service, (!isSecure ? serviceObj.port : serviceObj.securePort), isSecure, function() {});
+		else
+			disconnectionListener(id, service_name, isSecure);
+		});
 	}
 
 self.getRequiredService = function(service_name)
 	{
-	if(required[service_name])
-		return required[service_name];
-
-	return null;
+	return (required[service_name] ? required[service_name] : null);
 	}
 
 self.getRequiredServiceSecure = function(service_name)
 	{
-	if(requiredSecure[service_name])
-		return requiredSecure[service_name];
-
-	return null;
+	return (requiredSecure[service_name] ? requiredSecure[service_name] : null);
 	}
 
-	// -- -- -- -- -- -- -- -- -- //
-	// -- -- -- -- -- -- -- -- -- //
-	// SERVER SIDE - THE PROVIDED SERVICES (= SERVERS) -- -- -- -- -- -- -- -- -- -- //
-self.connectProvided = fibrous( function(service_names, isRealSpaceify, ca_crt, key, crt)
+self.keepConnectionUp = function(val)
 	{
-	var server = null;
-	var port = config.FIRST_SERVICE_PORT;
-	var secure_port = config.FIRST_SERVICE_PORT_SECURE;
-
-	for(var i=0; i<service_names.length; i++)
-		{
-		var service_name = service_names[i];
-
-		// UNSECURE SERVERS -- -- -- -- --
-		server = new Server(config.WEBSOCKET_RPC_SERVER)
-		server.sync.connect({hostname: null, port: port, is_secure: false, key: key, crt: crt, ca_crt: ca_crt, user_object: {name: "service_name", value: service_name}, owner: "provSer: " + service_name});
-
-		provided[service_name] = server.getServer();
-
-		// SECURE SERVERS -- -- -- -- --
-		server = new Server(config.WEBSOCKET_RPC_SERVER)
-		server.sync.connect({hostname: null, port: secure_port, is_secure: true, key: key, crt: crt, ca_crt: ca_crt, user_object: {name: "service_name", value: service_name}, owner: "provSerSec: " + service_name});
-
-		providedSecure[service_name] = server.getServer();
-
-		// -- -- -- -- --
-		if(isRealSpaceify)
-			core.sync.registerService(service_name);
-
-		port++;
-		secure_port++;
-		}
-	});
-
-self.closeProvided = function(service_names)
-	{
-	while(service_names.length > 0)
-		{
-		var service_name = service_names.pop();
-
-		if(provided[service_name])
-			{
-			provided[service_name].getServer().close();
-			delete provided[service_name];
-			}
-
-		if(providedSecure[service_name])
-			{
-			providedSecure[service_name].getServer().close();
-			delete providedSecure[service_name];
-			}
-		}
+	keepConnectionUp = (typeof val == "boolean" ? val : false);
 	}
 
-self.reconnectProvided = fibrous( function(service_name)
+	// SERVER SIDE - THE PROVIDED SERVICES - NODE.JS -- -- -- -- -- -- -- -- -- -- //
+self.listen = fibrous( function(service_name, port, securePort)
 	{
-	
+	if(!provided[service_name])															// Create the connection objects
+		provided[service_name] = new classes.Service(service_name, true, new classes.WebSocketRpcServer());
+
+	if(!providedSecure[service_name])
+		providedSecure[service_name] = new classes.Service(service_name, true, new classes.WebSocketRpcServer());
+
+	listen.sync(provided[service_name], port, false);
+	listen.sync(providedSecure[service_name], securePort, true);
+	core.sync.registerService(service_name);
 	});
+
+var listen = fibrous( function(service, port, isSecure)
+	{
+	if(service.getIsOpen())
+		return;
+
+	service.getServer().listen({ hostname: null, port: port, isSecure: isSecure, key: key, crt: crt, caCrt: caCrt, keepUp: keepServerUp, debug: true });
+	});
+
+self.close = function(service_name)
+	{ // Close one service, listed services or all services
+	var keys;
+
+	if(!service_names)																	// All the services
+		keys = Object.keys(required);
+	else if(service_name.constructor !== Array)											// One service (string)
+		keys = [service_names];
+
+	for(var i = 0; i < keys.length; i++)
+		{
+		if(keys[i] in provided)
+			provided[keys[i]].getServer().close();
+
+		if(keys[i] in providedSecure)
+			providedSecure[keys[i]].getServer().close();
+		}
+	}
 
 self.getProvidedService = function(service_name)
 	{
-	if(provided[service_name])
-		return provided[service_name];
-
-	return null;
+	return (provided[service_name] ? provided[service_name] : null);
 	}
 
 self.getProvidedServiceSecure = function(service_name)
 	{
-	if(providedSecure[service_name])
-		return providedSecure[service_name];
+	return (providedSecure[service_name] ? providedSecure[service_name] : null);
+	}
 
-	return null;
+self.keepServerUp = function(val)
+	{
+	keepServerUp = (typeof val == "boolean" ? val : false);
 	}
 
 }

@@ -1,6 +1,5 @@
-#!/usr/bin/env node
 /**
- * Spaceify iptables writer, 12.11.2014 Spaceify Inc.
+ * Spaceify iptables writer, 12.11.2014 Spaceify Oy
  * 
  * @class Iptables
  */
@@ -8,21 +7,22 @@
 var fs = require("fs");
 var fibrous = require("fibrous");
 var PubSub = require("./pubsub");
-var config = require("./config")();
-var utility = require("./utility");
+var SpaceifyConfig = require("./spaceifyconfig");
+var SpaceifyUtility = require("./spaceifyutility");
 
 function Iptables()
 {
 var self = this;
 
 var pubSub = new PubSub();
+var config = new SpaceifyConfig();
+var utility = new SpaceifyUtility();
 
 var SPLASH_ADD_MAC = "-t mangle -I Spaceify-mangle 1 -m mac --mac-source :mac -j RETURN";		// NOTICE! Add to the top of the rules.
-var SPLASH_REM_MAC = "-t mangle -D Spaceify-mangle -m mac --mac-source :mac -j RETURN";
+var SPLASH_DEL_MAC = "-t mangle -D Spaceify-mangle -m mac --mac-source :mac -j RETURN";
 var SPLASH_CHK_MAC = "-t mangle -C Spaceify-mangle -m mac --mac-source :mac -j RETURN";
 
-// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-// I/O   // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+	// I/O -- -- -- -- -- -- -- -- -- -- //
 var write = function(rule, callback)
 	{ // Wait for the streams to close to prevent EMFILE error (= maximum open streams exceeded)!!!
 	try {
@@ -54,23 +54,21 @@ var write = function(rule, callback)
 		}
 	}
 
-// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-// SPLASH   // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+	// SPLASH -- -- -- -- -- -- -- -- -- -- //
 self.splashAddRule = fibrous( function(MAC)
 	{
-	MAC = formatMAC(MAC);
 	var splash = pubSub.value("splash", config.IPTABLES_PATH) || {};
 
-	if(!isMAC(MAC))
+	if(!utility.isMAC(MAC))
 		return false;
 
 	try {																				// Add to the iptables rules and splash object
-		if(!self.splashHasRule(MAC))
-			write.sync(utility.replace(SPLASH_ADD_MAC, {":mac": MAC}));
+		if(!self.sync.splashHasRule(MAC))
+			write.sync(utility.replace(SPLASH_ADD_MAC, {"~mac": MAC}));
 
 		if(!splash[MAC])
 			{
-			splash[MAC] = {"ts": Date.now()};
+			splash[MAC] = {"timestamp": Date.now()};
 			pubSub.publish("splash", splash, config.IPTABLES_PATH);
 			}
 		}
@@ -82,17 +80,16 @@ self.splashAddRule = fibrous( function(MAC)
 	return true;
 	});
 
-self.splashRemoveRule = fibrous( function(MAC)
+self.splashDeleteRule = fibrous( function(MAC)
 	{
-	MAC = formatMAC(MAC);
 	var splash = pubSub.value("splash", config.IPTABLES_PATH) || {};
 
-	if(!isMAC(MAC))
+	if(!utility.isMAC(MAC))
 		return false;
 
 	try {																				// Remove from the iptables rules and splash object
-		if(self.splashHasRule(MAC))
-			write.sync(utility.replace(SPLASH_REM_MAC, {":mac": MAC}));
+		if(self.sync.splashHasRule(MAC))
+			write.sync(utility.replace(SPLASH_DEL_MAC, {"~mac": MAC}));
 
 		delete splash[MAC];
 		pubSub.publish("splash", splash, config.IPTABLES_PATH);
@@ -105,41 +102,57 @@ self.splashRemoveRule = fibrous( function(MAC)
 	return true;
 	});
 
-self.splashHasRule = function(MAC)
+self.splashDeleteRules = fibrous( function()
 	{
-	try {
-		return write.sync(utility.replace(SPLASH_CHK_MAC, {":mac": formatMAC(MAC)})); }
-	catch(err) {
-		}
+	var splash = pubSub.value("splash", config.IPTABLES_PATH);
 
-	return false;
-	}
+	for(var mac in splash)
+		self.sync.splashDeleteRule(mac);
+	});
 
 self.splashRestoreRules = fibrous( function()
 	{ // Restores rules not existing in the iptables
 	var splash = pubSub.value("splash", config.IPTABLES_PATH);
 
-	for(mac in splash)
+	for(var mac in splash)
 		self.sync.splashAddRule(mac);
 	});
 
-self.splashRemoveRules = fibrous( function()
+self.splashHasRule = function(MAC)
 	{
-	var splash = pubSub.value("splash", config.IPTABLES_PATH);
+	try { return write.sync(utility.replace(SPLASH_CHK_MAC, {"~mac": MAC})); }
+	catch(err) { return false; }
+	}
 
-	for(mac in splash)
-		self.sync.splashRemoveRule(mac);
+	// CONTAINER CONNECTIONS -- -- -- -- -- -- -- -- -- -- //
+self.removeRules = fibrous( function()
+	{
+	var connections = pubSub.value("connections", config.IPTABLES_PATH) || {};
+/*
+	{
+	"service_name": {sourceIp: , destinationIp, destinationPort}
+	}
+*/
 	});
 
-var formatMAC = function(MAC)
+self.allowConnection = fibrous( function(sourceIp, destinationIp, destinationPort)
 	{
-	return MAC.toUpperCase();
-	}
+	//iptables -D INPUT -m mac --mac-source aa:BB:cc:aD:Ff:ac -j RETURN
 
-var isMAC = function(MAC)
+	//write.sync("-A INPUT -m mac --mac-source aa:BB:cc:aD:Ff:ac -j RETURN");
+// ip -> ip+port
+	});
+
+self.disallowConnection = fibrous( function(sourceIp, destinationIp, destinationPort)
 	{
-	return MAC.match(new RegExp(config.MAC_REGX, "i"));
-	}
+	write.sync("-D INPUT -m mac --mac-source aa:BB:cc:aD:Ff:ac -j RETURN");
+	});
+
+self.hasConnectionRule = fibrous( function(sourceIp, destinationIp, destinationPort)
+	{
+	try { return write.sync(utility.replace("-C INPUT -m mac --mac-source aa:BB:cc:aD:Ff:ac -j RETURN")); }
+	catch(err) { return false; }
+	});
 
 }
 

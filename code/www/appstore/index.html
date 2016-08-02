@@ -1,0 +1,235 @@
+<!doctype html>
+<html ng-app-spaceify spaceify-secure>
+	<head head-directive>
+		<script src="../app/storage.js"></script>
+		<script src="../js/angular-1.5.3.min.js"></script>
+		<script src="../app/spaceify.js"></script>
+
+		<script>
+			var sam = null;
+			var config = null;
+			var packages = null;
+
+			var page = 1;
+			var maxPages = 1;
+
+			// This message is sent from a code snippet Spaceify adds to the application readme.html files.
+			// The message is sent when the readme is fully loaded or resized.
+			window.addEventListener("message", receiveMessage, false);
+
+			function receiveMessage(event)
+				{
+				if(event && event.data && event.data.height)										// Resize the iframe to its contents
+					$("#packageReadme").css("height", event.data.height + "px");
+				}
+
+			function pageReady()
+				{
+				config = new SpaceifyConfig();
+				sam = new SpaceifyApplicationManager();
+
+				// Setup the page
+				var atype = $("#atype");
+				atype.append($("<option></option><option>" + config.SPACELET + "</option><option>" + config.SANDBOXED + "</option><option>" + config.NATIVE + "</option>"));
+
+				var categories = $("#categories");													// Categories in human readable format
+				categories.append($("<option></option>")).val("");
+				$.each(config.APPLICATION_CATEGORIES, function(val, text)
+					{
+					text = text.charAt(0).toUpperCase() + text.replace("_", " ").slice(1);
+					categories.append($("<option value='" + text + "'>"));
+					});
+
+				search();																			// INITIAL SEARCH!!!
+				}
+
+			function search()
+				{
+				try {
+					$("#detailContainer").empty();
+					$("#listContainer").empty().text("Wait, this might take some time...");
+
+					var where = {};
+
+					if($("#name").val() != "")
+						where.name = {"value": $("#name").val(), "operator": "LIKE"};
+
+					if($("#atype option:selected").text() != "")
+						where.type = $("#atype option:selected").text();
+
+					if($("#username" ).val() != "")
+						where.username = {"value": $("#username" ).val(), "operator": "LIKE"};
+
+					category = $("#category").val().replace(" ", "_").toLowerCase();				// Category in database format
+					if(category != "")
+						where.category = {"value": category, "operator": "LIKE"};
+
+					var order = {"name": "ASC"};
+
+					var pageSize = $("#navPageSize option:selected").val();
+
+					sam.appStoreGetPackages({ "where": where,  "order": order, "page": page, "pageSize": pageSize }, results);
+					}
+				catch(err)
+					{}
+				}
+
+			function results(err, result)
+				{
+				$("#listContainer").empty();
+				$("#detailContainer").empty();
+				listContainer = $("#listContainer");
+
+				packages = result;
+
+				if(err)
+					listContainer.append($("<div>" + err.message + "</div>"));
+				else
+					{
+					if(result.fetchedRows > 0)
+						{
+						for(var i=0; i<packages.sandboxed.length; i++)
+							listContainer.append(row(packages.sandboxed[i], "sandboxed" + i));
+						for(var i=0; i<packages.spacelet.length; i++)
+							listContainer.append(row(packages.spacelet[i], "spacelet" + i));
+						for(var i=0; i<packages.native.length; i++)
+							listContainer.append(row(packages.native[i], "native" + i));
+						}
+					else
+						listContainer.append($("<div>No results</div>"));
+
+					navigation(result.page, result.pageSize, result.maxPages, result.fetchedRows, result.maxRows);
+					}
+				}
+
+			function row(manifest, id)
+				{
+				var style = ' style="border: 1px solid #ccc; width: 90%; margin: 5px 0;"';
+
+				var dline = manifest.type + " : " + manifest.name;
+				var dbutton = '<button onclick="details(this.id);" id="' + id + '">CLICK ME FOR DETAILS</button>';
+
+				return $("<div " + style + ">" + dbutton + dline + "</div>");
+				}
+
+			function details(id)
+				{
+				var detailContainer = $("#detailContainer");
+				detailContainer.empty();
+
+				var pos= id.replace(/[a-z]/g, "");
+				var type = id.replace(/[^a-z]/g, "");			
+				var manifest = packages[type][pos];
+
+				// empty div
+				detailContainer.append($('<div id="adiv" style="margin: 20px 0 0 0; padding: 5px; background-color: #eee; height: 100%; width: 90%;"></div>'));
+				adiv = $("#adiv");
+
+				adiv.append($("<h3><u>THE MANIFEST</u></h3>"));
+				for(m in manifest)
+					adiv.append($("<div>" + m + " = " + JSON.stringify(manifest[m], 2) + "</div>"));
+
+				if(manifest.icon)
+					{
+					adiv.append($("<h3><u>APPLICATIONS ICON</u></h3>"));
+					adiv.append($('<img src="https://' + manifest.icon + '" width="128" height="128">'));
+					}
+				else
+					{
+					adiv.append($("<h3><u>THE DEFAULT ICON</u></h3>"));
+					adiv.append($('<img src="../images/icon.png" width="128" height="128">'));
+					}
+
+				if(manifest.readme)
+					{
+					adiv.append($("<h3><u>THE README</u></h3>"));
+					adiv.append($('<iframe id="packageReadme" src="https://' + manifest.readme + '" frameBorder="0" sandbox="allow-scripts" style="width: 100%;"></iframe>'));
+					}
+				}
+
+			function navigation(_page, _pageSize, _maxPages, _fetchedRows, _maxRows)
+				{
+				// Buttons
+				$("#navFirst").attr("disabled", _page == 1 || _fetchedRows == 0 ? true : false);
+				$("#navPrev").attr("disabled", _page == 1 || _fetchedRows == 0 ? true : false);
+					
+				$("#navNext").attr("disabled", _page == _maxPages || _fetchedRows == 0 ? true : false);
+				$("#navLast").attr("disabled", _page == _maxPages || _fetchedRows == 0 ? true : false);
+
+				// Info text
+				var rp = (_page - 1) * _pageSize;
+				var pagePos = "Page " + page + (_maxPages != 1 ? " of " + _maxPages + " page" + (_maxPages != 0 ? "s" : "") : "");
+				var rowPos = ", Row" + (_pageSize != 1 ? "s " : " ") + (rp + 1) + (_pageSize != 1 ? " - " + (rp + _fetchedRows) : "") + " of " + _maxRows + " row" + (_maxRows != 1 ? "s" : "");
+				$("#navInfo").val(_fetchedRows != 0 ? pagePos + rowPos : "");
+
+				// Remeber positions
+				page = _page;
+				maxPages = _maxPages;
+				}
+
+			function navigateTo(direction)
+				{
+				if(direction == "first")
+					page = 1;
+				else if(direction == "prev")
+					page = Math.max(page - 1, 1);
+				else if(direction == "next")
+					page = Math.min(page + 1, maxPages);
+				else if(direction == "last")
+					page = maxPages;
+				else if(direction == "pageSize")
+					page = maxPages = 1;
+
+				search();
+				}
+		</script>
+	</head>
+
+	<body class="edgeBody" id="edgeBody" ng-controller="bodyController" body-directive style="display: none;">
+
+	<table border="0">
+		<tr>
+			<td>&nbsp;</td>
+			<td>name</td>
+			<td>type</td>
+			<td>category</td>
+			<td>username</td>
+		</tr>
+
+		<tr>
+			<td><button onclick="search();">Search</button></td>
+			<td><input type="text" id="name"></td>
+			<td><select id="atype"></select></td>
+			<td>
+				<input type="text" name="category" id="category" list="categories">
+				<datalist id="categories"></datalist>
+			</td>
+			<td><input type="text" id="username"></td>
+		</tr>
+	</table><br>
+
+	<div class="adminContainer" id="navigationContainer">
+		<button id="navFirst" disabled onclick="navigateTo('first');">&lt;&lt;</button>
+		<button id="navPrev" disabled onclick="navigateTo('prev');">&lt;</button>
+		<button id="navNext" disabled onclick="navigateTo('next');">&gt;</button>
+		<button id="navLast" disabled onclick="navigateTo('last');">&gt;&gt;</button>
+		<select id="navPageSize" onchange="navigateTo('pageSize');">
+			<option value="1">1 row on page</option>
+			<option value="2" selected>2 rows on page</option>
+			<option value="4">4 rows on page</option>
+			<option value="10">10 rows on page</option>
+			<option value="20">20 rows on page</option>
+			<option value="50">50 rows on page</option>
+			<option value="100">100 rows on page</option>
+		</select>
+		<input id="navInfo" type="text" value="" style="border-width: 0px; width: 90%;">
+	</div>
+
+	<div class="adminContainer" id="listContainer">
+	</div>
+
+	<div class="adminContainer" id="detailContainer">
+	</div>
+
+	</body>
+</html>

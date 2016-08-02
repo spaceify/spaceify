@@ -3,8 +3,10 @@
   "SPACEIFY_CODE_PATH": "/var/lib/spaceify/code/",
   "SPACEIFY_DATA_PATH": "/var/lib/spaceify/data/",
   "SPACEIFY_WWW_PATH": "/var/lib/spaceify/code/www/",
+  "SPACEIFY_WWW_ERRORS_PATH": "/var/lib/spaceify/code/www/errors/",
   "SPACEIFY_TLS_PATH": "/var/lib/spaceify/data/tls/",
   "SPACEIFY_DATABASE_FILE": "/var/lib/spaceify/data/db/spaceify.db",
+  "SPACEIFY_TEMP_SESSIONID": "/var/lib/spaceify/data/db/session.id",
   "SPACEIFY_REGISTRATION_FILE": "/var/lib/spaceify/data/db/edge_id.uuid",
   "SPACEIFY_MANIFEST_RULES_FILE": "/var/lib/spaceify/data/manifest/manifest.rules",
 
@@ -14,6 +16,8 @@
   "INSTALLED_PATH": "/var/lib/spaceify/data/installed/",
 
   "DOCS_PATH": "/var/lib/spaceify/data/docs/",
+
+  "VERSION_FILE": "/var/lib/spaceify/versions",
 
   "VOLUME_DIRECTORY": "volume/",
   "VOLUME_PATH": "/volume/",
@@ -33,9 +37,7 @@
   "PACKAGE_PATH": "package/",
   "SOURCES_DIRECTORY": "sources/",
 
-  "TEMPLATES_PATH": "/var/lib/spaceify/code/www/templates/",
-  "LAYOUT_PATHNAME": "/var/lib/spaceify/code/www/templates/layout.tpl",
-  "LANGUAGES_PATH": "/var/lib/spaceify/code/www/languages/",
+  "LOCALES_PATH": "/var/lib/spaceify/code/www/locales/",
   "DEFAULT_LOCALE": "en_US",
 
   "SPACEIFY_INJECT": "/var/lib/spaceify/code/www/lib/inject/spaceify.csv",
@@ -53,12 +55,11 @@
   "CUSTOM_DOCKER_IMAGE": "custom_",
 
   "EDGE_IP": "10.0.0.1",
-  "EDGE_IP_V4": "10.0.0.1",
-  "EDGE_IP_V6": "",
   "EDGE_HOSTNAME": "edge.spaceify.net",
+  "EDGE_SHORT_HOSTNAME": "e.n",
   "EDGE_HOSTNAME_REGX": "edge\\.spaceify\\.net",
   "EDGE_SUBNET": "10.0.0.0/16",
-  "ACTION_URL": "https://10.0.0.1/admin/action.html",
+  "ALL_IPV4_LOCAL": "0.0.0.0",
 
   "APPLICATION_SUBNET": "172.17.0.0/16",
 
@@ -67,26 +68,25 @@
   "EDGE_PORT_HTTP": 80,
   "EDGE_PORT_HTTPS": 443,
 
-  "CORE_PORT_WEBSOCKET": 2947,
-  "CORE_PORT_WEBSOCKET_SECURE": 4947,
-  "CORE_PORT_ENGINEIO": 2948,
-  "CORE_PORT_ENGINEIO_SECURE": 4948,
+  "CORE_PORT": 2947,
+  "CORE_PORT_SECURE": 4947,
 
-  "APPMAN_PORT_WEBSOCKET": 2949,
-  "APPMAN_PORT_WEBSOCKET_SECURE": 4949,
+  "APPMAN_PORT": 2948,
+  "APPMAN_PORT_SECURE": 4948,
 
-  "APPMAN_PORT_WEBSOCKET_MESSAGE": 2950,
-  "APPMAN_PORT_WEBSOCKET_MESSAGE_SECURE": 4950,
+  "APPMAN_MESSAGE_PORT": 2950,
+  "APPMAN_MESSAGE_PORT_SECURE": 4950,
 
-  "SPM_PORT": 2951,
-  "SPM_PORT_SECURE": 4951,
-
+  "OPERATION_URL": "https://10.0.0.1/templates/operation.html",
+  "ADMIN_LOGIN_URL": "https://10.0.0.1/admin/login.html",
+  "ADMIN_INDEX_URL": "https://10.0.0.1/admin/",
   "REGISTRY_HOSTNAME": "spaceify.org",
-  "REGISTRY_URL": "http://spaceify.org",
-  "REGISTRY_PUBLISH_URL": "http://spaceify.org/ajax/upload.php?type=package&id=package",
-  "REGISTRY_INSTALL_URL": "http://spaceify.org/install.php",
-  "EDGE_REGISTRATION_URL": "http://spaceify.net/edge_register.php",
-  "EDGE_LOGIN": "http://spaceify.net/edge_login.php",
+  "REGISTRY_URL": "https://spaceify.org",
+  "REGISTRY_PUBLISH_URL": "https://spaceify.org/ajax/upload.php?type=package&id=package",
+  "REGISTRY_INSTALL_URL": "https://spaceify.org/install.php",
+  "EDGE_REGISTRATION_URL": "https://spaceify.net/edgeregister.php",
+  "EDGE_LOGIN_URL": "https://spaceify.net/edgelogin.php",
+  "EDGE_APPSTORE_GET_PACKAGES_URL": "https://spaceify.org/appstore/getpackages.php",
 
   "GITHUB_HOSTNAME": "github.com",
 
@@ -110,17 +110,16 @@
   "SANDBOXED": "sandboxed",
   "NATIVE": "native",
   "ANY": "any",
-  "HR_TYPES": {"spacelet": "Spacelet", "sandboxed": "Application", "native": "Native application"},
-  "HRL_TYPES": {"spacelet": "spacelet", "sandboxed": "application", "native": "native application"},
+  "APP_TYPES_HR": {"spacelet": "Spacelet", "sandboxed": "Application", "native": "Native application"},
+  "APP_TYPES_HRLC": {"spacelet": "spacelet", "sandboxed": "application", "native": "native application"},
+  "APP_TYPE_CONVERT": {"spacelet": 0, "sandboxed": 1, "native": 2},
 
   "OPEN": "open",
   "OPEN_LOCAL": "open_local",
   "STANDARD": "standard",
   "ALIEN": "alien",
-  "SERVICE_TYPES": ["standard", "open_local", "open", "alien"],
-  "HTTP_SERVICE": "http",
-  "HTTPS_SERVICE": "https",
-  "NON_NATIVE_SERVICE_TYPES": ["http", "https"],
+  "HTTP": "http",
+  "SERVICE_TYPES": ["standard", "open_local", "open", "alien", "http"],
 
   "EXT_COMPRESSED": ".zip",
   "PACKAGE_DELIMITER": "@",
@@ -137,9 +136,9 @@
   "MANIFEST_RULES": "manifest.rules",
   "VERSIONS": "versions",
 
-  "ENGINEIOJS": "engine.io.js",
   "SPACEIFYCLIENTJS": "spaceifyclient.js",
-  "INDEX_FILE": "index.html",
+  "INDEX_HTML": "index.html",
+  "INDEX_TPL": "index.tpl",
   "SERVER_NAME": "Spaceify Web Server",
   
   "TILEFILE": "tile.html",
@@ -156,43 +155,15 @@
   "SERVER_CRT": "server.crt",
   "SERVER_KEY": "server.key",
   "SPACEIFY_CRT": "spaceify.crt",
+  "SPACEIFY_CRT_WWW": "www/spaceify.crt",
 
   "RECONNECT_WAIT": 10000,
 
-  "CODE_SEPARATOR": " ",
-  "MESSAGE_SEPARATOR": " ",
+  "APPLICATION_CATEGORIES": [
+		"audio","astronomy","business","chemistry","children","computer_programming","communication","computer-aided_manufacturing","data_management","economy","editing","educational",
+		"entertainment","fysics","lifestyle","games","genealogy","government","graphics","health","home","industrial","knowledge_representation","language","legal","library_and_information_science",
+		"magazines","mathematics","meteorology","multimedia","music","navigation","news","personal_information_managers","productivity","religious","science","simulation","social","sport","theatre",
+		"transport","video","weather","word_processors","workflow"],
 
-  "WS_SUBPROTOCOLS": ["json-rpc"],
-  "WS_JSON_RPC": "json-rpc",
-
-  "WEBSOCKET_SERVER": 0,
-  "WEBSOCKET_SECURE_SERVER": 1,
-  "ENGINEIO_SERVER": 2,
-  "ENGINEIO_SECURE_SERVER": 3,
-
-  "WEBSOCKET_RPC_COMMUNICATOR": 1,
-  "WEBSOCKET_COMMUNICATOR": 2,
-  "ENGINEIO_RPC_COMMUNICATOR": 3,
-  "ENGINEIO_COMMUNICATOR": 4,
-  "WEBSOCKET_RPC_SERVER": 5,
-  "ENGINEIO_RPC_SERVER": 6,
-
-  "END_OF_MESSAGES": "<end>",
-  "END_OF_MESSAGES_ERROR": "<error>",
-  "MESSAGING_FAILED": "<fail>",
-
-  "SERVER": 0,
-  "CLIENT": 1,
-
-  "CONNECTION_UNINITIALIZED": 0,
-  "CONNECTED": 1,
-  "CONNECTION_FAILED": 2,
-  "CONNECTION_LOST": 3,
-  
-  "ENGINE_IO_SERVER": "engine.io server",
-  "ENGINE_IO_SERVER_SECURE": "Secure engine.io server",
-  "WEBSOCKET_RPC_SERVER": "WebSocket RPC server",
-  "WEBSOCKET_RPC_SERVER_SECURE": "Secure WebSocket RPC server",
-  "WEBSOCKET_SERVER": "WebSocket server",
-  "WEBSOCKET_SERVER_SECURE": "Secure WebSocket server"
+  "SESSION_COOKIE_PUBSUB_PATH": "/var/lib/spaceify/data/db/session_cookies.pub"
 }

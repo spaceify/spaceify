@@ -1,0 +1,128 @@
+The development folder in /var/lib/spaceify is separated from the GitHub project directory.
+This is because development requires extra files and folders that must not be published in GitHub.
+Below are instructions what files and directories should exists and be updated to the GitHub project
+directory before a new installation package is created or the updated project is pushed to GitHub.
+
+build-package.sh
+git-tagged-update.sh
+--------------------
+
+- Make sure the latest version information and details of changes are updated to files.
+
+  - /var/lib/spaceify/versions
+
+    core:<core version>:<core name (tag)>:spm:<spm version>:database:<database version>:injector:<injector version>:
+
+    The angle brackets above denote placeholders and should not be in the version file. Update the values in
+    the version file with the latest values.
+
+    - Core version is a string with three dot separated sequences of valid integers between 0 - 99999, e.g. 0.5.0, 1.2.7.
+    - Core name tag is a string indicating architecture of the Spaceify edge.
+    - Spaceify package manager (spm) version is a string with three dot separated sequences of valid integers between 0 - 99999, e.g. 0.5.0, 1.2.7.
+    - Database version is an ordinal starting from the initial release version number 1.
+    - Injector version is the Spaceify ecap injector version and is a string with three dot separated sequences of valid integers between 0 - 99999, e.g. 1.0.0, 1.4.0.
+ 
+  - /var/lib/spaceify/data/docker/image_versions
+
+    Add new line to beginnig of the file.
+
+      <core version>:[?].tgz
+
+      Where <core version> is the core release version from /var/lib/spaceify/versions file and [?].tgz is the Docker
+      image filename the version uses. The filename should start with spaceifyubuntu and have ordinal at the end,
+      e.g. spaceifyubuntu2.tgz, spaceifyubuntu3.tgz, etc. See more about this from below in the build-docker-image.sh section.
+      (As a sidenote, due to the version update history the first filename is spaceifyubuntu.tgz).
+
+  - /var/lib/spaceify/data/db/create.sql
+
+      INSERT INTO information VALUES(<database version>, '<core name (tag)>', '<core version>');
+
+      Where <database version>, <core name (tag)> are '<core version> values are from /var/lib/spaceify/versions.
+
+  - /var/lib/spaceify/CHANGELOG
+
+    This log file should naturally be updated as the edge is developed. Make sure the latest <core version> and
+    <core name (tag)> reflect the values from the /var/lib/spaceify/versions file.
+
+- Copy everything from /var/lib/spaceify/code to code/, minify JavaScript API and CSS files etc.
+
+  The process to do this is described below but there is a script for it. The script can not do the last 
+  step and it must be done manually.
+
+    ./make-code.sh
+
+  - node /var/lib/spaceify/storage/minify.js
+
+  - Remove old code/ 'rm -r code/'
+
+  - Copy /var/lib/spaceify/code to code/ 'cp -R /var/lib/spaceify/code/* .'
+
+  - Remove the node_modules directory 'rm -r code/node_modules/'.
+
+  - Remove spaceify.crt 'rm code/www/spaceify.crt'.
+
+  - Remove spaceify.csv 'rm code/www/libs/inject/spaceify.csv'
+
+  - Remove spaceify.css 'rm code/www/css/spaceify.css'
+
+  - Edit spaceifyinitalize.js 'nano code/www/libs/spaceifyinitialize.js'
+
+    In function spaceifyStartInit change 
+
+    spaceifyInitLoad(spaceifyInitURI + "libs/inject/spaceify.csv", "application/text", function(str)
+
+    to
+
+    spaceifyInitLoad(spaceifyInitURI + "libs/inject/spaceify.min.csv", "application/text", function(str)
+
+    The same with sed:
+
+      sed -i 's/spaceify\.csv/spaceify\.min\.csv/g' code/www/libs/spaceifyinitialize.js
+
+  - Run 'chmod -R 0644 code/*' to remove executable bits from the files in the code/ directory.
+
+  - As the last step, go through the directories and remove all the test etc. files. All files starting 
+    with 'test' are removed automatically from the root directory.
+
+- Copy everything from /var/lib/spaceify/data/scripts to data/scripts
+
+- Copy everything from /var/lib/spaceify/upstart to upstart/
+
+- Copy CHANGELOG, LICENSE, versions /var/lib/spaceify/ to .
+
+  - Do not copy the README.md because data/scripts/version_updater.sh creates it from the documentation/README.template file.
+
+- Follow the instructions in documentation/data_directories.txt to see how the directories in the data/ directory are managed.
+  Some of the directories are created during the package installation process and some must be created manually and exists in
+  the debian package. Copy the manually created part of the directory structure from /var/lib/spaceify/data to data/.
+
+- Copy changed files from /var/lib/spaceify/debian to debian/. The changelog must not be copied.
+
+- Copy everything from /var/lib/spaceify/monit to monit/.
+
+After the steps above the package can be built or the project can be pushed to GitHub.
+Run './build-package.sh' if the package is to be build and 'git-tagged-update.sh' if the project is 
+to be pushed to GitHub. If both of these are run the order is not important. They both execute the 
+data/scripts/version_updater.sh script to do the automatic README.md and debian/changelog version updating.
+The script checks the version in these files and does not do duplicate rows.
+
+Notice! The git-tagged-update.sh uses the lates version number as the tag.
+
+In the future the version updating script and the README.template file most likely need revisings. Tkae this into account do the
+changes before running build or update scripts.
+
+See /build-package.sh and git-tagged-update.sh for more information about what the scripts actually do.
+
+build-docker-image.sh
+---------------------
+
+Different versions of the Spaceify edge require a specific build of the spaceifyubuntu Docker image.
+This script is used to create a new image file if the new version of the edge should require one. The automatically
+maintained image_version_ordinal file contains the latest version number. The ordinal file and the data/docker/Dockerfile
+file are used to create the new version. See the script for more information how the image file is created.
+
+git-update.sh
+-------------
+
+Unlike the git-tagged-update.sh script this script does not create a new tag to the GitHub for the project. Instead
+it updates the project in GitHub and uses the version number and date as a message to denote the update (-m option in git commit).

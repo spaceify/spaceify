@@ -1,3 +1,13 @@
+0.5.0  Alpha Centauri (developer-pre-alpha)
+    * Migrated to use Node.js 5.10.1
+    * 'HTTP code is 404 ...' error while installing packages is now fixed.
+    * The service_type field in requires_services object in spaceify.manifest is now obsolete.
+    * Basic security model functionality implemented.
+    * status and version command added to spm: status shows running status of applications and spacelets, version shows version information of the Spaceify edge.
+    * Improved connection classes.
+    * JavaScript API improved.
+    * Several fixes: core, application manager, web server, log file handling, DNS server, installation process.
+
 0.3.6  Alpha Centauri (developer-pre-alpha)
     * Application manager fixed.
 

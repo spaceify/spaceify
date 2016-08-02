@@ -1,24 +1,22 @@
-#!/usr/bin/env node
 /**
- * Spaceify main, 2.9.2013 Spaceify Inc.
+ * Spaceify main, 2.9.2013 Spaceify Oy
  *
  * @class Main
  */
 
 var fibrous = require("fibrous");
 var Core = require("./core");
-var Server = require("./server");
-var config = require("./config")();
 var Iptables = require("./iptables");
-var logger = require("./www/libs/logger");
+var Logger = require("./logger");
+var SpaceifyConfig = require("./spaceifyconfig");
 
 function Main()
 {
 var self = this;
 
 var core = new Core();
-
-var owner = "Main";
+var logger = new Logger();
+var config = new SpaceifyConfig();
 
 self.start = fibrous( function()
 	{
@@ -30,13 +28,7 @@ self.start = fibrous( function()
 
 	try	{
 		// START CORE RUNNING - CORE LISTENS ALL THE SUPPORTED SERVER TYPES
-		var servers = {};
-		servers[config.WEBSOCKET_SERVER]			= {server: new Server(config.WEBSOCKET_RPC_SERVER), "port": config.CORE_PORT_WEBSOCKET, "is_secure": false};
-		servers[config.WEBSOCKET_SECURE_SERVERS]	= {server: new Server(config.WEBSOCKET_RPC_SERVER), "port": config.CORE_PORT_WEBSOCKET_SECURE, "is_secure": true};
-		servers[config.ENGINEIO_SERVER]				= {server: new Server(config.ENGINEIO_RPC_SERVER), "port": config.CORE_PORT_ENGINEIO, "is_secure": false};
-		servers[config.ENGINEIO_SECURE_SERVER]		= {server: new Server(config.ENGINEIO_RPC_SERVER), "port": config.CORE_PORT_ENGINEIO_SECURE, "is_secure": true};
-
-		core.sync.connect({hostname: null, servers: servers});
+		core.sync.connect();
 
 		// ---
 		// ToDO: enable - try { core.sync.loginToSpaceifyNet("login"); } catch(err) { logger.warn(err); }
@@ -55,7 +47,7 @@ var events = function()
 	{
 	process.on("uncaughtException", function(err)
 		{
-		logger.printErrors(err, true, true, 0);
+		logger.error(err, true, true, logger.ERROR);
 		exit();
 		})
 
@@ -82,12 +74,11 @@ var events = function()
 var exit = function(err)
 	{
 	if(err)
-		logger.printErrors(err, true, true, 0);
+		logger.error(err, true, true, logger.ERROR);
 
 	fibrous.run( function(err)
 		{
-		try
-			{
+		try {
 			core.sync.close();
 
 			// ToDO: enable - try { core.sync.loginToSpaceifyNet("logout"); } catch(err) {}
@@ -95,7 +86,7 @@ var exit = function(err)
 			process.exit(0);
 			}
 		catch(err)
-			{}		
+			{}
 		}, function(err, data) { } );
 	}
 

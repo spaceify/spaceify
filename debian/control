@@ -10,4 +10,4 @@ Architecture: amd64
 Pre-Depends: debconf (>= 0.5)
 Depends: debconf (>= 0.5), libc6 (>= 2.1), ${misc:Depends}, perl, upstart, monit, python-software-properties, python, g++, make, nodejs (>= 0.10.18), lxc-docker, hostapd, squid3 (= 3.3.8.spaceify), curl, openssl, libssl-dev, sqlite3, libsqlite3-dev, libzip-dev, zip, unzip, git, udhcpd
 Description: Spaceify is a smart access point platform.
- This package will turn your computer into a Spaceify edge node and installs Spaceify core WebSocket server on your computer.
+ This package will turn your computer into a Spaceify edge node and installs Spaceify's servers on your computer.

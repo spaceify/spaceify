@@ -1,0 +1,1 @@
+www/libs/spaceifyconfig.js

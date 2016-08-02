@@ -1,0 +1,23 @@
+Below are directories and their content after Spaceify is installed. The directories that
+are not created by the scripts must already exist in the installation package.
+The non-created directories/content must also be in the GitHub project because it is
+used as the template for creating installation packages.
+
+directory	content				note
+--------- 	-------				----
+db			create.sql
+dev								created by debian/postinst
+dhcp-data						created by debian/postinst
+dns								created by data/scripts/get_dns.sh
+docker		Dockerfile, image_versions
+docs		spm.help
+installed	readme.txt
+interfaces						created by debian/postinst->/var/lib/spaceify/data/scripts/input.sh
+ipt-data						created by debian/postinst
+logs		readme.txt
+manifest	manifest.rules
+native		readme.txt
+sandboxed	readme.txt
+scripts		*
+spacelets	readme.txt
+tls								created by debian/postinst

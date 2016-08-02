@@ -1,0 +1,71 @@
+<!doctype html>
+<html ng-app-spaceify spaceify-secure spaceify-is-login>
+	<head head-directive>
+		<script src="../app/storage.js"></script>
+		<script src="../js/angular-1.5.3.min.js"></script>
+		<script src="../app/spaceify.js"></script>
+
+		<script>
+		function pageReady()
+			{
+			net = new SpaceifyNet();
+			sam = new SpaceifyApplicationManager();
+
+			$("#adminLoginContainer").show();
+			$("#password").val("").focus();
+
+			$("#password").keyup(function(e)
+				{
+				if(e.which == "13")
+					logIn();
+				});
+			}
+
+		function logIn()
+			{
+			sam.logIn($("#password").val(), this, loggedIn)
+			}
+
+		function loggedIn(result)
+			{
+			if(result.isLoggedIn)
+				window.location.assign(spaceifyPage.urlHttps + "admin/");
+			}
+
+		this.error = function(err)
+			{
+			$("#password").empty();
+			net.showError(err[0].message);
+			}
+
+		</script>
+	</head>
+
+	<body class="edgeBody" id="edgeBody" ng-controller="bodyController" body-directive style="display: none;">
+
+		<div class="adminLoginContainer" id="adminLoginContainer" style="display: none;">
+
+			<div class="adminLogo">
+				<span class="adminLogoHelper"></span>	
+				<img src="../images/logotext.png" class="adminLogoImage" width="291" height="100">
+			</div>
+
+			<div class="adminLoginTitle">
+				{{ getString("admin_login") }}
+			</div>
+
+			<div class="adminInputContainer">
+				<input class="adminInput" style="width: 200px" type="password" name="password" id="password" placeholder="{{ getString('password') }}"/>
+			</div>
+
+			<div class="adminInputContainer">
+				<button class="adminButton normal" name="operation" onclick="logIn();">
+					{{ getString("login") }}
+				</button>
+			</div>
+
+			<div class="breaker"></div>
+
+		</div>
+	</body>
+</html>

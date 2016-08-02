@@ -1,367 +1,239 @@
-#!/usr/bin/env node
 /**
- * Spaceify core, 2.9.2013 Spaceify Inc.
+ * Spaceify core, 2.9.2013 Spaceify Oy
  * 
  * @class Core
  */
 
 var fs = require("fs");
 var mkdirp = require("mkdirp");
-var crypto = require("crypto");
 var fibrous = require("fibrous");
-var logger = require("./www/libs/logger");
-var config = require("./config")();
-var utility = require("./utility");
+var Manager = require("./manager");
 var DHCPDLog = require("./dhcpdlog");
 var Iptables = require("./iptables");
 var language = require("./language");
 var Database = require("./database");
-var connectionHub = require("./connectionhub");
+var Logger = require("./logger");
+var ConnectionHub = require("./connectionhub");
 var SecurityModel = require("./securitymodel");
-var SpaceletManager = require("./spaceletmanager");
-var SandboxedManager = require("./sandboxedmanager");
-var WebSocketRPCServer = require("./websocketrpcserver");
+var SpaceifyError = require("./spaceifyerror");
+var SpaceifyConfig = require("./spaceifyconfig");
+var SpaceifyUtility = require("./spaceifyutility");
+var WebSocketRpcServer = require("./websocketrpcserver");
 
 function Core()
 {
 var self = this;
 
-var owner = "Core";
-var accept_ip = "";
-var settings = null;
-var isLoggedInToSpaceifyNet = false;
-
+var logger = new Logger();
 var dhcpdlog = new DHCPDLog();
 var database = new Database();
 var iptables = new Iptables();
+var errorc = new SpaceifyError();
+var config = new SpaceifyConfig();
+var utility = new SpaceifyUtility();
+//var nativeManager = new Manager();
+var spaceletManager = new Manager();
+var sandboxedManager = new Manager();
 var securityModel = new SecurityModel();
-var ConnectionHub = new connectionHub();
-var coreRPCS = new WebSocketRPCServer();
-var coreRPCSS = new WebSocketRPCServer();
-//var nativeManager = new NativeManager();
-var spaceletManager = new SpaceletManager();
-var sandboxedManager = new SandboxedManager();
+var connectionHub = new ConnectionHub();
 
+var settings = null;
+var isLoggedInToSpaceifyNet = false;
+
+var servers = [];
 var key = config.SPACEIFY_TLS_PATH + config.SERVER_KEY;
 var crt = config.SPACEIFY_TLS_PATH + config.SERVER_CRT;
-var ca_crt = config.SPACEIFY_WWW_PATH + config.SPACEIFY_CRT;
+var caCrt = config.SPACEIFY_WWW_PATH + config.SPACEIFY_CRT;
 
-// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-// CONNECTION  // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-self.connect = fibrous( function(opts)
+	// CONNECTION -- -- -- -- -- -- -- -- -- -- //
+self.connect = fibrous( function()
 	{
-	options = opts;
+	var types = [{port: config.CORE_PORT, isSecure: false}, {port: config.CORE_PORT_SECURE, isSecure: true}];
 
-	// ? ConnectionHub.setup.sync(options.servers);								// Connnection hub uses the same servers as core
-
-	for(o in options.servers)												// Open all the supported server types
+	for(var i = 0; i < types.length; i++)														// Setup/open the servers
 		{
-		// Connect
-		var server = connectServer.sync(o);
-
-		//var server = options.servers[o].server;
-
-		// Set listeners - keep servers open
-		server.setServerUpListener(serverUpListener);
-		server.setServerDownListener(serverDownListener);
-		server.setAccessListener(accessListener);
+		var webSocketRpcServer = new WebSocketRpcServer();
+		servers.push(webSocketRpcServer);
 
 		// Expose RPC nethods
-		server.exposeRpcMethod("startSpacelet", self, startSpacelet);
-		server.exposeRpcMethod("getService", self, getService);
-		server.exposeRpcMethod("getServices", self, getServices);
-		server.exposeRpcMethod("registerService", self, registerService);
-		server.exposeRpcMethod("unregisterService", self, unregisterService);
-		server.exposeRpcMethod("setSplashAccepted", self, setSplashAccepted);
-		server.exposeRpcMethod("startApplication", self, startApplication);
-		server.exposeRpcMethod("stopApplication", self, stopApplication);
-		server.exposeRpcMethod("removeApplication", self, removeApplication);
-		server.exposeRpcMethod("isApplicationRunning", self, isApplicationRunning);
-		server.exposeRpcMethod("getApplicationData", self, getApplicationData);
-		server.exposeRpcMethod("getApplicationURL", self, getApplicationURL);
-		server.exposeRpcMethod("getManifest", self, getManifest);
-		server.exposeRpcMethod("connectTo", self, connectTo);
-		server.exposeRpcMethod("updateSettings", self, updateSettings);
+		webSocketRpcServer.exposeRpcMethod("startSpacelet", self, startSpacelet);
+		webSocketRpcServer.exposeRpcMethod("getService", self, getService);
+		webSocketRpcServer.exposeRpcMethod("getOpenServices", self, getOpenServices);
+		webSocketRpcServer.exposeRpcMethod("registerService", self, registerService);
+		webSocketRpcServer.exposeRpcMethod("unregisterService", self, unregisterService);
+		webSocketRpcServer.exposeRpcMethod("isApplicationRunning", self, isApplicationRunning);
+		webSocketRpcServer.exposeRpcMethod("getApplicationData", self, getApplicationData);
+		webSocketRpcServer.exposeRpcMethod("getApplicationURL", self, getApplicationURL);
+		webSocketRpcServer.exposeRpcMethod("getManifest", self, getManifest);
+		webSocketRpcServer.exposeRpcMethod("connectTo", self, connectTo);
+		webSocketRpcServer.exposeRpcMethod("setSplashAccepted", self, setSplashAccepted);
 
 		// THESE ARE EXPOSED ONLY OVER A SECURE CONNECTION!!!
-		if(options.servers[o].is_secure)
+		if(types[i].isSecure)
 			{
-			server.exposeRpcMethod("adminLogIn", self, adminLogIn);
-			server.exposeRpcMethod("adminLogOut", self, adminLogOut);
-			server.exposeRpcMethod("isAdminLoggedIn", self, isAdminLoggedIn);
-			server.exposeRpcMethod("saveOptions", self, saveOptions);
-			server.exposeRpcMethod("loadOptions", self, loadOptions);
+			webSocketRpcServer.exposeRpcMethod("adminLogIn", self, adminLogIn);
+			webSocketRpcServer.exposeRpcMethod("adminLogOut", self, adminLogOut);
+			webSocketRpcServer.exposeRpcMethod("isAdminLoggedIn", self, isAdminLoggedIn);
+			webSocketRpcServer.exposeRpcMethod("startApplication", self, startApplication);
+			webSocketRpcServer.exposeRpcMethod("stopApplication", self, stopApplication);
+			webSocketRpcServer.exposeRpcMethod("removeApplication", self, removeApplication);
+			webSocketRpcServer.exposeRpcMethod("getSettings", self, getSettings);
+			webSocketRpcServer.exposeRpcMethod("saveSettings", self, saveSettings);
+			webSocketRpcServer.exposeRpcMethod("getServiceRuntimeStates", self, getServiceRuntimeStates);
+			//webSocketRpcServer.exposeRpcMethod("saveOptions", self, saveOptions);
+			//webSocketRpcServer.exposeRpcMethod("loadOptions", self, loadOptions);
 			}
+
+		webSocketRpcServer.sync.listen({	hostname: config.ALL_IPV4_LOCAL, port: types[i].port,
+											isSecure: types[i].isSecure, key: key, crt: crt, caCrt: caCrt,
+											keepUp: true, debug: true });
 		}
 
 	// Build and/or start applications
-	try {
-		sandboxedManager.sync.start(null, false);
-		spaceletManager.sync.start(null, false, false);
-		//nativeManager.sync.start(null, false);
-		}
-	catch(err)
-		{
-		logger.printErrors(err, true, true, 0);
-		}
-		
+	try { sandboxedManager.sync.start({type: config.SANDBOXED, unique_name: null, throwErros: false}); } catch(err) {}
+	try { spaceletManager.sync.start({type: config.SPACELET, unique_name: null, throwErros: false, runSpacelet: false}); } catch(err) {}
+	try { nativeManager.sync.start({type: config.NATIVE, unique_name: null, throwErrors: false}); } catch(err) {}
+
 	// Get settings from the database
 	settings = database.sync.getSettings();
 	securityModel.setSettings(settings);
 	});
 
-var connectServer = fibrous( function(server_type)
-	{
-	var sobj = options.servers[server_type];
-	return sobj.server.sync.connect({hostname: null, port: sobj.port, is_secure: sobj.is_secure, key: key, crt: crt, ca_crt: ca_crt, owner: owner});
-	});
-
 self.close = fibrous( function()
 	{
-	spaceletManager.sync.removeAll(true);
-	sandboxedManager.sync.removeAll(true);
-	//nativeManager.sync.removeAll(true);
+	spaceletManager.sync.removeAll();
+	sandboxedManager.sync.removeAll();
+	//nativeManager.sync.removeAll();
 
-	for(o in options.servers)												// Close all the supported server types
-		options.servers[o].server.getServer().close();
+	for(var i = 0; i < servers.length; i++)
+		servers[i].close();
 	});
 
-var serverUpListener = function(server)
+	// EXPOSED RPC METHODS -- -- -- -- -- -- -- -- -- -- //
+var startSpacelet = fibrous( function(unique_name)
 	{
+	var spacelet = null, runtimeServices = [];
 
-	}
+	if(securityModel.isApplicationIP(arguments[arguments.length-1].remoteAddress))
+		throw language.E_APPLICATION_CAN_NOT_START_SPACELET.pre("Core::startSpacelet");
 
-var serverDownListener = function(server)
-	{
-	setTimeout(function(server_type)
-		{
-		fibrous.run( function() { connectServer(server_type); }, function(err, data) { } );
-		}, config.RECONNECT_WAIT, server.server_type);
-	}
-
-var accessListener = function(remoteAddress, remotePort, origin, server_type, is_secure, requestedProtocols)
-	{
-	if(!securityModel.hasRequestedProtocol(requestedProtocols))
-		return {message: language.PROTOCOLS_DENIED, granted: false};
-
-	/*if(!securityModel.isLocalIP(remoteAddress))
-		return {message: language.REMOTE_DENIED, granted: false};*/
-
-	return {message: "", granted: true};	
-	}
-
-// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-// EXPOSED RPC METHODS  // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-var startSpacelet = fibrous( function(unique_name, connObj/*Added by Spaceify*/)
-	{
-	var connection_ip = connObj.remoteAddress;
-	var spacelet = null;
-
-	if(securityModel.isApplicationIP(connection_ip))
-		throw utility.error(language.E_APPLICATION_CAN_NOT_START_SPACELET.p("Core::startSpacelet"));
+	if(!securityModel.sameOriginPolicyStartSpacelet(getManifest.sync(unique_name), arguments[arguments.length-1].origin))
+		throw language.E_SSOP_START_SPACELET.pre("Core::startSpacelet");
 
 	try {
-		spacelet = spaceletManager.sync.start(unique_name, true, true);
+		spacelet = spaceletManager.sync.start({type: config.SPACELET, unique_name: unique_name, throwErros: true, runSpacelet: true});
 		}
 	catch(err)
 		{
-		throw utility.error(language.E_FAILED_TO_START_SPACELET.p("Core::startSpacelet"), err);
+		throw language.E_FAILED_TO_START_SPACELET.pre("Core::startSpacelet", err);
 		}
 
-	return (spacelet ? spacelet.getProvidesServices() : []);
+	if(spacelet)
+		runtimeServices = securityModel.getOpenServices(spacelet.getProvidesServices());
+
+	return runtimeServices;
 	});
 
-var registerService = fibrous( function(service_name, connObj/*Added by Spaceify*/)
+var registerService = fibrous( function(service_name)
 	{
-	var connection_ip = connObj.remoteAddress;
-
 	// ALLOW REGISTRATION FROM APPLICATIONS ONLY - STARTED CONTAINERS (APPLICATIONS) HAVE AN IP THAT IDENTIFIES THEM
-	var _find = self.find("container_ip", connection_ip);
+	var getApplicationByIp = get("getApplicationByIp", arguments[arguments.length-1].remoteAddress);
 
-	if(!_find.obj)
-		throw utility.ferror(language.E_REGISTER_SERVICE_UNKNOWN_ADDRESS.p("Core::registerService"), {":address": connection_ip});
-
-	// ToDo: Other security considerations before accepting the registration?
+	if(!getApplicationByIp)
+		throw language.E_REGISTER_SERVICE_UNKNOWN_ADDRESS.preFmt("Core::registerService", {"~address": arguments[arguments.length-1].remoteAddress});
 
 	// APPLICATION CAN REGISTER ONLY ITS OWN SERVICES = SERVICE NAME FOUND IN ITS SERVICES
-	var service = _find.obj.registerService(service_name, true);
+	var service = securityModel.registerService(getApplicationByIp, service_name);
 	if(!service)
-		throw utility.ferror(language.E_REGISTER_SERVICE_UNKNOWN_SERVICE_NAME.p("Core::registerService"), {":name": service_name});
+		throw language.E_REGISTER_SERVICE_UNKNOWN_SERVICE_NAME.preFmt("Core::registerService", {"~name": service_name});
 
 	return service;
 	});
 
-var unregisterService = fibrous( function(service_name, connObj/*Added by Spaceify*/)
+var unregisterService = fibrous( function(service_name)
 	{
-	var connection_ip = connObj.remoteAddress;
-
 	// ALLOW UNREGISTRATION FROM APPLICATIONS ONLY - STARTED CONTAINERS (APPLICATIONS) HAVE AN IP THAT IDENTIFIES THEM
-	var _find = self.find("container_ip", connection_ip);
+	var getApplicationByIp = get("getApplicationByIp", arguments[arguments.length-1].remoteAddress);
 
-	if(!_find.obj)
-		throw utility.error(language.E_UNREGISTER_SERVICE_UNKNOWN_ADDRESS.p("Core::unregisterService"), {address: connection_ip});
-
-	// ToDo: Other security considerations before accepting the unregistration?
+	if(!getApplicationByIp)
+		throw language.E_UNREGISTER_SERVICE_UNKNOWN_ADDRESS.pre("Core::unregisterService", {address: arguments[arguments.length-1].remoteAddress});
 
 	// APPLICATION CAN UNREGISTER ONLY ITS OWN SERVICES = SERVICE NAME FOUND IN THE SERVICES
-	var service = _find.obj.registerService(service_name, false);
+	var service = securityModel.unregisterService(getApplicationByIp, service_name);
 	if(!service)
-		throw utility.error(language.E_UNREGISTER_SERVICE_UNKNOWN_SERVICE_NAME.p("Core::unregisterService"), {name: service_name});
+		throw language.E_UNREGISTER_SERVICE_UNKNOWN_SERVICE_NAME.pre("Core::unregisterService", {name: service_name});
 
 	return service;
 	});
 
-var getService = fibrous( function(service_name, unique_name, connObj/*Added by Spaceify*/)
-	{ // Get either by service name or service name and unique_name.
-	var connection_ip = connObj.remoteAddress;
+var getService = fibrous( function(service_name, unique_name)
+	{ // Get either by service name or service name and unique_name
+	var service = null;
 
-	// TRY TO FIND THE SERVICE
-	var _service = self.find("service", {service_name: service_name, unique_name: unique_name});
-
-	if(!_service.obj)
-		throw utility.ferror(language.E_GET_SERVICE_UNKNOWN.p("Core::getService"), {":name": service_name});
-
-	if(!_service.obj.registered)
-		throw utility.ferror(language.E_GET_SERVICE_UNREGISTERED.p("Core::getService"), {":name": service_name});
-
-	//_application = self.find("container_ip", connection_ip);
-	//securityModel.isLocalIP(_service.obj, connection_ip);
-	// ToDo:
-	// SPACELET, SANDBOXED APPLICATIONS OR NATIVE APPLICATION CAN ASK SERVICES THAT ARE LISTED IN THEIR MANIFESTS REQUIRED SERVICES.
-	// or anybody can ask any service?
-	// http and https services are "open" to everyone
-	/*if(_find.obj.service_type == config.OPEN) // UNLESS SERVICE TYPE IS OPEN
+	if(unique_name)
 		{
-		if((client = self.find("container_ip", connObj.remoteAddress)) == null)
-		throw utility.error(language.E_GET_SERVICE_UNKNOWN_ADDRESS.p("Core::getService"));
-		// ip not from local source
+		var getApplication = get("getApplication", unique_name);
+		if(!getApplication)
+			throw language.E_APPLICATION_NOT_INSTALLED.preFmt("Core::getService", {"~name": unique_name});
 		}
-	else if(_find.obj.service_type == config.OPEN_LOCAL)
-		{
-		}
-	else if(_find.obj.service_type == config.STANDARD)
-		{
-		}*/
 
-	// ToDo: create iptable rule to allow traffic.
-		
-	return _service.obj;
+	var getApplicationByIp = get("getApplicationByIp", arguments[arguments.length-1].remoteAddress);
+	var getRuntimeService = get("getRuntimeService", {service_name: service_name, unique_name: unique_name});
+
+	if(!getRuntimeService)
+		throw language.E_GET_SERVICE_UNKNOWN.preFmt("Core::getService", {"~name": service_name});
+
+	return securityModel.getService(getRuntimeService, getApplicationByIp, arguments[arguments.length-1].remoteAddress);
 	});
 
-var getServices = fibrous( function(unique_names, connObj/*Added by Spaceify*/)
-	{ // Get all the services for all the unique applications on the list
-	var connection_ip = connObj.remoteAddress;
+var getOpenServices = fibrous( function(unique_names)
+	{ // Get all the open and allowed open_local runtime services from all the unique applications in the list
+	var runtimeServices = [];
 
-	// TRY TO FIND THE SERVICE
-	var services = [];
-	for(var i=0; i<unique_names.length; i++)
+	for(var i = 0; i < unique_names.length; i++)
 		{
-		var _service = self.find("services", unique_names[i]);
+		var getApplication = get("getApplication", unique_names[i]);
+		if(!getApplication)
+			throw language.E_APPLICATION_NOT_INSTALLED.preFmt("Core::getOpenServices", {"~name": unique_name});
 
-		services = services.concat(_service.obj ? _service.obj : []);
+		var getRuntimeServices = get("getRuntimeServices", unique_names[i]);
+
+		runtimeServices = runtimeServices.concat( securityModel.getOpenServices(getRuntimeServices, arguments[arguments.length-1].remoteAddress) );
 		}
 
-	return services;
+	return runtimeServices;
 	});
-	
-var adminLogIn = fibrous( function(password, connObj/*Added by Spaceify*/)
+
+var adminLogIn = fibrous( function(password)
 	{
-	var connection_ip = connObj.remoteAddress;
-
-	var session_id = null;
-
-	try {
-		if(!securityModel.isLocalIP(connection_ip))											// Only the local callers can call this method
-			throw utility.error(language.E_ADMIN_LOGIN_DENIED.p("Core::adminLogIn"));
-
-		if(securityModel.isApplicationIP(connection_ip))									// Applications can't call this method
-			throw utility.error(language.E_ADMIN_LOGIN_DENIED.p("Core::adminLogIn"));
-
-		// GET CLIENTS MAC
-		/*var lease = dhcpdlog.getDHCPLeaseByIP(connection_ip);
-		if(!lease)
-			throw utility.error(language.E_UNKNOWN_MAC.p("Core::adminLogIn"));*/
-
-		// CHECK THE PASSWORD - UPDATE DATABASE
-		user = database.sync.getUserData();
-
-		if(typeof user == "undefined")
-			throw utility.error(language.E_ADMIN_LOGIN_USER.p("Core::adminLogIn"));
-
-		var shasum = crypto.createHash("sha512");
-		shasum.update(password + user.admin_salt);
-		var password_hash = shasum.digest("hex").toString();
-
-		if(password_hash != user.admin_password_hash)
-			throw utility.error(language.E_ADMIN_LOGIN_PASSWORD.p("Core::adminLogIn"));
-
-		var last_login = Date.now();
-		database.sync.adminLoggedIn([last_login]);
-
-		// START A NEW SESSION
-		shasum = crypto.createHash("sha512");
-		var result = utility.bytesToHexString(crypto.randomBytes(32));
-		shasum.update(result);
-		session_id = shasum.digest("hex").toString();
-
-		//securityModel.adminLogIn(lease["mac_or_duid"], session_id, last_login, connection_ip);
-		securityModel.adminLogIn(session_id, last_login, connection_ip);
-		}
-	catch(err)
-		{
-		throw utility.error(err);
-		}
-	finally
-		{
-		database.close();
-		}
-
-	return session_id;
+	return securityModel.sync.adminLogIn(password, arguments[arguments.length-1].remoteAddress);
 	});
 
-var adminLogOut = fibrous( function(session_id, connObj/*Added by Spaceify*/)
+var adminLogOut = fibrous( function(sessionId)
 	{
-	var connection_ip = connObj.remoteAddress;
-
-	try {
-		if(!securityModel.isLocalIP(connection_ip))											// Only the local callers can call this method
-			throw utility.error(language.E_ADMIN_LOGIN_DENIED.p("Core::adminLogOut"));
-
-		if(securityModel.isApplicationIP(connection_ip))									// Applications can't call this method
-			throw utility.error(language.E_ADMIN_LOGIN_DENIED.p("Core::adminLogOut"));
-
-		// GET CLIENTS MAC
-		/*var lease = dhcpdlog.getDHCPLeaseByIP(connection_ip);
-		if(!lease)
-			throw utility.error(language.E_UNKNOWN_MAC.p("Core::adminLogOut"));*/
-
-		securityModel.adminLogOut(/*lease["mac_or_duid"], */session_id);
-		}
-	catch(err)
-		{
-		throw utility.error(err);
-		}
+	securityModel.sync.adminLogOut(sessionId, arguments[arguments.length-1].remoteAddress);
 
 	return true;
 	});
 
-var isAdminLoggedIn = fibrous( function(session_id)
+var isAdminLoggedIn = fibrous( function(sessionId)
 	{
-	var session = securityModel.findSession(session_id);
+	securityModel.sync.checkCallerRights(arguments[arguments.length-1].remoteAddress, null);	// Throws
+
+	var session = securityModel.sync.findSession(sessionId);
+
 	return (session ? true : false);
 	});
 
-var setSplashAccepted = fibrous( function(connObj)
+var setSplashAccepted = fibrous( function()
 	{
-	var connection_ip = connObj.remoteAddress;
-
 	try {
-		var lease = dhcpdlog.getDHCPLeaseByIP(connection_ip);							// Lease must exist for the device
+		var lease = dhcpdlog.getDHCPLeaseByIP(arguments[arguments.length-1].remoteAddress);	// Lease must exist for the device
 		if(!lease)
-			throw utility.error(language.E_UNKNOWN_MAC.p("Core::setSplashAccepted"));
+			throw language.E_UNKNOWN_MAC.pre("Core::setSplashAccepted");
 
-		if(!iptables.sync.splashAddRule(lease.mac_or_duid))								// Add MAC to the iptables rules
-			throw utility.error(language.E_SPLASH_ADD_FAILED.p("Core::setSplashAccepted"));
+		if(!iptables.sync.splashAddRule(lease.macOrDuid))										// Add MAC to the iptables rules
+			throw language.E_SPLASH_ADD_FAILED.pre("Core::setSplashAccepted");
 
 		/*	The following line removes connection tracking for the PC. This clears any previous (incorrect) route info for the redirection
 			exec("sudo rmtrack ".$_SERVER['REMOTE_ADDR']);
@@ -377,33 +249,33 @@ var setSplashAccepted = fibrous( function(connObj)
 		}
 	catch(err)
 		{
-		throw utility.error(err);
+		throw errorc.make(err);
 		}
 
 	return true;
 	});
 
-var startApplication = fibrous( function(unique_name, run, throws, connObj/*Added by Spaceify*/)
+var startApplication = fibrous( function(unique_name, run, sessionId, throws)
 	{
-	var connection_ip = connObj.remoteAddress;
-
 	try {
-		if(!securityModel.isLocalIP(connection_ip))
-			throw utility.error(language.E_NON_EDGE_CALLER.p("Core::startApplication"));
+		securityModel.sync.checkCallerRights(arguments[arguments.length-1].remoteAddress, sessionId);	// Throws
 
+		securityModel.refreshLogInSession(sessionId);
+
+		// START APPLICATION
 		var app = database.sync.getApplication(unique_name);
 		if(!app && throws)
-			throw utility.ferror(language.E_PACKAGE_NOT_INSTALLED.p("Core::startApplication"), {":name": unique_name});
+			throw language.E_APPLICATION_NOT_INSTALLED.preFmt("Core::startApplication", {"~name": unique_name});
 
-		if(isApplicationRunning.sync(unique_name, connObj))
-			throw utility.ferror(language.PACKAGE_ALREADY_RUNNING.p("Core::startApplication"), {":type": config.HR_TYPES[app.type], ":name": unique_name});
+		if(isApplicationRunning.sync(unique_name))
+			throw language.PACKAGE_ALREADY_RUNNING.preFmt("Core::startApplication", {"~type": config.APP_TYPES_HR[app.type], "~name": unique_name});
 
-		if(app && app.type == config.SPACELET)
-			spaceletManager.sync.start(unique_name, run, true);
-		else if(app && app.type == config.SANDBOXED)
-			sandboxedManager.sync.start(unique_name, true);
+		if(app && app.type == config.SANDBOXED)
+			sandboxedManager.sync.start({type: config.SANDBOXED, unique_name: unique_name, throwErros: true});
+		else if(app && app.type == config.SPACELET)
+			spaceletManager.sync.start({type: config.SPACELET, unique_name: unique_name, throwErros: true, runSpacelet: run});
 		/*else if(app && app.type == config.NATIVE)
-			nativeManager.sync.start(unique_name, true);*/
+			nativeManager.sync.start({type: config.NATIVE, unique_name: unique_name, throwErrors: true});*/
 		}
 	catch(err)
 		{
@@ -417,207 +289,241 @@ var startApplication = fibrous( function(unique_name, run, throws, connObj/*Adde
 	return true;
 	});
 
-var stopApplication = fibrous( function(unique_name, throws, connObj/*Added by Spaceify*/)
+var stopApplication = fibrous( function(unique_name, sessionId, throws)
 	{
-	var connection_ip = connObj.remoteAddress;
+	securityModel.sync.checkCallerRights(arguments[arguments.length-1].remoteAddress, sessionId);	// Throws
 
-	if(!securityModel.isLocalIP(connection_ip))											// Only local caller (applicationmanager/spm) can call this method
-		throw utility.error(language.E_NON_EDGE_CALLER.p("Core::stopApplication"));
+	securityModel.refreshLogInSession(sessionId);
 
-	_find = self.find("application", unique_name);
-	if(!_find.manager && throws)
-		throw utility.ferror(language.E_PACKAGE_NOT_INSTALLED.p("Core::stopApplication"), {":name": unique_name});
+	// STOP APPLICATION
+	var getApplication = get("getApplication", unique_name);
+	if(!getApplication && throws)
+		throw language.E_APPLICATION_NOT_INSTALLED.preFmt("Core::stopApplication", {"~name": unique_name});
 
-	if(_find.manager)
-		_find.manager.sync.stop(unique_name);
+	if(getApplication)
+		//getApplication.manager.sync.stop(unique_name);
+		getManager(getApplication.getType()).sync.stop(unique_name);
 
 	return true;
 	});
 
-var removeApplication = fibrous( function(unique_name, throws, connObj/*Added by Spaceify*/)
-	{ // Stops application and removes it from the running applications list - files are not removed.
-	var connection_ip = connObj.remoteAddress;
+var removeApplication = fibrous( function(unique_name, sessionId, throws)
+	{ // Stops application or spacelet, if its running, and then removes it from core's list of applications or spacelets. This method does not remove the applications or spacelets installation.
+	securityModel.sync.checkCallerRights(arguments[arguments.length-1].remoteAddress, sessionId);	// Throws
 
-	if(!securityModel.isLocalIP(connection_ip))
-		throw utility.error(language.E_NON_EDGE_CALLER.p("Core::removeApplication"));
+	securityModel.refreshLogInSession(sessionId);
 
-	_find = self.find("application", unique_name);
-	if(!_find.manager && throws)
-		throw utility.ferror(language.E_PACKAGE_NOT_INSTALLED.p("Core::removeApplication"), {":name": unique_name});
+	// REMOVE APPLICATION
+	var getApplication = get("getApplication", unique_name);
+	if(!getApplication && throws)
+		throw language.E_APPLICATION_NOT_INSTALLED.preFmt("Core::removeApplication", {"~name": unique_name});
 
-	if(_find.manager)
-		_find.manager.sync.remove(unique_name);
+	if(getApplication)
+		getManager(getApplication.getType()).sync.remove(unique_name);
 
 	return true;
 	});
 
 var isApplicationRunning = fibrous( function(unique_name)
 	{
-	_find = self.find("is_running", unique_name);
+	var isRunning = get("isRunning", unique_name);
 
-	return _find.obj;
+	return isRunning;
 	});
 
 var getApplicationData = fibrous( function()
 	{
-	var app_dir = "";
-	var app_data = null;
+	var i;
+	var appDir = "";
 	var manifest = null;
-	var services = null;
+	var dbSpacelet, dbSandboxed, dbNative;
+	var appData = { spacelet: [], sandboxed: [], native: [] };
 
-	try {
-		var app_data = { spacelets: [], sandboxed: [], native: [] };
+	try { dbSpacelet = database.sync.getApplications([config.SPACELET]); } catch(err) { dbSpacelet = []; }
+	try { dbSandboxed = database.sync.getApplications([config.SANDBOXED]); } catch(err) { dbSandboxed = []; }
+	try { dbNative = database.sync.getApplications([config.NATIVE]); } catch(err) { dbNative = []; }
+	database.close();
 
-		var spacelets = database.sync.getApplications([config.SPACELET]) || [];
-		for(var i=0; i<spacelets.length; i++)
-			{
-			app_dir = config.SPACELETS_PATH + spacelets[i].unique_directory + config.VOLUME_DIRECTORY + config.APPLICATION_DIRECTORY;
-
-			manifest = getManifest.sync(spacelets[i].unique_name);
-			manifest.has_tile = utility.sync.isLocal(app_dir + config.WWW_DIRECTORY + config.TILEFILE, "file");
-			manifest.is_running = spaceletManager.isRunning(manifest.unique_name);
-			app_data.spacelets.push(manifest);
-			}
-
-		var sandboxed = database.sync.getApplications([config.SANDBOXED]) || [];
-		for(var i=0; i<sandboxed.length; i++)
-			{
-			app_dir = config.SANDBOXED_PATH + sandboxed[i].unique_directory + config.VOLUME_DIRECTORY + config.APPLICATION_DIRECTORY;
-
-			manifest = getManifest.sync(sandboxed[i].unique_name);
-			manifest.has_tile = utility.sync.isLocal(app_dir + config.WWW_DIRECTORY + config.TILEFILE, "file");
-			manifest.is_running = sandboxedManager.isRunning(manifest.unique_name);
-
-			app_data.sandboxed.push(manifest);
-			}
-
-		/*var native = database.sync.getApplications([config.NATIVE]) || [];
-		for(var i=0; i<native.length; i++)
-			{
-			app_dir = config.NATIVE_PATH + native[i].unique_directory + config.VOLUME_DIRECTORY + config.APPLICATION_DIRECTORY;
-
-			manifest = getManifest.sync(native[i].unique_name);
-			manifest.has_tile = utility.sync.isLocal(app_dir + config.WWW_DIRECTORY + config.TILEFILE, "file");
-			manifest.is_running = nativeManager.isRunning();
-			app_data.native.push(utility.parseJSON(manifest), true);
-			}*/
-		}
-	catch(err)
+	for(i = 0; i < dbSpacelet.length; i++)
 		{
-		throw utility.error(language.E_GET_APP_DATA_FAILED.p("Core::getApplicationData"), err);
-		}
-	finally
-		{
-		database.close();
+		if((manifest = getManifest.sync(dbSpacelet[i].unique_name, false)))
+			{
+			appDir = config.SPACELETS_PATH + dbSpacelet[i].unique_directory + config.VOLUME_DIRECTORY + config.APPLICATION_DIRECTORY;
+
+			manifest.hasTile = utility.sync.isLocal(appDir + config.WWW_DIRECTORY + config.TILEFILE, "file");
+			manifest.isRunning = spaceletManager.isRunning(manifest.unique_name);
+
+			appData.spacelet.push(manifest);
+			}
 		}
 
-	return app_data;
+	for(i = 0; i < dbSandboxed.length; i++)
+		{
+		if((manifest = getManifest.sync(dbSandboxed[i].unique_name, false)))
+			{
+			appDir = config.SANDBOXED_PATH + dbSandboxed[i].unique_directory + config.VOLUME_DIRECTORY + config.APPLICATION_DIRECTORY;
+
+			manifest.hasTile = utility.sync.isLocal(appDir + config.WWW_DIRECTORY + config.TILEFILE, "file");
+			manifest.isRunning = sandboxedManager.isRunning(manifest.unique_name);
+
+			appData.sandboxed.push(manifest);
+			}
+		}
+
+	/*for(i = 0; i < dbNative.length; i++)
+		{
+		if((manifest = getManifest.sync(dbNative[i].unique_name, false)))
+			{
+			appDir = config.NATIVE_PATH + dbNative[i].unique_directory + config.VOLUME_DIRECTORY + config.APPLICATION_DIRECTORY;
+
+			manifest.hasTile = utility.sync.isLocal(appDir + config.WWW_DIRECTORY + config.TILEFILE, "file");
+			manifest.isRunning = nativeManager.isRunning();
+
+			appData.native.push(utility.parseJSON(manifest), true);
+			}
+		}*/
+
+	return appData;			//throw language.E_GET_APP_DATA_FAILED.pre("Core::getApplicationData", err); }
 	});
 
 var getApplicationURL = fibrous( function(unique_name)
 	{
-	var app_dir = "";
-
 	try {
-		var type = self.find("type", unique_name);
-		var is_running = self.find("is_running", unique_name);
-		var implements_web_server = self.find("implements_web_server", unique_name);
-		var http = self.find("service", {service_name: "http", unique_name: unique_name});
-		var https = self.find("service", {service_name: "https", unique_name: unique_name});
+		var getType = get("getType", unique_name);
+		var isRunning = get("isRunning", unique_name);
+		var implementsWebServer = get("implementsWebServer", unique_name);
+		var httpService = get("getRuntimeService", {service_name: config.HTTP, unique_name: unique_name});
+		var port, securePort, url, secureUrl;
 
-		if(implements_web_server.obj && is_running.obj && http.obj && https.obj)			// Use applications internal server
+		if(implementsWebServer && isRunning && httpService)								// Use applications internal server
 			{
-			http_port = http.obj.port;
-			https_port = https.obj.port;
-			http_url = config.EDGE_IP + ":" + http_port;
-			https_url = config.EDGE_IP + ":" + https_port;
+			port = httpService.port;
+			securePort = httpService.securePort;
+			url = config.EDGE_HOSTNAME + ":" + port;
+			secureUrl = config.EDGE_HOSTNAME + ":" + securePort;
 			}
-		else																				// Use cores web server
+		else																			// Use cores web server
 			{
-			http_port = null;
-			https_port = null;
-			http_url = config.EDGE_IP;
-			https_url = config.EDGE_IP;
+			port = null;
+			securePort = null;
+			url = config.EDGE_HOSTNAME;
+			secureUrl = config.EDGE_HOSTNAME;
 			}
 		}
 	catch(err)
 		{
-		throw utility.error(language.E_GET_APP_URL_FAILED.p("Core::getApplicationURL"), err);
+		throw language.E_GET_APP_URL_FAILED.pre("Core::getApplicationURL", err);
 		}
 
-	return {http_url: http_url, https_url: https_url, http_port: http_port, https_port: https_port, unique_name: unique_name, type: type.obj};
+	return	{
+			url: url, secureUrl: secureUrl, port: port, securePort: securePort,
+			implementsWebServer: implementsWebServer, isRunning: isRunning, unique_name: unique_name, type: getType
+			};
 	});
 
-var getManifest = fibrous( function(unique_name)
+var getManifest = fibrous( function(unique_name, throws)
 	{
 	var service = null;
 
 	// TRY TO GET THE MANIFEST
-	var _find = self.find("manifest", unique_name);
+	var getManifest = get("getManifest", unique_name);
 
-	if(!_find.obj)
-		throw utility.ferror(language.E_GET_MANIFEST_NOT_FOUND.p("Core::getManifest"), {":name": unique_name});
+	if(!getManifest && throws)
+		throw language.E_GET_MANIFEST_NOT_FOUND.preFmt("Core::getManifest", {"~name": unique_name});
 
-	return _find.obj;
+	return getManifest;
 	});
 
-var connectTo = fibrous( function(service_name, is_secure, connObj/*Added by Spaceify*/)
+var connectTo = fibrous( function(service_name, isSecure)
 	{
-	var _find = spaceletManager.find("service", service_name);
-	if(!_find.obj)
-		throw utility.ferror(language.E_NOT_A_SPACELET_SERVICE.p("Core::getManifest"), {":name": service_name});
 
-		// tarkista origin 
-		
-	var port = (is_secure ? service.secure_port : service.port);
-
-	ConnectionHub.connectTo.sync(service_port, is_secure, connObj.server_type, connObj.id);
 	});
 
-var updateSettings = fibrous( function(settings, session_id)
+var getServiceRuntimeStates = fibrous( function(sessionId)
+	{
+	var status = {spacelet: {}, sandboxed: {}, native: {}};
+
+	securityModel.sync.checkCallerRights(arguments[arguments.length-1].remoteAddress, sessionId);	// Throws
+
+	securityModel.refreshLogInSession(sessionId);
+
+	// GET SERVICE RUNTIME STATES
+	status.spacelet = spaceletManager.getServiceRuntimeStates();
+
+	status.sandboxed = sandboxedManager.getServiceRuntimeStates();
+
+	//status.native = nativeManager.getServiceRuntimeStates();
+
+	return status;
+	});
+
+var getSettings = fibrous( function(sessionId)
+	{
+	var settings = null;
+
+	securityModel.sync.checkCallerRights(arguments[arguments.length-1].remoteAddress, sessionId);	// Throws
+
+	securityModel.refreshLogInSession(sessionId);
+
+	// GET SETTINGS
+	return database.sync.getSettings();
+	});
+
+var saveSettings = fibrous( function(newSettings, sessionId)
 	{
 	try {
-		if(!isAdminLoggedIn(session_id))
-			throw utility.error(language.E_AUTHENTICATION_FAILED.p("Core::updateSettings"));
+		securityModel.sync.checkCallerRights(arguments[arguments.length-1].remoteAddress, sessionId);	// Throws
 
-		// Update the settings
-		// ToDo: Allow: language, splash_ttl, session_ttl
-		// ToDo: Enable database.sync.updateSettings(settings)
+		securityModel.refreshLogInSession(sessionId);
+
+		// SAVE SETTINGS
+		var settings = database.sync.getSettings();
+
+		for(var i in settings)													// Check object
+			{
+			if(!(i in newSettings))
+				throw language.E_SETTINGS_PROPERTY.preFmt("Core::saveSettings", {"~property": i});
+
+			if(typeof newSettings[i] != typeof settings[i])
+				throw language.E_SETTINGS_DATATYPE.preFmt("Core::saveSettings", {"~property": i, "~datatype": typeof settings[i]});
+			}
+
+		database.sync.saveSettings(newSettings);								// Save to database and update to security model
+		securityModel.setSettings(newSettings);
 		}
 	catch(err)
 		{
-		throw utility.error(language.E_FAILED_TO_UPDATE_SETTINGS.p("Core::updateSettings"), err);
+		throw language.E_FAILED_TO_SAVE_SETTINGS.pre("Core::saveSettings", err);
 		}
 	finally
 		{
 		database.close();
-		unlock();
 		}
+
+	return true;
 	});
 
-// USER APPLICATION SPECIFIC
-var saveOptions = fibrous( function(session_id, unique_name, directory, file, data, connObj/*Added by Spaceify*/)
+	// APPLICATION -- -- -- -- -- -- -- -- -- -- //
+/*var saveOptions = fibrous( function(sessionId, unique_name, directory, file, data)
 	{
-	var connection_ip = connObj.remoteAddress;
-
 	var optionsOk = false;
-	var session = securityModel.findSession(session_id);
-	
-	try {
-		if(!session || session.ip != connection_ip)										// Accept only from the same ip (= logged in device)
-			throw utility.error(language.E_INVALID_SESSION.p("Core::saveOptions"));
+	var session = securityModel.findSession(sessionId);
 
-		var app = database.sync.getApplication(unique_name) || null;					// Get application, path to volume, create directory and save
-		if(!app)
-			throw utility.ferror(language.E_PACKAGE_NOT_INSTALLED.p("Core::saveOptions"), {":name": unique_name});
+	try {
+		if(!session || session.ip != arguments[arguments.length-1].remoteAddress)		// Accept only from the same ip (= logged in device)
+			throw language.E_INVALID_SESSION.pre("Core::saveOptions");
+
+		var dbApp = database.sync.getApplication(unique_name) || null;					// Get application, path to volume, create directory and save
+		if(!dbApp)
+			throw language.E_APPLICATION_NOT_INSTALLED.preFmt("Core::saveOptions", {"~name": unique_name});
 
 		var volume = "";
-		if(app.type == config.SPACELET)
-			volume = config.SPACELETS_PATH + app.unique_directory + config.VOLUME_DIRECTORY;
-		else if(app.type == config.SANDBOXED)
-			volume = config.SANDBOXED_PATH + app.unique_directory + config.VOLUME_DIRECTORY;
-		/*else if(app.type == config.NATIVE)
-			volume = config.NATIVEAPPS_PATH + app.unique_directory + config.VOLUME_DIRECTORY;*/
+		if(dbApp.type == config.SPACELET)
+			volume = config.SPACELETS_PATH + dbApp.unique_directory + config.VOLUME_DIRECTORY;
+		else if(dbApp.type == config.SANDBOXED)
+			volume = config.SANDBOXED_PATH + dbApp.unique_directory + config.VOLUME_DIRECTORY;
+		//else if(dbApp.type == config.NATIVE)
+		//	volume = config.NATIVEAPPS_PATH + dbApp.unique_directory + config.VOLUME_DIRECTORY;
 
 		if(directory != "")
 			{
@@ -631,7 +537,7 @@ var saveOptions = fibrous( function(session_id, unique_name, directory, file, da
 		}
 	catch(err)
 		{
-		throw utility.error(err);
+		throw errorc.make(err);
 		}
 	finally
 		{
@@ -641,28 +547,26 @@ var saveOptions = fibrous( function(session_id, unique_name, directory, file, da
 	return optionsOk;
 	});
 
-var loadOptions = fibrous( function(session_id, unique_name, directory, file, connObj/*Added by Spaceify*/)
+var loadOptions = fibrous( function(sessionId, unique_name, directory, file)
 	{
-	var connection_ip = connObj.remoteAddress;
-
 	var data = null;
-	var session = securityModel.findSession(session_id);
-	
-	try {
-		if(!session || session.ip != connection_ip)										// Accept only from the same ip (= logged in device)
-			throw utility.error(language.E_INVALID_SESSION.p("Core::loadOptions"));
+	var session = securityModel.findSession(sessionId);
 
-		var app = database.sync.getApplication(unique_name) || null;					// Get application, path to volume and load
-		if(!app)
-			throw utility.ferror(language.E_PACKAGE_NOT_INSTALLED.p("Core::loadOptions"), {":name": unique_name});
+	try {
+		if(!session || session.ip != arguments[arguments.length-1].remoteAddress)		// Accept only from the same ip (= logged in device)
+			throw language.E_INVALID_SESSION.pre("Core::loadOptions");
+
+		var dbApp = database.sync.getApplication(unique_name) || null;					// Get application, path to volume and load
+		if(!dbApp)
+			throw language.E_APPLICATION_NOT_INSTALLED.preFmt("Core::loadOptions", {"~name": unique_name});
 
 		var volume = "";
-		if(app.type == config.SPACELET)
-			volume = config.SPACELETS_PATH + app.unique_directory + config.VOLUME_DIRECTORY;
-		else if(app.type == config.SANDBOXED)
-			volume = config.SANDBOXED_PATH + app.unique_directory + config.VOLUME_DIRECTORY;
-		/*else if(app.type == config.NATIVE)
-			volume = config.NATIVE_PATH + app.unique_directory + config.VOLUME_DIRECTORY;*/
+		if(dbApp.type == config.SPACELET)
+			volume = config.SPACELETS_PATH + dbApp.unique_directory + config.VOLUME_DIRECTORY;
+		else if(dbApp.type == config.SANDBOXED)
+			volume = config.SANDBOXED_PATH + dbApp.unique_directory + config.VOLUME_DIRECTORY;
+		//else if(dbApp.type == config.NATIVE)
+		//	volume = config.NATIVE_PATH + dbApp.unique_directory + config.VOLUME_DIRECTORY;
 
 		if(directory != "")
 			directory += (directory.search(/\/$/) != -1 ? "" : "/");
@@ -671,7 +575,7 @@ var loadOptions = fibrous( function(session_id, unique_name, directory, file, co
 		}
 	catch(err)
 		{
-		throw utility.error(err);
+		throw errorc.make(err);
 		}
 	finally
 		{
@@ -679,25 +583,24 @@ var loadOptions = fibrous( function(session_id, unique_name, directory, file, co
 		}
 
 	return data;
-	});
+	});*/
 
-// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-// PUBLIC NON-EXPOSED   // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+	// PUBLIC NON-EXPOSED -- -- -- -- -- -- -- -- -- -- //
 self.loginToSpaceifyNet = fibrous( function(mode)
 	{
 	try {
 		var user = database.sync.getUserData();
 
-		var result = utility.sync.postForm(config.EDGE_LOGIN, {form: {un: user.edge_id, pw: user.edge_password, md: mode}});
+		var result = utility.sync.postForm(config.EDGE_LOGIN_URL, {form: {un: user.edge_id, pw: user.edge_password, md: mode}});
 
 		if(mode == "login")
 			{
 			isLoggedInToSpaceifyNet = true;
 
 			if(result.body == "")
-				logger.info(utility.replace(language.LOGGED_IN_SPACEIFY_NET, {":edge_id": user.edge_id}));
+				logger.info(utility.replace(language.LOGGED_IN_SPACEIFY_NET, {"~edge_id": user.edge_id}));
 			else
-				logger.warn(utility.replace(language.LOGGING_IN_SPACEIFY_NET_FAILED, {":result": result.body}));
+				logger.warn(utility.replace(language.LOGGING_IN_SPACEIFY_NET_FAILED, {"~result": result.body}));
 			}
 		else
 			{
@@ -710,7 +613,7 @@ self.loginToSpaceifyNet = fibrous( function(mode)
 		{
 		isLoggedInToSpaceifyNet = false;
 
-		throw utility.error(language.E_EDGE_LOGIN.p("Core::loginToSpaceifyNet"), err);
+		throw language.E_EDGE_LOGIN.pre("Core::loginToSpaceifyNet", err);
 		}
 	finally
 		{
@@ -718,28 +621,33 @@ self.loginToSpaceifyNet = fibrous( function(mode)
 		}
 	});
 
-self.find = function(_param, _find)
+	// PRIVATE -- -- -- -- -- -- -- -- -- -- //
+var get = function(method, search)
 	{
-	var obj = spaceletManager.find(_param, _find);
-	var man = spaceletManager;
+	var result = spaceletManager[method](search);
 
-	if(obj == null)
-		{
-		obj = sandboxedManager.find(_param, _find);
-		man = sandboxedManager;
-		}
+	if(result == null)
+		result = sandboxedManager[method](search);
 
-	/*if(obj == null)
-		{
-		obj = nativeManager.find(_param, _find);
-		man = nativeManager;
-		}*/
+	/*if(result == null)
+		result = nativeManager[method](search);*/
 
-	return {obj: obj, manager: (obj == null ? null : man)};
+	return result;
 	}
 
-// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-// PRIVATE  // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+var getManager = function(type)
+	{
+	var manager = null;
+
+	if(type == "spacelet")
+		manager = spaceletManager;
+	else if(type == "sandboxed")
+		manager = sandboxedManager;
+	/*else if(type == "native")
+		manager = nativeManager;*/
+
+	return manager;
+	}
 
 }
 

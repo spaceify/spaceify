@@ -1,7 +1,8 @@
 #!/bin/bash
-# Get DNS server IP address for Spaceify's DNS server, 30.4.2015 Spaceify Inc.
+# Get DNS server IP address for Spaceify's DNS server
+# Spaceify Oy 30.4.2015
 
-eth=$(</var/lib/spaceify/data/interfaces/ethernet)
+eth=$(< /var/lib/spaceify/data/interfaces/ethernet)
 
 lease=""																					# Get the leases for the user selected network adapter connected to the internet
 find="option domain-name-servers "
@@ -20,11 +21,11 @@ fi
 
 ips=$(grep "$find" "$lease" | tail -1)														# Find last occurance = latest lease
 
-ips=${ips//$find/}																		# Replace
+ips=${ips//$find/}																			# Replace
 ips=${ips//;/,}
 ips=${ips// /}
 
-IFS="," read -a ips <<< "$ips"															# Split into an array of IPs
+IFS="," read -a ips <<< "$ips"																# Split into an array of IPs
 
 dip=""
 for ip in "${ips[@]}"; do

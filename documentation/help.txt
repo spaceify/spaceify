@@ -1,0 +1,143 @@
+================================
+= SEARCH FIELDS AND PARAMETERS =
+================================
+
+WHERE
+-----
+
+The database can be searched with "name", "type", "category" and "username" fields.
+
+Format: {"field": search object, "field": search object, ...}
+
+The search object has two forms.
+
+1) JavaScript Object: "<field>": {"value": "", operator: "", condition: ""}
+
+	If field is not one the supported fields the search object is ignored.
+	If value is not defined the search object is ignored.							
+	Operator can be <, >, <=, >= <>, =, != or LIKE. If operator is not defined = is used.
+	If LIKE is used as the operator the value is pre- and postfixed with % (e.g., "%screen%").
+	Condition: WHERE condition1 [AND [OR]] condition2... If condition is not defined AND is used.
+
+2) String: "<field>": "<value>"
+
+	If field is not one the supported fields the search object is ignored.
+	The operator in this form is = and condition is AND.
+
+About the "name", "type" and "category" search fields.
+
+	"name"
+		The search includes name and unique_name fields => (name OR unique_name).
+
+	"type"
+		"spacelet", "sandboxed" or "native" - config.SPACELET, config.SANDBOXED or config.NATIVE.
+
+	"category"
+		Predefined values are listed in config.APPLICATION_CATEGORIES. Categories can also be defined by developers
+		and the predefined categories are just suggestions.
+
+Parameters
+----------
+
+"page"
+"pageSize"
+
+	Format: Integer
+
+	Page defines the position in pages and pageSize defines the row count in a page.
+	Example: search matches 57 rows. 
+		pageSize = 20 (if pageSize is 0 query is not limited and all the rows are returned)
+		page = 1 => rows 0 - 19 are returned
+		page = 2 => rows 20 - 49 are returned
+		page = 3 => rows 50 - 57 are returned
+		page = 0 => rows 0 - 19 are returned
+		page > 3 => rows 50 - 57 are returned
+
+"order" is order and direction of the rows in the result set.
+
+	Format: JavaScript Object: {"<field>"; "<order>", "<field>": "<order>", ...}
+
+	Order can be ASC or DESC (case insensitive).
+	If field is not one of the supported fields the order is ignored.
+	Order allows many fields but it might be confusing for users to have "multiselectionorder" in the GUI.
+
+=====================
+= THE SEARCH RESULT =
+=====================
+
+Object { sandboxed: Array, spacelet: Array, native: Array, page: Integer, pageSize: Integer, maxPages: Integer, maxRows: Integer, fetchedRows: Integer }
+
+sandboxed
+spacelet
+native
+
+Manifest arrays per type.
+
+page
+pageSize
+
+	Echoes back the page number and size given in the search.
+
+maxPages
+
+	The maximum number of pages available for the pageSize.
+
+maxRows
+
+	The total available rows in the database the search matched, e.g., 57
+
+fetchedRows
+
+	The number of rows returned in the page position, e.g., 20
+
+It should be easy to make some sort of a page browsing system using these parameters.
+
+The manifests
+-------------
+
+The manifests contain every field a manifest can be expect to have. 
+(http://spaceify.org/wiki/doku.php?id=tutorials:how_to_write_an_application:the_manifest_file:spaceify.manifest)
+In addition to these the manifests contains extra fields.
+
+publish_date
+
+	The date when package was published to the registry.
+
+readme
+
+	URL to the applications readme.html file. If readme is an empty string, the application doesn't have readme.
+
+	Because the readme is written by application developers, the safest way to show it is to load it into a sandboxed iframe, e.g.
+
+		<iframe id="packageReadme" src="<readme url>" frameBorder="0" sandbox="allow-scripts"></iframe>
+
+	Spaceify adds a JavaScript code snippet to the readme file when application is published to the spaceify registry.
+	The code posts messages to the iframes parent when the readme.html web page is loaded and/or resized.
+
+		window.parent.postMessage({height: height, width: width}, "*");
+
+	The message contains the dimensions of the readme.html page that can be used to change the iframe size to fit
+	its content. If the iframe is not resized the readme probably gets clipped (unless, of course, the readme.html has scrollbars)
+
+	To catch the message implement something like this on your web page.
+
+		window.addEventListener("message", receivedMessage, false);
+
+		function receivedMessage(event)
+			{
+			if(event && event.data && event.data.height)
+				$("#packageReadme").css("height", event.data.height + "px");
+			}
+	
+	Notice: The URL returned in the manifest for readme.html doesn't a have protocol; https:// should be used, but until spaceify.org 
+	gets SSL certificate use http://.
+
+icon
+
+	Like readme this is a URL but to the applications icon image. If icon is empty the application doesn't have icon, in which
+	case show the default icon www/images/default_icon.png. Similarly to the readme URL the icon URL doesn't have protocol defined.
+
+versions
+
+	The manifests returned by the search are always from the latest version. This array contains the version strings
+	of the earlier versions in ascending order.

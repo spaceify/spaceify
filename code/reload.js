@@ -1,6 +1,5 @@
-#!/usr/bin/env node
 /**
- * Reload, 25.3.2014 Spaceify Inc.
+ * Reload, 25.3.2014 Spaceify Oy
  * 
  * Adapted from: https://gist.github.com/gleitz/6896099
  * 

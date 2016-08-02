@@ -1,6 +1,5 @@
-#!/usr/bin/env node
 /**
- * DNSServer, 22.10.2014 Spaceify Inc.
+ * DNSServer, 22.10.2014 Spaceify Oy
  * 
  * @class DNSServer
  */
@@ -18,7 +17,10 @@ var serverUDP6 = null;
 var serverTCP4 = null;
 var serverTCP6 = null;
 
-var cnames = {};
+var questions = [];
+var processingQuestion = false;
+var events = require('events');
+var eventEmitter = new events.EventEmitter()
 
 self.connect = function(opts)
 	{
@@ -29,17 +31,23 @@ self.connect = function(opts)
 	options.ttl = opts.ttl || 0;
 	options.external_dns = opts.external_dns;
 	options.default_response = opts.default_response || null;
-	options.debug = opts.debug || false;
+	options.debug = ("debug" in opts ? opts.debug : false);
 
-	serverUDP4 = dns.createUDPServer({dgram_type: "udp4"});
-	serverUDP6 = dns.createUDPServer({dgram_type: "udp6"});
-	serverTCP4 = dns.createTCPServer({dgram_type: "tcp4"});
-	serverTCP6 = dns.createTCPServer({dgram_type: "tcp6"});
+	// -- --
+	eventEmitter.on("processQuestions", processQuestions);
 
+	// -- --
+	serverUDP4 = dns.createUDPServer({type: "udp4", reuseAddr: true});
 	startServer(serverUDP4, options.port, options.v4_address, "udp4");
-	startServer(serverUDP6, options.port, options.v6_address, "udp6");
+
+	serverTCP4 = dns.createTCPServer({type: "tcp4", reuseAddr: true});
 	startServer(serverTCP4, options.port, options.v4_address, "tcp4");
-	//startServer(serverTCP6, options.port, options.v4_address, "tcp6");
+
+	serverUDP6 = dns.createUDPServer({type: "udp6", reuseAddr: true});
+	startServer(serverUDP6, options.port, options.v6_address, "udp6");
+
+	//serverTCP6 = dns.createTCPServer({type: "tcp6", reuseAddr: true});
+	//startServer(serverTCP6, options.port, options.v6_address, "tcp6");
 	}
 
 self.close = function()
@@ -57,24 +65,11 @@ self.close = function()
 var startServer = function(server, port, address, type)
 	{
 	server.on("request", function(request, response)
-		{	
-		var question = request.question[0];
-		var name = question.name;
+		{
+		for(var i = 0; i < request.question.length; i++)
+			questions.push({question: request.question[i], response: response});
 
-		if(name in options.url2ip)														// Redirect URLs straight to IPs without requesting them from extrenal DNS
-			{
-			response.answer.push(dns.A(
-				{
-				name: name,
-				type: question.type,
-				ttl: options.url2ip[name].ttl,
-				address: options.url2ip[name].ip,
-				class: options.url2ip[name].class
-				}));
-				response.send();
-			}
-		else																						
-			makeRequest(question, response);
+		eventEmitter.emit("processQuestions");
 		});
 
 	server.on("listening", function()
@@ -101,106 +96,146 @@ var startServer = function(server, port, address, type)
 		server.serve(port);
 	}
 
-var makeRequest = function(question, responseToClient)
+var processQuestions = function()
+	{ // Process the questions in the order they arrive
+	if(!processingQuestion && questions.length > 0)
+		{
+		processingQuestion = true;
+
+		var question = questions.shift();
+		var response = question.response;
+		var question = question.question;
+		var name = question.name;
+
+		if(name in options.url2ip)											// Redirect URLs straight to IPs without requesting them from extrenal DNS
+			{
+			response.answer.push(dns.A(
+				{
+				name: name,
+				type: question.type,
+				ttl: options.url2ip[name].ttl,
+				address: options.url2ip[name].ip,
+				class: options.url2ip[name].class
+				}));
+
+			response.send();
+
+			processingQuestion = false;
+			processQuestions();
+			}
+		else
+			ask(question, response);
+		}
+	}
+
+var ask = function(question, response)
 	{
-	var query_restarted = false;
+	var i;
+
+	if(options.debug)
+		console.log("QUESTION:", question.name, dns.consts.qtypeToName(question.type), "\n");
 
 	var request = dns.Request(
 		{
 		question: question,
 		server: options.external_dns,
 		try_edns: true,
-		timeout: 1000/*,
-		cache: false*/
+		timeout: 1000
+		//, cache: false
 		});
 
 	request.on("message", function(err, answers)
 		{
-		for(var i=0; i<answers.answer.length; i++)
-			{
-			var a = answers.answer[i];
+		var cname = null;
+		var answer = null;
 
-			if(a.type == 5)																// If answer is a CNAME record, restart the query with the new name
-				{
-				query_restarted = true;
-				cnames[responseToClient.header.id] = question.name;							// Return the original URL client sent, not the URL CNAME question returns
-				makeRequest({name: a.data, type: question.type, class: question.class}, responseToClient);
-				break;
-				}
+		for(i = 0; i < answers.answer.length; i++)
+			{
+			answer = answers.answer[i];
+
+			if(/*!cname && */answer.type == 5)
+				cname = {name: answer.data, type: question.type, class: question.class};
 			else
-				{
-				if(responseToClient.header.id in cnames)
-					{
-					a.name = cnames[responseToClient.header.id];
-					delete cnames[responseToClient.header.id];
-					}
-				responseToClient.answer.push(a);
-				}
+				response.answer.push(answer);
 			}
 
-		if(!query_restarted)															// CNAME was not returned
+		if(response.answer.length > 0)										// Error? Sometimes CNAME and other records are send together.
+			cname = null;													// Answer with the other records.
+
+		if(options.debug)
+			debug(response, question.name, question.type, dns.consts.qtypeToName(question.type));
+
+		for(i = 0; i < answers.authority.length; i++)
+			response.authority.push(answers.authority[i]);
+
+		for(i = 0; i < answers.additional.length; i++)
+			response.additional.push(answers.additional[i]);
+
+		if(cname)															// Start new request
+			ask(cname, response);
+		else																// Return response
 			{
-			for(var i=0; i<answers.authority.length; i++)
-				{
-				var a = answers.authority[i];
-				responseToClient.authority.push(a);
-				}
-
-			for(var i=0; i<answers.additional.length; i++)
-				{
-				var a = answers.additional[i];
-				responseToClient.additional.push(a);
-				}
-
-			if(	options.default_response &&
-				dns.consts.nameToQtype(options.default_response.type) == question.type &&
-				answers.answer.length == 0 &&
+			if(	answers.answer.length == 0 &&									// If DNS request fails return the default response
 				answers.authority.length == 0 &&
-				answers.additional.length == 0)												// If DNS request fails return the default response
+				answers.additional.length == 0 &&
+				options.default_response &&
+				options.default_response.type == question.type)
 				{
-				responseToClient.answer.push(dns.A({
+				response.answer.push(dns.A({
 					name: question.name,
-					type: dns.consts.nameToQtype(options.default_response.type),
+					type: options.default_response.type,
 					class: options.default_response.class,
 					address: options.default_response.ip,
 					ttl: options.ttl}));
 				}
 
-			responseToClient.send();														// lib/packet.js::send()
+			response.send();												// lib/packet.js::send()
+
+			processingQuestion = false;
+			processQuestions();
 			}
-
-		// DEBUG - DEBUG - DEBUG
-		if(options.debug)
-			{
-			console.log();
-			console.log("QUESTION: " + question.name + " " + dns.consts.qtypeToName(question.type));
-
-			console.log("ANSWERS: " + responseToClient.answer.length);
-			for(i=0; i<responseToClient.answer.length; i++)
-				console.log(" => " + responseToClient.answer[i].address + " class: " + responseToClient.answer[i].class + " ttl: " + responseToClient.answer[i].ttl);
-
-			console.log("AUTHORITY: " + responseToClient.authority.length);
-			for(i=0; i<responseToClient.authority.length; i++)
-				console.log(" => " + responseToClient.authority[i].data + " class: " + responseToClient.authority[i].class + " ttl: " + responseToClient.authority[i].ttl);
-
-			console.log("ADDITIONAL: " + responseToClient.additional.length);
-			/*for(i=0; i<responseToClient.additional.length; i++)
-				console.log(" => " + responseToClient.additional[i].address);*/
-			}
-		// DEBUG - DEBUG - DEBUG
 		});
 
 	request.on("timeout", function()
 		{
 		// Timeout in making the request
+		//if(options.debug)
+		//	console.log("Timeout in making the request");
 		});
 
 	request.on("end", function()
 		{
 		// Finished processing the request
+		var r = request.question;
+		//if(options.debug)
+		//	console.log("FINISHED PROCESSING REQUEST:", r.name, "TYPE:", r.type, "NAME:", dns.consts.qtypeToName(r.type), "\n");
 		});
 
 	request.send();
+	}
+
+var debug = function(response, question_name, type, type_name)
+	{
+	var i;
+
+	// DEBUG - DEBUG - DEBUG -- -- -- -- -- -- -- -- -- -- //
+	if(options.debug)
+		{
+		console.log("RESPONSE FOR:", question_name, "TYPE:", type, "NAME:", type_name)
+
+		console.log("ANSWERS: " + response.answer.length);
+		for(i = 0; i < response.answer.length; i++)
+			console.log(" <=", JSON.stringify(response.answer[i]));
+
+		console.log("AUTHORITY: " + response.authority.length);
+		for(i = 0; i < response.authority.length; i++)
+			console.log(" <=", JSON.stringify(response.authority[i]));
+
+		console.log("ADDITIONAL: " + response.additional.length);
+		for(i = 0; i < response.additional.length; i++)
+			console.log(" <=", JSON.stringify(response.additional[i]));
+		}
+	// DEBUG - DEBUG - DEBUG -- -- -- -- -- -- -- -- -- -- //
 	}
 
 }

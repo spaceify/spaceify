@@ -1,20 +1,23 @@
 /**
- * Crypt, 29.5.2015, Spaceify Inc.
+ * Crypt, 29.5.2015 Spaceify Oy
  * 
  * Crypt uses cores private key and certificate to create encryption key and initialization vector.
- *
+ * 
  * @class Crypt
  */
 
 var fs = require("fs");
 var crypto = require("crypto");
 var fibrous = require("fibrous");
-var config = require("./config")();
-var utility = require("./utility");
+var SpaceifyConfig = require("./spaceifyconfig");
+var SpaceifyUtility = require("./spaceifyutility");
 
 function Crypt()
 {
 var self = this;
+
+var config = new SpaceifyConfig();
+var utility = new SpaceifyUtility();
 
 var algorithm = "aes-256-cbc";
 var output_format = "hex";

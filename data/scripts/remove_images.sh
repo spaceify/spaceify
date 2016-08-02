@@ -1,5 +1,6 @@
 #!/bin/bash -e
-# Remove all Docker images created by Spaceify, 30.6.2015 Spaceify Inc.
+# Remove all Docker images created by Spaceify
+# Spaceify Oy 30.6.2015
 
 # ----- Docker and sqlite3 must be installed. Exit if either of them is not installed. ----- #
 
@@ -37,6 +38,6 @@ do
 
 done
 
-	# -- Remove Sapceify's image last -- #
+	# -- Remove Spaceify's image last -- #
 printf "\nRemoving spaceifyubuntu image.\n"
 docker rmi spaceifyubuntu > /dev/null 2>&1 || true

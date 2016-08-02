@@ -1,11 +1,13 @@
 /**
- * Application Manager service, 12.5.2015, Spaceify Inc.
+ * Application Manager service, 12.5.2015 Spaceify Oy
  * 
  */
 
 var fibrous = require("fibrous");
-var logger = require("./www/libs/logger");
+var Logger = require("./logger");
 var ApplicationManager = require("./applicationmanager");
+
+var logger = new Logger();
 
 fibrous.run( function()
 	{
@@ -19,6 +21,6 @@ fibrous.run( function()
 		}
 	catch(err)
 		{
-		logger.printErrors(err, true, true, 0);
+		logger.error(err, true, true, logger.ERROR);
 		}
 	}, function(err, data) { } );

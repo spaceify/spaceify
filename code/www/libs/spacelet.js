@@ -1,5 +1,7 @@
+"use strict";
+
 /**
- * Spacelet by Spaceify Inc. 24.1.2016
+ * Spacelet, 24.1.2016 Spaceify Oy
  *
  * class @Spacelet
  */
@@ -11,25 +13,34 @@ var self = this;
 var core = new SpaceifyCore();
 var spaceifyService = new SpaceifyService();
 
-self.start = function(unique_name, callback)
-	{
+self.start = function(application, unique_name, callback)
+	{ // callback takes preference over application context
 	try {
-		core.startSpacelet(unique_name, function(err, serviceobj)									// Returns only services where type is open
+		core.startSpacelet(unique_name, function(err, serviceobj)
 			{
 			if(err)
-				callback(err, false);
+				throw err;
 			else
 				{
-				spaceifyService.connectServices(serviceobj.service_names, function()
+				for(var i = 0; i < serviceobj.serviceNames.length; i++)
 					{
-					callback(null, true);
-					});
+					spaceifyService.connect(serviceobj.serviceNames[i], (i + 1 != serviceobj.serviceNames.length ? null : function(err, data)
+						{
+						if(typeof application == "function")
+							application(null, true);
+						else if(application && application.start)
+							application.start();
+						}));
+					}
 				}
 			});
 		}
 	catch(err)
 		{
-		callback(err, null);
+		if(typeof application == "function")
+			application(err, false);
+		else if(application && application.fail)
+			application.fail(err);
 		}
 	}
 

@@ -1,18 +1,21 @@
 /**
- * DockerImage, 15.4.2014, Spaceify Inc.
+ * DockerImage, 15.4.2014 Spaceify Oy
  * 
  * @class DockerImage
  */
 
 var fibrous = require("fibrous");
 var Docker = require("dockerode");
-var logger = require("./www/libs/logger");
-var utility = require("./utility");
+var Logger = require("./logger");
 var language = require("./language");
+var SpaceifyUtility = require("./spaceifyutility");
 
 function DockerImage()
 {
 var self = this;
+
+var logger = new Logger();
+var utility = new SpaceifyUtility();
 
 var docker = new Docker({socketPath: "/var/run/docker.sock"});
 
@@ -27,7 +30,7 @@ self.stopContainers = fibrous( function(imageId, imageName)
 			containerInfo.Image = containerInfo.Image.split(":")[0];			// containerInfo.Image can be either <name:tag> or <id>!? Check which it is.
 			if(containerInfo.Image == imageId || containerInfo.Image == imageName)
 				{
-				logger.info(utility.replace(language.STOP_CONTAINER, {":container": containerInfo.Image}));
+				logger.info(utility.replace(language.STOP_CONTAINER, {"~container": containerInfo.Image}));
 
 				var container = docker.getContainer(containerInfo.Id);
 				container.sync.stop({"t": "0"});
@@ -36,7 +39,7 @@ self.stopContainers = fibrous( function(imageId, imageName)
 		}
 	catch(err)
 		{
-		utility.ferror(language.E_GENERAL_ERROR.p("DockerImage::stopContainers"), {":err": err.toString()});
+		language.E_GENERAL_ERROR.preFmt("DockerImage::stopContainers", {"~err": err.toString()});
 		}
 	});
 
@@ -53,7 +56,7 @@ self.removeContainers = fibrous( function(imageId, imageName, streams)
 			containerInfo.Image = containerInfo.Image.split(":")[0];			// containerInfo.Image can be either <name:tag> or <id>!? Check which it is.
 			if(containerInfo.Image == imageId || containerInfo.Image == imageName)
 				{
-				utility.replace(language.REMOVE_CONTAINER, {":container": containerInfo.Image});
+				utility.replace(language.REMOVE_CONTAINER, {"~container": containerInfo.Image});
 
 				var container = docker.getContainer(containerInfo.Id);
 				container.sync.remove({"f": true});
@@ -65,7 +68,7 @@ self.removeContainers = fibrous( function(imageId, imageName, streams)
 		}
 	catch(err)
 		{
-		utility.ferror(language.E_GENERAL_ERROR.p("DockerImage::removeContainers"), {":err": err.toString()});
+		language.E_GENERAL_ERROR.preFmt("DockerImage::removeContainers", {"~err": err.toString()});
 		}
 	});
 
@@ -82,7 +85,7 @@ self.removeImage = fibrous( function(imageId, imageName)
 		}
 	catch(err)
 		{
-		utility.ferror(language.E_GENERAL_ERROR.p("DockerImage::removeImage"), {":err": err.toString()});
+		language.E_GENERAL_ERROR.preFmt("DockerImage::removeImage", {"~err": err.toString()});
 		}
 	});
 

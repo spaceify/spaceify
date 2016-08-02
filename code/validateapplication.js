@@ -1,12 +1,26 @@
+/**
+ * ValidateApplication, 2015 Spaceify Oy
+ * 
+ * A class for checking package validity before installing it.
+ * 
+ * @class ValidateApplication
+ */
+
 var mmm = require("mmmagic");
 var fibrous = require("fibrous");
-var config = require("./config")();
-var utility = require("./utility");
 var language  = require("./language");
+var SpaceifyError = require("./spaceifyerror");
+var SpaceifyConfig = require("./spaceifyconfig");
+var SpaceifyUtility = require("./spaceifyutility");
 
 function ValidateApplication()
 {
 var self = this;
+
+var errorc = new SpaceifyError();
+var config = new SpaceifyConfig();
+var utility = new SpaceifyUtility();
+
 var errors = [];
 var rules = null;
 var unique_values = [];
@@ -24,10 +38,10 @@ self.validatePackage = fibrous( function(package_path, save_path_manifest)
 
 		// REQUIRED DIRECTORIES AND FILES
 		if(!utility.sync.isLocal(application_path, "directory"))
-			throw utility.error(language.E_NO_APPLICATION_DIRECTORY.p("ValidateApplication::validate"));
+			throw language.E_NO_APPLICATION_DIRECTORY.pre("ValidateApplication::validate");
 
 		if(!utility.sync.isLocal(manifest_path, "file"))
-			throw utility.error(language.E_NO_MANIFEST_FILE.p("ValidateApplication::validate"));
+			throw language.E_NO_MANIFEST_FILE.pre("ValidateApplication::validate");
 
 		// VALIDATE MANIFEST
 		var manifest = self.validateManifestFile.sync(manifest_path);
@@ -53,18 +67,18 @@ self.validatePackage = fibrous( function(package_path, save_path_manifest)
 
 self.validateDirectories = fibrous( function(application_path, manifest)
 	{ // CHECKS THAT THE FILES DEFINED IN THE MANIFEST ARE IN THE PACKAGE
-	var i, obj, type, path = "";
+	var i, obj, type, path = "", image, mtype;
 
 	try {
 		if(manifest.type == config.SPACELET)												// inject_files
 			{
-			for(i=0; i<manifest.inject_files.length; i++)
+			for(i = 0; i < manifest.inject_files.length; i++)
 				{
 				obj = manifest.inject_files[i];
 
 				path = utility.preparePath(obj.directory ? obj.directory : "");
 				if(!utility.sync.isLocal(application_path + config.WWW_DIRECTORY + path + obj.file, "file"))
-					addError( utility.ferror(language.E_INJECT_FILE.p("ValidateApplication::validateDirectories"), {":file": path + obj.file, ":directory": config.APPLICATION_DIRECTORY + config.WWW_DIRECTORY + path + obj.file}) );
+					addError( language.E_INJECT_FILE.preFmt("ValidateApplication::validateDirectories", {"~file": path + obj.file, "~directory": config.APPLICATION_DIRECTORY + config.WWW_DIRECTORY + path + obj.file}) );
 				}
 			}
 
@@ -72,7 +86,7 @@ self.validateDirectories = fibrous( function(application_path, manifest)
 			{
 			var magic = new mmm.Magic(mmm.MAGIC_MIME_TYPE);
 
-			for(i=0; i<manifest.images.length; i++)
+			for(i = 0; i < manifest.images.length; i++)
 				{
 				obj = manifest.images[i];
 
@@ -80,14 +94,14 @@ self.validateDirectories = fibrous( function(application_path, manifest)
 				image = application_path + config.IMAGE_DIRECTORY + path + obj.file;
 
 				if(!utility.sync.isLocal(image, "file"))
-					addError( utility.ferror(language.E_IMAGE_FILE.p("ValidateApplication::validateDirectories"), {":file": obj.file, ":directory": obj.directory}) );
+					addError( language.E_IMAGE_FILE.preFmt("ValidateApplication::validateDirectories", {"~file": obj.file, "~directory": obj.directory}) );
 				else
 					{
 					mtype = magic.sync.detectFile(image);
 
 					type = obj.file.split(".");
 					if(config.IMAGE_TYPES.indexOf(mtype) == -1)
-						addError( utility.error(language.E_IMAGE_TYPES.p("ValidateApplication::validateDirectories")) );
+						addError( language.E_IMAGE_TYPES.pre("ValidateApplication::validateDirectories") );
 					}
 				}
 			}
@@ -95,7 +109,7 @@ self.validateDirectories = fibrous( function(application_path, manifest)
 		if(manifest.docker_image)														// Dockerfile
 			{
 			if(!utility.sync.isLocal(application_path + config.DOCKERFILE, "file"))
-				addError( utility.error(language.E_DOCKER_IMAGE.p("ValidateApplication::validateDirectories")) );
+				addError( language.E_DOCKER_IMAGE.pre("ValidateApplication::validateDirectories") );
 			}
 		}
 	catch(err)
@@ -123,12 +137,12 @@ self.validateManifestFile = fibrous( function(manifest_path)
 
 self.validateManifest = fibrous( function(manifest)
 	{
-	var i, j, rule, rule_errors, sub_rule, sub_rule_errors, required, type, value, is_required, is_set, is_type, objects, object, sub_rule_field, field_errors;
+	var i, j, rule, rule_errors, sub_rule, sub_rule_errors, required, type, value, is_required, is_set, is_type, objects, object, field, sub_rule_field, field_errors;
 
 	rules = utility.sync.loadJSON(config.SPACEIFY_MANIFEST_RULES_FILE, true, true);						// Get the manifest validation rules
 
 	if(!manifest.type || rules.lists.application_types.indexOf(manifest.type) == -1)					// Manifest must have the type field
-		throw utility.error(language.E_MANIFEST_TYPE.p("ValidateApplication::validateManifest"));
+		throw language.E_MANIFEST_TYPE.pre("ValidateApplication::validateManifest");
 
 	// FOR EACH MANIFEST FIELD THERE IS A DIFFERENT SET OF RULES
 	for(field in rules.rules)
@@ -156,7 +170,7 @@ self.validateManifest = fibrous( function(manifest)
 			if(objects.length == 0)																			// Add error if object array is empty
 				addErrorManifest(rule_errors.empty, rules.errors[rule_errors.empty], "");
 
-			for(i=0; i<objects.length; i++)																	// Loop through the objects in the rule for a particular manifest field
+			for(i = 0; i < objects.length; i++)																// Loop through the objects in the rule for a particular manifest field
 				{
 				object = objects[i];
 
@@ -193,7 +207,7 @@ self.validateManifest = fibrous( function(manifest)
 				addErrorManifest(rule_errors.empty, rules.errors[rule_errors.empty], "");
 
 			field_errors = false;
-			for(j=0; j<manifest[field].length; j++)
+			for(j = 0; j < manifest[field].length; j++)
 				{
 				value = manifest[field][j];
 
@@ -218,9 +232,6 @@ self.validateManifest = fibrous( function(manifest)
 				isUnique(rule, manifest[field], type);
 			}
 		}
-
-	if(manifest.unique_name)
-		manifest.unique_directory = self.makeUniqueDirectory(manifest.unique_name);						// Create internal manifest fields
 
 	return manifest;
 	});
@@ -268,7 +279,7 @@ var isUnique = function(rule, vobj, type)
 	if(!rule.unique)
 		return;
 
-	for(i=0; i<rule.unique.length; i++)																// there might be multiple fields to check for uniqueness in a rule
+	for(i = 0; i < rule.unique.length; i++)																// there might be multiple fields to check for uniqueness in a rule
 		{
 		unique = rule.unique[i];
 		compare = unique.compare;																		// name of the compare array (e.g. service_name)
@@ -277,7 +288,7 @@ var isUnique = function(rule, vobj, type)
 		value = "";
 		if(type == "objects" || type == "object")
 			{
-			for(j=0; j<unique.fields.length; j++)														// value can be a single or compound value (service_name, directory+file)
+			for(j = 0; j < unique.fields.length; j++)													// value can be a single or compound value (service_name, directory+file)
 				value += (vobj[unique.fields[j]] ? vobj[unique.fields[j]] + "+" : "");					// ignore optional fields
 			}
 		else if(type == "array" || "string")
@@ -285,7 +296,7 @@ var isUnique = function(rule, vobj, type)
 
 		if(unique_values[compare])																		// does the compare array exist (e.g. for service_name)
 			{
-			for(j=0; j<unique_values[compare].length; j++)
+			for(j = 0; j < unique_values[compare].length; j++)
 				{
 				uvalue = unique_values[compare][j];
 
@@ -324,7 +335,7 @@ self.suggestedApplication = function(value, params)
 	if(values[0].match(new RegExp(regx)))								// Match against regular expression "unique_name"
 		return false;
 
-	regx = rules.regxs[params[1]];				
+	regx = rules.regxs[params[1]];
 	if(values.length == 2 && values[1].match(new RegExp(regx)))			// Match against regular expression "version"
 		return false;
 
@@ -332,7 +343,7 @@ self.suggestedApplication = function(value, params)
 	}
 
 self.serviceName = function(value, params)
-	{ // JavaScript doesn't support negative lookbehinds and /^(spaceify.org\/services\/[0-9a-z_\/]{3,106})$(?<!\/http|https)/ won't work!
+	{ // JavaScript doesn't support negative look behinds and /^(spaceify.org\/services\/[0-9a-z_\/]{3,106})$(?<!\/http|https)/ won't work!
 	if(value.match(/(\/http|https|\/)$/))									// Can't be with http or https, because they are reserved services, or end with /
 		return false;
 
@@ -342,33 +353,29 @@ self.serviceName = function(value, params)
 	return true;
 	}
 
-self.makeUniqueDirectory = function(unique_name)
+self.makeUniqueDirectory = function(unique_name, noEndSlash)
 	{ // Make a file system safe directory name: lowercase, allowed characters, can't start or end with /.
 	unique_name = unique_name.toLowerCase();
 	unique_name = unique_name.replace(/[^a-z0-9\/]/g, "/");
 	unique_name = unique_name.replace(/^\/+/, "");
 	unique_name += (unique_name.search(/\/$/) != -1 ? "" : "/");
 
+	if(noEndSlash)
+		unique_name = unique_name.replace(/\/$/, "");
+
 	return unique_name;
 	}
 
 var addError = function(error)
 	{
-	var messages = "", codes = "", paths = "";
-	for(var i=0; i<error.codes.length; i++)
-		{
-		codes += (i == 0 ? "" : ", ") + (error.codes[i] ? error.codes[i] : "-");
-		messages += (i == 0 ? "" : ", ") + error.messages[i];
-		paths += (i == 0 ? "" : ", ") + (error.paths[i] ? error.paths[i] : "-");
-		}
-
-	errors.push(utility.makeError(codes, messages, paths));
+	errors.push(error);
 	}
 
 var addErrorManifest = function(code, message, path)
 	{
-	errors.push(utility.makeError(code, message, path));
+	errors.push(errorc.makeErrorObject(code, message, path));
 	}
+
 }
 
 module.exports = ValidateApplication;

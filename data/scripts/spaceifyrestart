@@ -1,10 +1,17 @@
 service spaceifyappman stop > /dev/null 2>&1
 service spaceifyhttp stop > /dev/null 2>&1
 service spaceify stop > /dev/null 2>&1
-printf "" > /var/log/spaceify.log
-printf "" > /var/log/spaceifyhttp.log
-printf "" > /var/log/spaceifyappman.log
+service spaceifyipt stop > /dev/null 2>&1
+service spaceifydns stop > /dev/null 2>&1
+
+printf "" > /var/lib/spaceify/data/logs/spaceifydns.log
+printf "" > /var/lib/spaceify/data/logs/spaceifyipt.log
+printf "" > /var/lib/spaceify/data/logs/spaceify.log
+printf "" > /var/lib/spaceify/data/logs/spaceifyappman.log
+printf "" > /var/lib/spaceify/data/logs/spaceifyhttp.log
+
+service spaceifydns start > /dev/null 2>&1
+service spaceifyipt start > /dev/null 2>&1
 service spaceify start > /dev/null 2>&1
 service spaceifyappman start > /dev/null 2>&1
 service spaceifyhttp start > /dev/null 2>&1
-

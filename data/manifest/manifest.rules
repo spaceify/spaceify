@@ -37,7 +37,6 @@
       "sub_rules":
       {
         "service_name": {"required": true, "type": "string", "validator": {"type": "function", "name": "serviceName", "params": ""}, "errors": {"field": "E_SERVICE_NAME_UNDEFINED_R", "type": "E_SERVICE_NAME_STRING_R", "error": "E_SERVICE_NAME_FORMAT_R"}},
-        "service_type": {"required": true, "type": "string", "validator": {"type": "list", "match": "service_types"}, "errors": {"field": "E_SERVICE_TYPE_UNDEFINED_R", "type": "E_SERVICE_TYPE_STRING_R", "error": "E_SERVICE_TYPE_R"}},
         "suggested_application": {"required": true, "type": "string", "validator": {"type": "function", "name": "suggestedApplication", "params": ["unique_name", "version"]}, "errors": {"field": "E_SERVICE_SUGGESTED_UNDEFINED", "type": "E_SERVICE_SUGGESTED_STRING", "error": "E_SERVICE_SUGGESTED_FORMAT"}}
       },
       "errors": {"type": "E_SERVICE_ARRAY_R", "empty": "E_SERVICE_ARRAY_EMPTY_R"}

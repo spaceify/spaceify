@@ -3,5 +3,7 @@ CREATE TABLE provided_services(unique_name TEXT, service_name TEXT, service_type
 CREATE TABLE inject_hostnames(unique_name TEXT, inject_hostname TEXT);
 CREATE TABLE inject_files(unique_name TEXT, url_or_path TEXT, directory TEXT DEFAULT NULL, file TEXT, inject_type TEXT, inject_order INTEGER);
 CREATE TABLE user(edge_id TEXT NOT NULL PRIMARY KEY, edge_password TEXT, admin_password_hash TEXT, admin_salt TEXT, admin_login_count INTEGER DEFAULT 0, admin_last_login INTEGER DEFAULT 0);
-CREATE TABLE settings(language TEXT DEFAULT 'en_US', splash_ttl INTEGER DEFAULT 3600000, session_ttl INTEGER DEFAULT 86400000, db_version INTEGER, release_name TEXT, release_version TEXT);
-INSERT INTO settings VALUES('en_US', 3600000, 86400000, 6, 'Alpha Centauri', '0.3.1');
+CREATE TABLE information(db_version INTEGER, release_name TEXT, release_version TEXT);
+INSERT INTO information VALUES(7, 'Alpha Centauri', '0.5.0');
+CREATE TABLE settings(locale TEXT DEFAULT 'en_US', splash_ttl INTEGER DEFAULT 3600000, log_in_session_ttl INTEGER DEFAULT 3600000);
+INSERT INTO settings VALUES('en_US', 3600000, 3600000);

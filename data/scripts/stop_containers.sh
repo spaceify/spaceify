@@ -1,5 +1,6 @@
 #!/bin/bash -e
-## Spaceify stop container, 15.7.2013 Spaceify Inc.
+# Spaceify stop container
+# Spaceify Oy 15.7.2013
 
 # Get running Docker containers and image ids of installed applications
 ps=$(docker ps -a -q)

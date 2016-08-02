@@ -1,7 +1,10 @@
 #!/bin/bash
+# Spaceify certificate authority (CA)
+# Spaceify Oy 2014
 
 #################################################################################
 # Specify certificate authority diretory, files and database
+
 cd /etc/squid3/certs/
 
 ca_root="spaceifyCA";

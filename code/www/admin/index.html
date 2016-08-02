@@ -1,0 +1,420 @@
+<!doctype html>
+<html ng-app-spaceify spaceify-secure>
+	<head head-directive>
+		<script src="../app/storage.js"></script>
+		<script src="../js/angular-1.5.3.min.js"></script>
+		<script src="../app/spaceify.js"></script>
+
+		<script>
+		var self = this;
+		var sam = null;
+		var config = null;
+
+		function pageReady()
+			{
+			config = new SpaceifyConfig();
+			sam = new SpaceifyApplicationManager();
+			}
+
+		<!-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -->
+		function getApplications()
+			{
+			jQuery("#adminContainerRight").empty();
+			var types = [config.SPACELET, config.SANDBOXED/*, config.NATIVE*/];
+			sam.getApplications(types, self, gotApplications);
+			}
+
+		function commandApplication(operation, unique_name)
+			{
+			jQuery("#adminContainerRight").empty();
+			var unique_name = $("#unique_name").val();
+
+			if(operation == "logOut")
+				sam.logOut(self, loggedOut);
+			else if(operation == "stop")
+				sam.stopApplication(unique_name, self, applicationStopped);
+			else if(operation == "start")
+				sam.startApplication(unique_name, self, applicationStarted);
+			else if(operation == "restart")
+				sam.restartApplication(unique_name, self, applicationRestarted);
+			else if(operation == "remove")
+				sam.removeApplication(unique_name, self, applicationRemoved);
+			else if(operation == "install")
+				sam.installApplication($("#package").val(), "", "", self, applicationInstalled);
+			else if(operation == "getServiceRuntimeStates")
+				sam.getServiceRuntimeStates(self, getServiceRuntimeStates);
+			else if(operation == "getSettings")
+				sam.getSettings(self, getSettings);
+			}
+
+		<!-- COMMAND - RETURN CALLBACKS -->
+		function gotApplications(applications)
+			{
+			var acr = $("#adminContainerRight");
+
+			printApps(acr, applications.spacelet, "SPACELETS", true);
+			printApps(acr, applications.sandboxed, "APPLICATIONS", false);
+			//printApps(acr, applications.native, "NATIVE APPLICATIONS", false);
+			}
+
+		loggedOut = function(result)
+			{
+			window.location.assign(spaceifyPage.urlHttps + "admin/login.html");
+			}
+
+		applicationStopped = 
+		applicationStarted =
+		applicationRestarted =
+		applicationRemoved =
+		applicationInstalled = function(result)
+			{
+			<!-- DO SOME PROCESSING AFTER COMMAND IS EXECUTED. DEFINE THESE INDIVIDUALLY IF REQUIRED. -->
+			}
+
+		getServiceRuntimeStates = function(services)
+			{
+			var acr = $("#adminContainerRight");
+
+			acr.append($("<div>Service runtime states</div>"));
+
+			printRuntimeService("SPACELET", services.spacelet, acr);
+			printRuntimeService("SANDBOXED", services.sandboxed, acr);
+			printRuntimeService("NATIVE", services.native, acr);
+			}
+		printRuntimeService = function(title, services, acr)
+			{
+			acr.append($("<div>" + title + "</div>"));
+			
+			if(Object.keys(services).length == 0)
+				return acr.append($("<div>No services</div><div>&nbsp;</div>"));
+
+			for(unique_name in services)
+				{
+				acr.append($("<div>|- " + unique_name + "</div>"));
+
+				var app = services[unique_name];
+				for(var i=0; i<app.length; i++)
+					{
+					acr.append($("<div>&nbsp;&nbsp;|- " + app[i].service_name + "</div>"));
+					acr.append($("<div>&nbsp;&nbsp;&nbsp;&nbsp;|- Type: " + app[i].service_type + "</div>"));
+					acr.append($("<div>&nbsp;&nbsp;&nbsp;&nbsp;|- Port: " + app[i].port + " > " + app[i].containerPort + "</div>"));
+					acr.append($("<div>&nbsp;&nbsp;&nbsp;&nbsp;|- Secure port: " + app[i].securePort + " > " + app[i].secureContainerPort + "</div>"));
+					acr.append($("<div>&nbsp;&nbsp;&nbsp;&nbsp;|- IP: " + app[i].ip + "</div>"));
+					acr.append($("<div>&nbsp;&nbsp;&nbsp;&nbsp;|- Is registered: " + app[i].isRegistered + "</div>"));
+					}
+				}
+			acr.append($("<div>&nbsp;</div>"));
+			}
+
+		getSettings = function(settings)
+			{
+			console.log(settings);
+			var acr = $("#adminContainerRight");
+			
+			$("#adminContainerRight").append($("<div>Settings object</div>"));
+			$("#adminContainerRight").append($("<div>Object { locale: \"" + settings.locale + "\", splash_ttl: " + settings.splash_ttl + ", log_in_session_ttl: " + settings.log_in_session_ttl + " }</div>"));
+
+			acr.append($("<div>&nbsp;</div>"));
+			acr.append($("<div>Locale (drop down? where to get options?)</div>"));
+			acr.append($("<div><input type='text' value='" + settings.locale + "', id='locale'></div>"));
+			acr.append($("<div>&nbsp;</div>"));
+			acr.append($("<div>Splash - session length before displayed again (ms)</div>"));
+			acr.append($("<div><input type='text' value='" + settings.splash_ttl + "', id='splash_ttl'></div>"));
+			acr.append($("<div>&nbsp;</div>"));
+			acr.append($("<div>Log in - session inactivity expiration time (ms)</div>"));
+			acr.append($("<div><input type='text' value='" + settings.log_in_session_ttl + "', id='log_in_session_ttl'></div>"));
+			acr.append($("<div>&nbsp;</div>"));
+			acr.append($("<div><button onclick='saveSettings();'>Save settings</button></div>"));
+			}
+		saveSettings = function()
+			{
+			var locale = $("#locale").val();
+			var splash_ttl = parseInt($("#splash_ttl").val());
+			var log_in_session_ttl = parseInt($("#log_in_session_ttl").val());
+
+			sam.saveSettings({locale: locale, splash_ttl: splash_ttl, log_in_session_ttl: log_in_session_ttl}, self, null);
+			}
+
+		<!-- APPLICATION MANAGER CALLBACKS (HANDLERS) -->
+		self.failed = function()
+			{ <!-- Setting up messaging failed -->
+			$("#adminContainerRight").append($("<div>Setting up the messaging connection failed. There will be no messages or questions from the Application Manager.</div>"));
+			}
+
+		self.error = function(errors)
+			{ <!-- Executing the command failed -->
+			$("#adminContainerRight").append($("<div><h3>There were " + errors.length + " error(s) during the operation:</h3></div><br>"));
+			for(var i=0; i<errors.length; i++)
+				{
+				for(var j=0; j<errors[i].messages.length; j++)
+					$("#adminContainerRight").append($("<div style='color: #f00; font-weight: bold;'><i>" + errors[i].codes[j] + "</i> <b>" + errors[i].messages[j] + "</b></div><br>"));
+				}
+			}
+
+		self.warning = function(message, code)
+			{ <!-- Warning (not error) messages and corresponding codes from the Application manager -->
+			$("#adminContainerRight").append($("<div style='color: #d5a500;'><br>" + message + "<br></div>"));
+			}
+
+		self.notify = function(message, code)
+			{ <!-- Notification messages and corresponding codes from the Application manager -->
+			$("#adminContainerRight").append($("<div style='color: #32af32;'><br>" + message + "<br></div>"));
+			}
+
+		self.message = function(message)
+			{ <!-- General messages from the Application manager -->
+			$("#adminContainerRight").append($("<div>" + (message != "" ? message : "<br>") + "</div>"));
+			}
+		
+		self.question = function(question, choices, origin, answerId)
+			{ <!-- Questions from the Application manager -->
+			$("#adminContainerRight").append($("<div>" + question + "<br>" + "</div>"));
+
+			for(var i=0; i<choices.length; i++)
+				$("#adminContainerRight").append($("<div><button onclick=\"sam.answer('" + choices[i].short + "', '" + answerId + "');\">" + choices[i].screen + "</button></div>"));
+			}
+
+		self.questionTimedOut = function(message, origin, answerId)
+			{ <!-- Application manager does't wait forever answers to questions -->
+			$("#adminContainerRight").append($("<div>" + message + "</div>"));
+			}
+
+		<!-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -->
+		function printApps(acr, apps, title, is_spacelet)
+			{
+			if(apps.length == 0)
+				acr.append($("<div><h3>NO " + title + " INSTALLED</h3></div><br><br>"));
+			else
+				acr.append($("<div><h3>" + title + "</h3></div><br><br>"));
+
+			for(var i=0; i<apps.length; i++)
+				{
+				var app = apps[i];
+
+				acr.append($("<div><b>" + app.name + "</b></div>"));
+				acr.append($("<div>unique_name: " + app.unique_name + "</div>"));
+				acr.append($("<div>version: " + app.version + "</div>"));
+				acr.append($("<div>type: " + app.type + "</div>"));
+				acr.append($("<div>category: " + app.category + "</div>"));
+				if(is_spacelet)
+					acr.append($("<div>shared: " + app.shared + "</div>"));
+				acr.append($("<div>start_command: " + app.start_command + "</div>"));
+				if(app.stop_command)
+					acr.append($("<div>stop_command: " + app.stop_command + "</div>"));
+				if(app.license)
+					acr.append($("<div>license: " + app.license + "</div>"));
+				if(app.creation_date)
+					acr.append($("<div>creation_date: " + app.creation_date + "</div>"));
+				if(app.implements)
+					acr.append($("<div>implements: " + app.implements + "</div>"));
+				if(app.repository)
+					acr.append($("<div>repository: " + app.repository + "</div>"));
+				if(app.web_url)
+					acr.append($("<div>web_url: " + app.web_url + "</div>"));
+				if(app.bugs)
+					acr.append($("<div>bugs: " + app.bugs + "</div>"));
+
+				acr.append($("<div>&nbsp;</div>"));
+
+				acr.append($("<div><u>Short Description</u></div>"));
+				acr.append($("<div>" + app.short_description + "</div><div>&nbsp;</div>"));
+
+				if(app.keywords)
+					{
+					acr.append($("<div><u>Keywords</u></div>"));
+					for(j=0; j<app.keywords.length; j++)
+						acr.append($("<div>" + app.keywords[j] + "</div>"));
+					acr.append($("<div>&nbsp;</div>"));
+					}
+
+				acr.append($("<div><u>Developer</u></div>"));
+				acr.append($("<div>name: " + app.developer.name + "</div>"));
+				if(app.developer.email)
+					acr.append($("<div>email: " + app.developer.email + "</div>"));
+				if(app.developer.url)
+					acr.append($("<div>url: " + app.developer.url + "</div>"));
+				acr.append($("<div>&nbsp;</div>"));
+
+				if(app.contributors)
+					{
+					acr.append($("<div><u>Contributors</u></div>"));
+
+					for(j=0; j<app.contributors.length; j++)
+						{
+						acr.append($("<div>name: " + app.contributors[j].name + "</div>"));
+						if(app.contributors[j].email)
+							acr.append($("<div>email: " + app.contributors[j].email + "</div>"));
+						if(app.contributors[j].url)
+							acr.append($("<div>url: " + app.contributors[j].url + "</div>"));
+						acr.append($("<div>&nbsp;</div>"));
+						}
+					}
+
+				if(app.images)
+					{
+					acr.append($("<div><u>Images</u></div>"));
+
+					for(j=0; j<app.images.length; j++)
+						{
+						if(app.images[j].directory)
+							acr.append($("<div>directory: " + app.images[j].directory + "</div>"));
+						acr.append($("<div>file: " + app.images[j].file + "</div>"));
+						if(app.images[j].title)
+							acr.append($("<div>title: " + app.images[j].title + "</div>"));
+						acr.append($("<div>&nbsp;</div>"));
+						}
+					}
+
+				if(app.docker_image)
+					acr.append($("<div>docker_image: yes</div><div>&nbsp;</div>"));
+
+				if(app.install_commands)
+					{
+					acr.append($("<div><u>Install Commands</u></div>"));
+
+					for(j=0; j<app.install_commands.length; j++)
+						acr.append($("<div>" + app.install_commands[j] + "</div><div>&nbsp;</div>"));
+					}
+
+				if(is_spacelet)
+					{
+					acr.append($("<div><u>Origins</u></div>"));
+					for(j=0; j<app.origins.length; j++)
+						acr.append($("<div>" + app.origins[j] + "</div>"));
+					acr.append($("<div>&nbsp;</div>"));
+					}
+
+				if(is_spacelet)
+					{
+					acr.append($("<div><u>Inject Hostnames</u></div>"));
+					for(j=0; j<app.inject_hostnames.length; j++)
+						acr.append($("<div>" + app.inject_hostnames[j] + "</div>"));
+					acr.append($("<div>&nbsp;</div>"));
+					}
+
+				if(is_spacelet)
+					{
+					acr.append($("<div><u>Inject Identifier</u></div>"));
+					acr.append($("<div>" + app.inject_identifier + "</div><div>&nbsp;</div>"));
+					}
+
+				if(is_spacelet)
+					{
+					acr.append($("<div><u>Inject Files</u></div>"));
+					for(j=0; j<app.inject_files.length; j++)
+						{
+						if(app.inject_files[j].directory)
+							acr.append($("<div>directory: " + app.inject_files[j].directory + "</div>"));
+						acr.append($("<div>file: " + app.inject_files[j].file + "</div>"));
+						acr.append($("<div>type: " + app.inject_files[j].type + "</div>"));
+						acr.append($("<div>&nbsp;</div>"));
+						}
+					}
+
+				if(app.provides_services)
+					{
+					acr.append($("<div><u>Provides Services</u></div>"));
+
+					for(j=0; j<app.provides_services.length; j++)
+						{
+						acr.append($("<div>service_name: " + app.provides_services[j].service_name + "</div>"));
+						acr.append($("<div>service_type: " + app.provides_services[j].service_type + "</div><div>&nbsp;</div>"));
+						}
+					}
+
+				if(app.requires_services)
+					{
+					acr.append($("<div><u>Requires Services</u></div>"));
+
+					for(j=0; j<app.requires_services.length; j++)
+						{
+						acr.append($("<div>service_name: " + app.requires_services[j].service_name + "</div>"));
+						acr.append($("<div>service_type: " + app.requires_services[j].service_type + "</div>"));
+						acr.append($("<div>suggested_application: " + app.requires_services[j].suggested_application + "</div><div>&nbsp;</div>"));
+						}
+					}
+				}
+			}
+		</script>
+
+	</head>
+
+	<body class="edgeBody" id="edgeBody" ng-controller="bodyController" body-directive style="display: none;">
+
+		<div class="adminContainer half" id="adminContainerLeft">
+
+			<div class="adminInputContainer">
+				<button class="adminButton normal" name="operation" onclick="commandApplication('logOut');">
+					{{ getString("logout") }}
+				</button>
+
+				<br><hr>
+			</div>
+
+			<!-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -->
+			<br><br>
+			<h3>Application Manager Commands</h3>
+			
+			<button class="adminButton normal" name="operation" onclick="getApplications();">
+				getApplications
+			</button>
+
+			<br><br>
+			<button class="adminButton normal" name="operation" onclick="commandApplication('getServiceRuntimeStates');">
+				getServiceRuntimeStates
+			</button>
+
+			<br><br>
+			<button class="adminButton normal" name="operation" onclick="commandApplication('getSettings');">
+				getSettings
+			</button>
+
+			<br><hr>
+			<p>Unique name of an application</p>
+			<input type="text" value="spaceify/bigscreen", id="unique_name" class="adminInput">
+
+			<br><br>
+			<button class="adminButton normal" name="operation" onclick="commandApplication('stop');">
+				stopApplication
+			</button>
+
+			<br><br>
+			<button class="adminButton normal" name="operation" onclick="commandApplication('start');">
+				startApplication
+			</button>
+
+			<br><br>
+			<button class="adminButton normal" name="operation" onclick="commandApplication('restart');">
+				restartApplication
+			</button>
+
+			<br><br>
+			<button class="adminButton normal" name="operation" onclick="commandApplication('remove');">
+				removeApplication
+			</button>
+
+			<br><hr>
+			<p>Unique name in the Spaceify registry (e.g. spaceify/bigscreen)</p>
+			<p>Package URL (e.g. spaceify.org/downloads/bigscreen.zip)</p>
+			<p>GitHub URL (e.g. https://github.com/jovepsala/pictureviewer.git)</p>
+			<input type="text" value="spaceify/bigscreen", id="package" class="adminInput wider">
+
+			<br><br>
+			<button class="adminButton normal" name="operation" onclick="commandApplication('install');">
+				installApplication
+			</button>
+
+			<!-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -->
+			<br><hr>
+
+			<button class="adminButton normal" name="operation" onclick="window.location.assign(spaceifyPage.urlHttps + '/appstore/');">
+				Spaceify AppStore
+			</button>
+
+			<p class="breaker">&nbsp;</p>
+		</div>
+
+		<div class="adminContainer half" id="adminContainerRight"></div>
+
+	</body>
+</html>

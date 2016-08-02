@@ -1,5 +1,6 @@
 #!/bin/bash -e
-# Stop and remove all Spaceify's containers, 15.7.2013 Spaceify Inc.
+# Stop and remove all Spaceify's containers
+# Spaceify Oy 15.7.2013
 
 # ----- Docker and sqlite3 must be installed. Exit if either of them is not installed. ----- #
 docker > /dev/null 2>&1

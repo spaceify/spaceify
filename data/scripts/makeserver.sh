@@ -1,4 +1,6 @@
 #!/bin/bash
+# Spaceify server certificate
+# Spaceify Oy 2014
 
 #################################################################################
 # Copy necessary files

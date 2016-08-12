@@ -25,9 +25,9 @@ var config = new classes.SpaceifyConfig();
 var utility = new classes.SpaceifyUtility();
 
 // Get the URL to the Spaceify Core
-self.getEdgeURL = function(forceSecure, withPort)
+self.getEdgeURL = function(forceSecure, withPort, withSlash)
 	{
-	return (forceSecure ? "https:" : location.protocol) + "//" + config.EDGE_HOSTNAME + (withPort ? ":" : "");
+	return (forceSecure ? "https:" : location.protocol) + "//" + config.EDGE_HOSTNAME + (withPort ? ":" : "") + (withSlash ? "/" : "");
 	}
 
 // Get secure or insecure port based on web pages protocol or requested security

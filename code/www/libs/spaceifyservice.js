@@ -51,6 +51,9 @@ var crt = config.APPLICATION_TLS_PATH + config.SERVER_CRT;
 	// CLIENT SIDE - THE REQUIRED SERVICES - NODE.JS / WEB PAGES -- -- -- -- -- -- -- -- -- -- //
 self.connect = function(service_name, callback)
 	{
+	if(service_name == config.HTTP)
+		return callback(null, true);
+
 	// Create the service objects and set their listener only once. Creating service objects even if making
 	// connection to the them fails helps to avoid problems. For example clients can call the getRequiredService
 	// method and a null reference is never returned. Clients can always call the getIsOpen method of the service

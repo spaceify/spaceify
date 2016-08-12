@@ -5,44 +5,104 @@
 db_version 2.0
 db_capb backup
 
-# get all network adapter names
+# Get all network adapter names
 ADAPTERS=$(ifconfig -a | sed 's/[ \t\n].*//;/^\(lo\|\)$\|^mon/d')
-ADAPTERS=$(echo "$ADAPTERS" | sed ':a;N;$!ba;s/\n/, /g')	# replace \n with ", "
+ADAPTERS=$(echo "$ADAPTERS" | sed ':a;N;$!ba;s/\n/, /g')							# replace \n with ", "
 
-db_subst spaceify/ethernet ADAPTERS "$ADAPTERS"				# replace names in debconf templates
+db_subst spaceify/ethernet ADAPTERS "$ADAPTERS"										# replace names in debconf templates
 db_subst spaceify/wlan ADAPTERS "$ADAPTERS"
 
-# show questions every time the package is installed or reconfigured?
-#db_fset spaceify/ethernet seen false
-#db_fset spaceify/wlan seen false
-#db_fset spaceify/wlan_ap seen false
-#db_fset spaceify/admin_password seen false
+# Get existing edge name
+if [ -e /tmp/edge_id.uuid ]; then mv /tmp/edge_id.uuid > /tmp/edge.id; fi			# edge_id.uuid -> edge.id
+if [ -e /var/lib/spaceify/data/db/edge_id.uuid ]; then mv /tmp/edge_id.uuid > /var/lib/spaceify/data/db/edge.id; fi
 
-# show questions in order and provide user the ability to back up
-STATE=1
-while [ $STATE -gt 0 -a $STATE -lt 5 ];
+if [ -e /tmp/edge.id ]; then
+	edge_name=$(echo $(< /tmp/edge.id) | awk -F ',' '{print $2}')
+elif [ -e /var/lib/spaceify/data/db/edge.id ]; then
+	edge_name=$(echo $(< /var/lib/spaceify/data/db/edge.id) | awk -F ',' '{print $2}')
+else
+	edge_name=""
+fi
+db_set spaceify/edge_name $edge_name
+
+# Show questions in order and provide user the ability to back up
+STATE=3
+dbStatus=0
+while [ $STATE -gt 0 -a $STATE -lt 8 ];
 do
 	case "$STATE" in
+	# Errors
 	1)
-		db_input critical spaceify/ethernet || true
+		db_input critical spaceify/password_error || true
+		db_go || true; dbStatus=0
+		STATE=5
 	;;
 
 	2)
-		db_input critical spaceify/wlan || true
+		db_input critical spaceify/edge_name_error || true
+		db_go || true; dbStatus=0
+		STATE=6
 	;;
 
+	# Questions
 	3)
-		db_input critical spaceify/wlan_ap || true
+		db_input critical spaceify/ethernet || true
+		if db_go; then dbStatus=0; else dbStatus=30; fi
 	;;
 
 	4)
+		db_input critical spaceify/wlan || true
+		if db_go; then dbStatus=0; else dbStatus=30; fi
+	;;
+
+	5)
+		db_input critical spaceify/wlan_ap || true
+		if db_go; then dbStatus=0; else dbStatus=30; fi
+	;;
+
+	6)
 		db_input critical spaceify/admin_password || true
+		db_input critical spaceify/admin_confirm_password || true
+		if db_go; then dbStatus=0; else dbStatus=30; fi
+
+		db_get spaceify/admin_password
+		admin_password="$RET"
+
+		db_get spaceify/admin_confirm_password
+		admin_confirm_password="$RET"
+
+		if [ "$admin_password" != "$admin_confirm_password" ]; then
+			STATE=0
+			dbStatus=0
+			db_reset spaceify/admin_password
+			db_reset spaceify/admin_confirm_password
+		fi
+	;;
+
+	7)
+		db_input critical spaceify/edge_name || true
+		if db_go; then dbStatus=0; else dbStatus=30; fi
+
+		db_get spaceify/edge_name
+		edge_name="$RET"
+
+		if [[ ! $edge_name =~ ^[a-zA-Z0-9]{4,32}$ ]]; then
+			STATE=1
+			dbStatus=0
+			db_set spaceify/edge_name $edge_name
+		fi
 	;;
 	esac
 
-	if db_go; then
+	# Step
+	if [ $dbStatus == 0 ]; then
 		STATE=$(($STATE + 1))
 	else
 		STATE=$(($STATE - 1))
+
+		if [[ $STATE -le 2 ]]; then
+			STATE=3
+		fi
+
 	fi
 done

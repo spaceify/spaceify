@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * Application Manager service, 12.5.2015 Spaceify Oy
  * 

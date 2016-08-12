@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * DHCPDLog, 13.5.2015 Spaceify Oy
  *
@@ -17,15 +19,19 @@ var config = new SpaceifyConfig();
 
 self.saveToFile = function(type, ip, macOrDuid, hostname)
 	{
+	var log;
+	var leases;
+	var timestamp;
+
 	pubSub.open(config.LEASES_PATH);
 
-	var timestamp = Date.now();
+	timestamp = Date.now();
 
-	var leases = pubSub.value("leases") || {};											// current ip to mac leases
+	leases = pubSub.value("leases") || {};												// Current ip to mac leases
 	leases[ip] = {macOrDuid: macOrDuid, type: type, hostname: hostname, timestamp: timestamp};
 	pubSub.publish("leases", leases);
 
-	var log = pubSub.value("leaseslog") || {};											// keep a log of connections
+	log = pubSub.value("leaseslog") || {};												// Keep a log of connections
 	if(log[macOrDuid])
 		log[macOrDuid]["timestamps"].push({ts: timestamp, type: type});
 	else
@@ -38,6 +44,7 @@ self.saveToFile = function(type, ip, macOrDuid, hostname)
 self.getDHCPLeaseByIP = function(ip)
 	{
 	var leases = pubSub.value("leases", config.LEASES_PATH);
+
 	return (leases && leases[ip] ? leases[ip] : null);
 	}
 

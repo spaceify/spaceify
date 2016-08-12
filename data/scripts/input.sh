@@ -6,12 +6,15 @@
 # ----- Get input: source debconf/confmodule ----- #
 . /usr/share/debconf/confmodule
 
+#
 db_get spaceify/ethernet
 eth="$RET"
 
+#
 db_get spaceify/wlan
 wlan="$RET"
 
+#
 db_get spaceify/wlan_ap
 is_internal="$RET"
 if [[ "$is_internal" == "Internal" ]]; then
@@ -20,12 +23,18 @@ else
 	is_internal="0"
 fi
 
+#
+db_get spaceify/edge_name
+edge_name="$RET"
+
+#
 db_get spaceify/admin_password
 admin_password="$RET"
 admin_salt=$(openssl rand -hex 64)
-admin_hash=$(echo -n "${admin_password}${admin_salt}" | openssl dgst -sha512 -hex | awk '{print $2}')
+admin_password=$(echo -n "${admin_password}${admin_salt}" | openssl dgst -sha512 -hex | awk '{print $2}')
 db_set spaceify/admin_password ""
 
+#
 db_purge
 
 db_stop
@@ -39,5 +48,8 @@ mkdir -p /var/lib/spaceify/data/db/ > /dev/null 2>&1 || true
 printf "$eth" > /var/lib/spaceify/data/interfaces/ethernet
 printf "$wlan" > /var/lib/spaceify/data/interfaces/wlan
 printf "$is_internal" > /var/lib/spaceify/data/interfaces/is_internal
+
+printf "$edge_name" > /var/lib/spaceify/data/db/edge_name
+
 printf "$admin_salt" > /var/lib/spaceify/data/db/admin_salt
-printf "$admin_hash" > /var/lib/spaceify/data/db/admin_hash
+printf "$admin_password" > /var/lib/spaceify/data/db/admin_password

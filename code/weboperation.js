@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * Web Operation, 15.4.2016 Spaceify Oy
  * 
@@ -33,23 +35,32 @@ var caCrt = config.SPACEIFY_WWW_PATH + config.SPACEIFY_CRT;
  */
 self.getData = fibrous( function(operation, userData, isSecure)
 	{
-	var isLoggedIn = false, error = null, data = null;
+	var path;
+	var type;
+	var force;
+	var dbApps;
+	var manifest;
+	var username;
+	var password;
+	var data = null;
+	var error = null;
+	var isLoggedIn = false;
 
 	try {
 		if(!operation.type)
-			throw errorc.errorFromObject(language.E_NO_OPERATION_DEFINED);
+			throw errorc.errorFromObject(language.E_GET_DATA_OPERATION_NOT_DEFINED);
 
 		// -- -- -- -- -- -- -- -- -- -- //
 		if(operation.type == "installApplication" && isSecure && userData.sessionId)
 			{
-			isLoggedIn = securityModel.sync.isAdminLoggedIn(userData.sessionId, true);	// throws error if not logged in
+			isLoggedIn = securityModel.sync.isAdminLoggedIn(userData.sessionId, true);	// throws error if client is not logged in
 
 			if(!operation.package)
-				throw errorc.errorFromObject(language.E_UNDEFINED_PARAMETERS);
+				throw errorc.errorFromObject(language.E_GET_DATA_UNDEFINED_PARAMETERS);
 
-			var force = operation.force || "";
-			var username = operation.username || "";
-			var password = operation.password || "";
+			force = operation.force || "";
+			username = operation.username || "";
+			password = operation.password || "";
 
 			connect.sync();
 			data = secureConnection.sync.callRpc("installApplication", [operation.package, username, password, null, force, userData.sessionId], self);
@@ -60,7 +71,7 @@ self.getData = fibrous( function(operation, userData, isSecure)
 			isLoggedIn = securityModel.sync.isAdminLoggedIn(userData.sessionId, true);
 
 			if(!operation.unique_name)
-				throw errorc.errorFromObject(language.E_UNDEFINED_PARAMETERS);
+				throw errorc.errorFromObject(language.E_GET_DATA_UNDEFINED_PARAMETERS);
 
 			connect.sync();
 			data = secureConnection.sync.callRpc("removeApplication", [operation.unique_name, userData.sessionId], self);
@@ -71,7 +82,7 @@ self.getData = fibrous( function(operation, userData, isSecure)
 			isLoggedIn = securityModel.sync.isAdminLoggedIn(userData.sessionId, true);
 
 			if(!operation.unique_name)
-				throw errorc.errorFromObject(language.E_UNDEFINED_PARAMETERS);
+				throw errorc.errorFromObject(language.E_GET_DATA_UNDEFINED_PARAMETERS);
 
 			connect.sync();
 			data = secureConnection.sync.callRpc("startApplication", [operation.unique_name, userData.sessionId], self);
@@ -82,7 +93,7 @@ self.getData = fibrous( function(operation, userData, isSecure)
 			isLoggedIn = securityModel.sync.isAdminLoggedIn(userData.sessionId, true);
 
 			if(!operation.unique_name)
-				throw errorc.errorFromObject(language.E_UNDEFINED_PARAMETERS);
+				throw errorc.errorFromObject(language.E_GET_DATA_UNDEFINED_PARAMETERS);
 
 			connect.sync();
 			data = secureConnection.sync.callRpc("stopApplication", [operation.unique_name, userData.sessionId], self);
@@ -93,7 +104,7 @@ self.getData = fibrous( function(operation, userData, isSecure)
 			isLoggedIn = securityModel.sync.isAdminLoggedIn(userData.sessionId, true);
 
 			if(!operation.unique_name)
-				throw errorc.errorFromObject(language.E_UNDEFINED_PARAMETERS);
+				throw errorc.errorFromObject(language.E_GET_DATA_UNDEFINED_PARAMETERS);
 
 			connect.sync();
 			data = secureConnection.sync.callRpc("restartApplication", [operation.unique_name, userData.sessionId], self);
@@ -107,20 +118,36 @@ self.getData = fibrous( function(operation, userData, isSecure)
 			data = secureConnection.sync.callRpc("requestMessages", [userData.sessionId], self);
 			}
 		// -- -- -- -- -- -- -- -- -- -- //
-		else if(operation.type == "getSettings" && isSecure && userData.sessionId)
+		else if(operation.type == "getCoreSettings" && isSecure && userData.sessionId)
 			{
 			isLoggedIn = securityModel.sync.isAdminLoggedIn(userData.sessionId, true);
 
 			connect.sync();
-			data = secureConnection.sync.callRpc("getSettings", [userData.sessionId], self);
+			data = secureConnection.sync.callRpc("getCoreSettings", [userData.sessionId], self);
 			}
 		// -- -- -- -- -- -- -- -- -- -- //
-		else if(operation.type == "saveSettings" && isSecure && userData.sessionId)
+		else if(operation.type == "saveCoreSettings" && isSecure && userData.sessionId)
 			{
 			isLoggedIn = securityModel.sync.isAdminLoggedIn(userData.sessionId, true);
 
 			connect.sync();
-			data = secureConnection.sync.callRpc("saveSettings", [operation.settings || {}, userData.sessionId], self);
+			data = secureConnection.sync.callRpc("saveCoreSettings", [operation.settings || {}, userData.sessionId], self);
+			}
+		// -- -- -- -- -- -- -- -- -- -- //
+		else if(operation.type == "getEdgeSettings" && isSecure && userData.sessionId)
+			{
+			isLoggedIn = securityModel.sync.isAdminLoggedIn(userData.sessionId, true);
+
+			connect.sync();
+			data = secureConnection.sync.callRpc("getEdgeSettings", [userData.sessionId], self);
+			}
+		// -- -- -- -- -- -- -- -- -- -- //
+		else if(operation.type == "saveEdgeSettings" && isSecure && userData.sessionId)
+			{
+			isLoggedIn = securityModel.sync.isAdminLoggedIn(userData.sessionId, true);
+
+			connect.sync();
+			data = secureConnection.sync.callRpc("saveEdgeSettings", [operation.settings || {}, userData.sessionId], self);
 			}
 		// -- -- -- -- -- -- -- -- -- -- //
 		else if(operation.type == "getServiceRuntimeStates" && isSecure && userData.sessionId)
@@ -136,13 +163,13 @@ self.getData = fibrous( function(operation, userData, isSecure)
 			connect.sync();
 
 			data = {spacelet: [], sandboxed: [], native: []};
-			var type, dbApps = secureConnection.sync.callRpc("getApplications", [operation.types || ""], self);
+			dbApps = secureConnection.sync.callRpc("getApplications", [operation.types || ""], self);
 
 			for(var i = 0; i < dbApps.length; i++)
 				{
 				type = dbApps[i].type;
 
-				var path = "";
+				path = "";
 				if(type == config.SPACELET)
 					path = config.SPACELETS_PATH;
 				else if(type == config.SANDBOXED)
@@ -150,7 +177,7 @@ self.getData = fibrous( function(operation, userData, isSecure)
 				else if(type == config.NATIVE)
 					path = config.NATIVE_PATH;
 
-				var manifest = utility.sync.loadJSON(path + dbApps[i].unique_directory + config.APPLICATION_PATH + config.MANIFEST, true);
+				manifest = utility.sync.loadJSON(path + dbApps[i].unique_directory + config.APPLICATION_PATH + config.MANIFEST, true);
 				manifest.isRunning = dbApps[i].isRunning;
 				data[type].push(manifest);
 				}
@@ -187,7 +214,7 @@ self.getData = fibrous( function(operation, userData, isSecure)
 			}
 		// -- -- -- -- -- -- -- -- -- -- //
 		else
-			throw errorc.errorFromObject(language.E_UNDEFINED_OPERATION_DEFINED);
+			throw errorc.errorFromObject(language.E_GET_DATA_UNKNOWN_OPERATION);
 		}
 	catch(err)
 		{
@@ -206,7 +233,7 @@ self.getData = fibrous( function(operation, userData, isSecure)
 var connect = fibrous( function()
 	{
 	secureConnection = new WebSocketRpcConnection();
-	secureConnection.sync.connect({hostname: config.ALL_IPV4_LOCAL, port: config.APPMAN_PORT_SECURE, isSecure: true, caCrt: caCrt});
+	secureConnection.sync.connect({hostname: config.CONNECTION_HOSTNAME, port: config.APPMAN_PORT_SECURE, isSecure: true, caCrt: caCrt});
 	});
 
 }

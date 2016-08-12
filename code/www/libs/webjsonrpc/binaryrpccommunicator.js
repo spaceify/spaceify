@@ -296,6 +296,8 @@ var handleRPCCall = function(requests, isBatch, connectionId)
 		if(requestId != null)
 			onlyNotifications = false;
 
+		logger.info((requestId ? "  REQUEST -> " : "  NOTIFICATION -> ") + JSON.stringify(requests[r]));
+
 		if (!requests[r].jsonrpc || requests[r].jsonrpc != "2.0" || !requests[r].method)	// Invalid JSON-RPC
 			{
 			responses.push({"jsonrpc": "2.0", "error": {"code": -32600, "message": "The JSON sent is not a valid Request object."}, "id": null}, connectionId);
@@ -333,22 +335,10 @@ var handleRPCCall = function(requests, isBatch, connectionId)
 
 			if(requestId != null)															// Notifications don't and can't send responses
 				responses.push({jsonrpc: "2.0", result: (typeof result === "undefined" ? null : result), id: requestId});
-
-			/*if (requests[r].id != null)													// It is a call !!!!!!!!!!!!!!!! ToDO: fix this memory-hog!
-				{
-				//requests[r].params.push(function(err, result) { sendResponse(err, result, requests[r].id, connectionId); });
-				rpcMethod.method.apply(rpcMethod.object, requests[r].params);
-				}
-			else																			// It is a notification
-				{
-				//requests[r].params.push(function(err,result) {});
-				rpcMethod.method.apply(rpcMethod.object, requests[r].params);
-				}*/
 			}
 		catch(err)
 			{
-			if(typeof err.constructor == "function")										// errors thrown by javascript, e.g. "ReferenceError: X is not defined"
-				err = err.toString();
+			err = errorc.make(err);															// Make all errors adhere to the SpaceifyError format
 
 			if(requestId != null)
 				responses.push({jsonrpc: "2.0", error: err, id: requestId});

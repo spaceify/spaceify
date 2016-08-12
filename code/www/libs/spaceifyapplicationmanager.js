@@ -89,14 +89,24 @@ self.isAdminLoggedIn = function(origin, handler)
 	setup("isAdminLoggedIn", {}, origin, handler);
 	}
 
-self.getSettings = function(origin, handler)
+self.getCoreSettings = function(origin, handler)
 	{
-	setup("getSettings", {}, origin, handler);
+	setup("getCoreSettings", {}, origin, handler);
 	}
 
-self.saveSettings = function(settings, origin, handler)
+self.saveCoreSettings = function(settings, origin, handler)
 	{
-	setup("saveSettings", {settings: settings}, origin, handler);
+	setup("saveCoreSettings", {settings: settings}, origin, handler);
+	}
+
+self.getEdgeSettings = function(origin, handler)
+	{
+	setup("getEdgeSettings", {}, origin, handler);
+	}
+
+self.saveEdgeSettings = function(settings, origin, handler)
+	{
+	setup("saveEdgeSettings", {settings: settings}, origin, handler);
 	}
 
 self.getServiceRuntimeStates = function(origin, handler)
@@ -128,7 +138,7 @@ self.appStoreGetPackages = function(search, returnCallback)
 
 	network.POST_FORM(config.EDGE_APPSTORE_GET_PACKAGES_URL, [{content: content, data: search}], "application/json", function(err, response)
 		{
-		var err = data = null;
+		var err = null, data = null;
 
 		try {
 			data = JSON.parse(response.replace(/&quot;/g,'"'));

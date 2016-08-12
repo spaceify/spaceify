@@ -28,11 +28,17 @@ var webSocketServer = new classes.WebSocketServer();
 
 webSocketServer.setEventListener(communicator);
 
+var connectionListener = null;
+var disconnectionListener = null;
+
 self.listen = function(options, callback)
 	{
 	var debug = ("debug" in options ? options.debug : false);
 	communicator.setOptions({ debug: debug });
 
+	communicator.setConnectionListener(listeneConnections);
+	communicator.setDisconnectionListener(listeneDisconnections);
+	
 	try {
 		webSocketServer.listen(options, callback);
 		}
@@ -93,12 +99,12 @@ self.callRpc = function()
 
 self.setConnectionListener = function(listener)
 	{
-	communicator.setConnectionListener(listener);
+	connectionListener = (typeof listener == "function" ? listener : null);
 	}
 
 self.setDisconnectionListener = function(listener)
 	{
-	communicator.setDisconnectionListener(listener);
+	disconnectionListener = (typeof listener == "function" ? listener : null);
 	}
 
 self.setServerUpListener = function(listener)
@@ -109,6 +115,19 @@ self.setServerUpListener = function(listener)
 self.setServerDownListener = function(listener)
 	{
 	webSocketServer.setServerDownListener(typeof listener == "function" ? listener : null);
+	}
+
+	// Call listeners with additional server information
+var listeneConnections = function(id)
+	{
+	if(typeof connectionListener == "function")
+		connectionListener(id, self.getId(), self.getIsSecure());
+	}
+
+var listeneDisconnections = function(id)
+	{
+	if(typeof disconnectionListener == "function")
+		disconnectionListener(id, self.getId(), self.getIsSecure());
 	}
 
 }

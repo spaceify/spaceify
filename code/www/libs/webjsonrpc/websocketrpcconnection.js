@@ -90,6 +90,11 @@ self.getPort = function()
 	return connection.getPort();
 	}
 
+self.getId = function()
+	{
+	return connection.getId();
+	}
+
 // External event listeners
 self.setConnectionListener = function(listener)
 	{

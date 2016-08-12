@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * DockerContainer, 2013 Spaceify Oy
  * 
@@ -33,7 +35,7 @@ var containerId = null;
 var containerIp = null;
 var envPorts = "";
 var containerPorts = [];
-var inspectedData = null;
+var inspectedData = {};
 
 var login = "root";
 var password ="docker123";
@@ -42,6 +44,10 @@ var docker = new Docker({socketPath: "/var/run/docker.sock"});
 // Start a Docker container in daemon mode. The OS image must have sshd installed.
 self.startContainer = fibrous( function(portCount, imageNameOrId, volumes, binds)
 	{
+	var opts;
+	var port;
+	var hostPort;
+
 	try	{
 		/*var version = docker.sync.version();
 		console.log(version);*/
@@ -64,7 +70,7 @@ self.startContainer = fibrous( function(portCount, imageNameOrId, volumes, binds
 		bindings["80/tcp"] = [{}];
 		bindings["443/tcp"] = [{}];
 
-		var opts = {
+		opts = {
 			"Hostname": "",
 			"User": "",
 			"AttachStdin": true,
@@ -93,30 +99,31 @@ self.startContainer = fibrous( function(portCount, imageNameOrId, volumes, binds
 		container = docker.sync.createContainer(opts);
 		}
 	catch(err) {
-		throw language.E_CREATE_CONTAINER_FAILED.pre("DockerContainer::createContainer", err); }
+		throw language.E_START_CONTAINER_CREATE_CONTAINER_FAILED.pre("DockerContainer::startContainer", err); }
 
 	try {
 		dockerHelper.sync.init(container); }
 	catch(err) {
-		throw language.E_INIT_CONTAINER_FAILED.pre("DockerContainer::createContainer", err); }
+		throw language.E_START_CONTAINER_INIT_CONTAINER_FAILED.pre("DockerContainer::startContainer", err); }
 
 	try	{
 		container.sync.start(); }
 	catch(err) {
-		throw language.E_START_CONTAINER_FAILED.pre("DockerContainer::startContainer", err); }
+		throw language.E_START_CONTAINER_START_CONTAINER_FAILED.pre("DockerContainer::startContainer", err); }
 
 	try	{
-		inspectedData = container.sync.inspect(); }
+		inspectedData = container.sync.inspect();
+		containerId = (inspectedData.ID ? inspectedData.ID : inspectedData.Id);
+		containerIp = inspectedData.NetworkSettings.IPAddress;
+		logger.info("containerId: " + containerId + ", containerIp: " + containerIp);
+		}
 	catch(err) {
-		throw language.E_CONTAINER_INSPECT_FAILED.pre("DockerContainer::startContainer", err); }
-	containerId = (inspectedData.ID ? inspectedData.ID : inspectedData.Id);
-	containerIp = inspectedData.NetworkSettings.IPAddress;
-	logger.info("containerId: " + containerId + ", containerIp: " + containerIp);
+		throw language.E_START_CONTAINER_INSPECT_FAILED.pre("DockerContainer::startContainer", err); }
 
 	for(var i = 0; i < portOrder.length; i++)												// Store the mapped ports in the order they were exposed
 		{
-		var port = portOrder[i];
-		var hostPort = inspectedData.NetworkSettings.Ports[port][0].HostPort;
+		port = portOrder[i];
+		hostPort = inspectedData.NetworkSettings.Ports[port][0].HostPort;
 
 		containerPorts.push(hostPort);
 		logger.info("HostPort " + port + " = " + hostPort);
@@ -141,7 +148,7 @@ self.stopContainer = fibrous( function(appobj)
 		}
 	catch(err)
 		{
-		throw language.E_STOPPING_CONTAINER_FAILED.preFmt("DockerContainer::stopContainer", {"~err": err.toString()});
+		throw language.E_STOP_CONTAINER_FAILED.preFmt("DockerContainer::stopContainer", {"~err": err.toString()});
 		}
 	});
 

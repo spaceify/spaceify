@@ -126,7 +126,9 @@ printf "If the network did not restart, please do it manually.\n"
 # ---------- Stop and remove docker container and images ---------- #
 . /var/lib/spaceify/data/scripts/remove_images.sh
 
-rm /var/lib/spaceify/data/docker/spaceifyubuntu* > /dev/null 2>&1 || true
+distro=$(sqlite3 /var/lib/spaceify/data/db/spaceify.db "SELECT distribution FROM information;")
+
+rm "/var/lib/spaceify/data/docker/spaceify$distro"* > /dev/null 2>&1 || true
 
 printf "\nOK\n"
 

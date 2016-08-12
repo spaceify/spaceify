@@ -1,0 +1,60 @@
+# libs/spaceifyinitialize.js injects the files Spaceify needs to web pages based on this list.
+#
+# Lines must have six tokens and undefined tokens are defined with hyphen (-)!
+# Format: type url path mime parameter class
+# Separator: tabulator
+# Line ending: (Unix style) line feed \n
+#
+# type
+# Possible types are javascript, css, json and text.
+#
+# url
+# A relative or absolute url to a web server for javascript and css type.
+#
+# path
+# For json and text a path to a file on the local filesystem.
+#
+# mime
+# MIME type of the file
+#
+# parameter
+# Parameter to use in the injector.
+# json: variable where result from JSON.parse(...) is assigned to. The variable is appended with window. and prepended with = by the injector.
+#       e.g. window.sconfig = JSON.parse(...);
+# css: media type
+
+# Styles first
+css	css/spaceify.css	-	text/css	all
+
+# 3rd party
+
+# Spaceify
+json	libs/config.json	-	application/json	sconfig
+
+javascript	libs/logger.js	-	application/javascript	-
+
+javascript	libs/webjsonrpc/binaryrpccommunicator.js	-	application/javascript	-
+javascript	libs/webjsonrpc/callbackbuffer.js	-	application/javascript	-
+javascript	libs/webjsonrpc/rpccommunicator.js	-	application/javascript	-
+javascript	libs/webjsonrpc/webrtcclient.js	-	application/javascript	-
+javascript	libs/webjsonrpc/webrtcconnection.js	-	application/javascript	-
+javascript	libs/webjsonrpc/websocketconnection.js	-	application/javascript	-
+javascript	libs/webjsonrpc/websocketrpcconnection.js	-	application/javascript	-
+javascript	libs/webjsonrpc/websocketserver.js	-	application/javascript	-
+javascript	libs/webjsonrpc/websocketrpcserver.js	-	application/javascript	-
+
+javascript	libs/spaceifyapplicationmanager.js	-	application/javascript	-
+javascript	libs/spaceifysynchronous.js	-	application/javascript	-
+javascript	libs/spaceifycache.js	-	application/javascript	-
+javascript	libs/spaceifyconfig.js	-	application/javascript	-
+javascript	libs/spaceifycore.js	-	application/javascript	-
+javascript	libs/spaceifymessages.js	-	application/javascript	-
+javascript	libs/spaceifynet.js	-	application/javascript	-
+javascript	libs/spaceifynetwork.js	-	application/javascript	-
+javascript	libs/spaceifyrequest.js	-	application/javascript	-
+javascript	libs/spaceifyservice.js	-	application/javascript	-
+javascript	libs/spaceifyutility.js	-	application/javascript	-
+javascript	libs/spacelet.js	-	application/javascript	-
+javascript	libs/spaceifyapplication.js	-	application/javascript	-
+javascript	libs/spaceifyerror.js	-	application/javascript	-
+javascript	libs/service.js	-	application/javascript	-

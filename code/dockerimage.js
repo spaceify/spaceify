@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * DockerImage, 15.4.2014 Spaceify Oy
  * 
@@ -21,8 +23,11 @@ var docker = new Docker({socketPath: "/var/run/docker.sock"});
 
 self.stopContainers = fibrous( function(imageId, imageName)
 	{
+	var imageId;
+	var container;
+
 	try {
-		var imageId = imageId.substr(0, 12);									// Id is always the short 12 character version
+		imageId = imageId.substr(0, 12);										// Id is always the short 12 character version
 
 		containers = docker.sync.listContainers({"all": 1});
 		containers.forEach(function(containerInfo)
@@ -32,7 +37,7 @@ self.stopContainers = fibrous( function(imageId, imageName)
 				{
 				logger.info(utility.replace(language.STOP_CONTAINER, {"~container": containerInfo.Image}));
 
-				var container = docker.getContainer(containerInfo.Id);
+				container = docker.getContainer(containerInfo.Id);
 				container.sync.stop({"t": "0"});
 				}
 			});
@@ -45,10 +50,13 @@ self.stopContainers = fibrous( function(imageId, imageName)
 
 self.removeContainers = fibrous( function(imageId, imageName, streams)
 	{
+	var imageId;
+	var container;
+
 	try {
 		self.sync.stopContainers(imageId, imageName);
 
-		var imageId = imageId.substr(0, 12);									// Id is always the short 12 character version
+		imageId = imageId.substr(0, 12);										// Id is always the short 12 character version
 
 		containers = docker.sync.listContainers({"all": 1, "size": 1});
 		containers.forEach(function(containerInfo)
@@ -58,7 +66,7 @@ self.removeContainers = fibrous( function(imageId, imageName, streams)
 				{
 				utility.replace(language.REMOVE_CONTAINER, {"~container": containerInfo.Image});
 
-				var container = docker.getContainer(containerInfo.Id);
+				container = docker.getContainer(containerInfo.Id);
 				container.sync.remove({"f": true});
 				}
 			});
@@ -74,13 +82,15 @@ self.removeContainers = fibrous( function(imageId, imageName, streams)
 
 self.removeImage = fibrous( function(imageId, imageName)
 	{
+	var img;
+	
 	try {
 		if(!self.sync.inspect(imageName))											// Image must exist
 			return false;
 
 		self.sync.removeContainers(imageId, imageName, null);
 
-		var img = docker.getImage(imageId);
+		img = docker.getImage(imageId);
 		img.sync.remove();
 		}
 	catch(err)
@@ -91,11 +101,12 @@ self.removeImage = fibrous( function(imageId, imageName)
 
 self.inspect = fibrous( function(image)
 	{
+	var img;
 	var info = null;
 
 	try {
-		var img = docker.getImage(image);
-		var info = img.sync.inspect();
+		img = docker.getImage(image);
+		info = img.sync.inspect();
 		}
 	catch(err)
 		{}

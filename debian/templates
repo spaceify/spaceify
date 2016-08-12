@@ -3,6 +3,14 @@ Type: text
 Description: Welcome to the Spaceify core and access point installer.
  Spaceify will now configure this computer to act as a Spaceify edge node.
 
+Template: spaceify/password_error
+Type: error
+Description: Password confirmation did not math password.
+
+Template: spaceify/edge_name_error
+Type: error
+Description: The format of the edge name is incorrect.
+
 Template: spaceify/ethernet
 Type: select
 Default: eth0
@@ -23,5 +31,15 @@ Description: Is the network adapter the Spaceify clients will connect to an inte
 
 Template: spaceify/admin_password
 Type: password
-Description: Create an admin password for this Spaceify edge node.
- The password is required for edge maintenance e.g. installing and removing applications.
+Description: The password is required for edge maintenance e.g. installing and removing applications.
+ Create an admin password for this Spaceify edge node.
+
+Template: spaceify/admin_confirm_password
+Type: password
+Description: The password is required for edge maintenance e.g. installing and removing applications.
+ Confirm the password.
+
+Template: spaceify/edge_name
+Type: string
+Description: The name is used for identifying the node. It must be 4 to 32 characters long and can contain alphanumerical characters a - z, A - Z and 0 - 9.
+ Give this Spaceify edge node a name.

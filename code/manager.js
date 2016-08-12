@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * Manager, 22.10.2015 Spaceify Oy
  * 
@@ -16,7 +18,7 @@ var SpaceifyConfig = require("./spaceifyconfig");
 var SpaceifyUtility = require("./spaceifyutility");
 var DockerContainer = require("./dockercontainer");
 
-function Manager()
+function Manager(managerType)
 {
 var self = this;
 
@@ -28,110 +30,44 @@ var utility = new SpaceifyUtility();
 
 var applications = {};
 
-self.start = fibrous( function(opts)
+self.install = fibrous( function(unique_name, throws)
 	{
-	var returnValue = null;
-
-	if(opts.type == config.SANDBOXED)
-		returnValue = startSandboxed.sync(opts);
-	else if(opts.type == config.SPACELET)
-		returnValue = startSpacelet.sync(opts);
-	/*if(opts.type == config.NATIVE)
-		returnValue = startSandboxed.sync(opts);*/
-
-	return returnValue;
-	});
-
-var startSandboxed = fibrous( function(opts)
-	{
-	var application = null, dbApps;
+	var dbApp;
+	var application = null;
 
 	try	{
-		if(opts.unique_name)																	// Start one named application
-			dbApps = [database.sync.getApplication(opts.unique_name)];
-		else																					// Start all applications
-			dbApps = database.sync.getApplications([config.SANDBOXED]);
+		dbApp = database.sync.getApplication(unique_name);
+
+		application = build.sync(dbApp.docker_image_id, dbApp.unique_directory, dbApp.unique_name);
 		}
 	catch(err)
-		{ throw errorc.make(err); }
-	finally
-		{ database.close(); }
-
-	for(var i = 0; i < dbApps.length; i++)
 		{
-		try	{
-			application = (applications[dbApps[i].unique_name] ? applications[dbApps[i].unique_name] : null);
-
-			if(!application)																	// Is application already build?
-				application = build.sync(dbApps[i].docker_image_id, dbApps[i].unique_directory, dbApps[i].unique_name, config.SANDBOXED);
-
-			self.sync.run(application);
-
-			if(!application.isInitialized())
-				throw language.E_SANDBOXED_FAILED_INIT_ITSELF.preFmt("SandboxedManager::start", {"~err": application.getInitializationError()});
-			}
-		catch(err)
-			{
-			if(opts.throwErrors)
-				throw errorc.make(err);
-			else
-				logger.error(errorc.make(err), true, true, logger.ERROR);
-			}
+		if(throws)
+			throw errorc.make(err);
 		}
+	finally
+		{
+		database.close();
+		}
+
+	return true;
 	});
 
-var startSpacelet = fibrous( function(opts)
-	{
-	var application = null, dbApps;
-
-	try	{
-		if(opts.unique_name)																	// Build one application
-			dbApps = [database.sync.getApplication(opts.unique_name)];
-		else																					// Build all applications
-			dbApps = database.sync.getApplications([config.SPACELET]);
-		}
-	catch(err)
-		{ throw errorc.make(err); }
-	finally
-		{ database.close(); }
-
-	for(var i = 0; i < dbApps.length; i++)
-		{
-		try	{
-			application = (applications[dbApps[i].unique_name] ? applications[dbApps[i].unique_name] : null);
-
-			if(!application)																	// Is application already build?
-				application = build.sync(dbApps[i].docker_image_id, dbApps[i].unique_directory, dbApps[i].unique_name, config.SPACELET);
-
-			if(opts.runSpacelet)
-				self.sync.run(application);
-
-			if(!application.isInitialized() && opts.runSpacelet && opts.throwErrors)
-				throw language.E_SPACELET_FAILED_INIT_ITSELF.preFmt("SpaceletManager::start", {"~err": application.getInitializationError()});
-			}
-		catch(err)
-			{
-			if(opts.throwErrors)
-				throw errorc.make(err);
-			else
-				logger.error(errorc.make(err), true, true, logger.ERROR);
-			}
-		}
-
-	return (opts.unique_name ? application : null);
-	});
-
-/*var startNative = fibrous( function(opts)
-	{}*/
-
-var build = fibrous( function(docker_image_id, unique_directory, unique_name, type)
+var build = fibrous( function(docker_image_id, unique_directory, unique_name)
 	{
 	var manifest;
 	var application = null;
-	var applicationPath = (type == config.SANDBOXED ? config.SANDBOXED_PATH : config.SPACELETS_PATH);
+	var applicationPath = "";
+
+	if(managerType == config.SPACELET)
+		applicationPath = config.SPACELETS_PATH;
+	else if(managerType == config.SANDBOXED)
+		applicationPath = config.SANDBOXED_PATH;
+	/*else if(managerType == config.NATIVE)
+		applicationPath = config.NATIVE_PATH;*/
 
 	if((manifest = utility.sync.loadJSON(applicationPath + unique_directory + config.VOLUME_DIRECTORY + config.APPLICATION_DIRECTORY + config.MANIFEST, true)) == null)
-		throw language.E_MANAGER_FAILED_TO_READ_MANIFEST.preFmt("Manager::build", {"~type": language.APPLICATION_DISPLAY_NAMES[type], "~unique_name": unique_name});
+		throw language.E_BUILD_READ_MANIFEST_FAILED.preFmt("Manager::build", {"~type": language.APP_DISPLAY_NAMES[managerType], "~unique_name": unique_name});
 
 	application = new Application(manifest);
 	application.setDockerImageId(docker_image_id);
@@ -140,32 +76,69 @@ var build = fibrous( function(docker_image_id, unique_directory, unique_name, ty
 	return application;
 	});
 
-self.run = fibrous( function(application)
+self.start = fibrous( function(unique_name)
 	{
-	// Start the application in a Docker container
+	var startObject = {};
+	var application = null;
+
+	try	{
+		application = applications[unique_name];
+
+		self.sync.run(application);
+
+		if(!application.isInitialized())
+			{
+			throw language.E_START_INIT_FAILED.preFmt("Manager::start", {	"~err": application.getInitializationError(), 
+																			"~type": language.APP_UPPER_CASE_DISPLAY_NAMES[application.managerType]});
+			}
+
+		startObject = { providesServices: application.getProvidesServices() };
+		}
+	catch(err)
+		{
+		throw errorc.make(err);
+		}
+
+	return startObject;
+	});
+
+self.run = fibrous( function(application)
+	{ // Starts the application in a Docker container
+	var ferr;
+	var matches;
+	var response;
+	var binds = [];
+	var volumes = {};
+	var dockerContainer;
+	var applicationPath = "";
+
 	try	{
 		if(application.isRunning())
 			return true;
 
-		var applicationPath = (application.getType() == config.SANDBOXED ? config.SANDBOXED_PATH : config.SPACELETS_PATH);
+		if(managerType == config.SPACELET)
+			applicationPath = config.SPACELETS_PATH;
+		else if(managerType == config.SANDBOXED)
+			applicationPath = config.SANDBOXED_PATH;
+		/*else if(managerType == config.NATIVE)
+			applicationPath = config.NATIVE_PATH;*/
 
-		var volumes = {};
-		volumes[config.VOLUME_PATH] = {};
 		volumes[config.API_PATH] = {};
+		volumes[config.VOLUME_PATH] = {};
 
-		var binds = [applicationPath + application.getUniqueDirectory() + config.VOLUME_DIRECTORY + ":" + config.VOLUME_PATH + ":rw",
-					 config.SPACEIFY_CODE_PATH + ":" + config.API_PATH + ":ro"];
+		binds = [applicationPath + application.getUniqueDirectory() + config.VOLUME_DIRECTORY + ":" + config.VOLUME_PATH + ":rw",
+				 config.SPACEIFY_CODE_PATH + ":" + config.API_PATH + ":ro"];
 
-		var dockerContainer = new DockerContainer();
+		dockerContainer = new DockerContainer();
 		application.setDockerContainer(dockerContainer);
 		dockerContainer.sync.startContainer(application.getProvidesServicesCount(), application.getDockerImageId(), volumes, binds);
 
 		application.createRuntimeServices(dockerContainer.getPublicPorts(), dockerContainer.getIpAddress());
 
-		var response = dockerContainer.sync.runApplication(application);		// [0] = output from the app, [1] = initialization status
+		response = dockerContainer.sync.runApplication(application);			// [0] = output from the app, [1] = initialization status
 		if(response[1] == config.APPLICATION_UNINITIALIZED)
 			{
-			var matches = /;;(.+)::/.exec(response[0]);							// extract error string from the output
+			matches = /;;(.+)::/.exec(response[0]);								// extract error string from the output
 			application.setInitialized(false, matches[1]);
 			self.stop(application.getUniqueName());
 			}
@@ -176,13 +149,14 @@ self.run = fibrous( function(application)
 		}
 	catch(err)
 		{
-		var ferr = language.E_MANAGER_FAILED_TO_RUN.preFmt("Manager::run", {"~type": language.APPLICATION_DISPLAY_NAMES[application.getType()], "~unique_name": application.getUniqueName()});
+		ferr = language.E_RUN_FAILED_TO_RUN.preFmt("Manager::run", {"~type": language.APP_DISPLAY_NAMES[managerType], "~unique_name": application.getUniqueName()});
 		throw errorc.make(ferr, err);
 		}
 	});
 
 self.stop = fibrous( function(unique_name)
 	{
+	var dockerContainer;
 	var application = self.getApplication(unique_name);
 
 	if(application)
@@ -202,6 +176,7 @@ var add = function(application)
 self.remove = fibrous( function(unique_name)
 	{
 	var keys = Object.keys(applications);								// Deleting seems to work reliably only in "normal" loop
+
 	for(var i = 0; i < keys.length; i++)
 		{
 		if(keys[i] == unique_name || unique_name == "")
@@ -220,21 +195,17 @@ self.removeAll = fibrous( function()
 	// -- -- -- -- -- -- -- -- -- -- //
 self.isRunning = function(unique_name)
 	{
-	var result = (applications[unique_name] ? applications[unique_name].isRunning() : false);
-
-	return (result ? result : null);
+	return (unique_name in applications ? applications[unique_name].isRunning() : null);
 	}
 
 self.implementsWebServer = function(unique_name)
 	{
-	var result = (applications[unique_name] ? applications[unique_name].implementsWebServer() : null);
-
-	return (result ? result : null);
+	return (unique_name in applications ? applications[unique_name].implementsWebServer() : null);
 	}
 
 self.getApplication = function(unique_name)
 	{
-	return (applications[unique_name] ? applications[unique_name] : null);
+	return (unique_name in applications ? applications[unique_name] : null);
 	}
 
 self.getApplicationByIp = function(ip)
@@ -253,17 +224,17 @@ self.getApplicationByIp = function(ip)
 
 self.getInstallationPath = function(unique_name)
 	{
-	return (applications[unique_name] ? applications[unique_name].getInstallationPath() : null);
+	return (unique_name in applications ? applications[unique_name].getInstallationPath() : null);
 	}
 
 self.getManifest = function(unique_name)
 	{
-	return (applications[unique_name] ? applications[unique_name].getManifest() : null);
+	return (unique_name in applications ? applications[unique_name].getManifest() : null);
 	}
 
 self.getType = function(unique_name)
 	{
-	return (applications[unique_name] ? applications[unique_name].getType() : null);
+	return (unique_name in applications ? applications[unique_name].getType() : null);
 	}
 
 self.getRuntimeService = function(search)
@@ -281,7 +252,7 @@ self.getRuntimeService = function(search)
 
 self.getRuntimeServices = function(unique_name)
 	{
-	return (applications[unique_name] ? applications[unique_name].getRuntimeServices() : null);
+	return (unique_name in applications ? applications[unique_name].getRuntimeServices() : null);
 	}
 
 self.getRequiresServices = function(unique_name)
@@ -291,7 +262,9 @@ self.getRequiresServices = function(unique_name)
 
 self.getServiceRuntimeStates = function()
 	{
-	var services, state, status = {};
+	var state;
+	var services;
+	var status = {};
 
 	for(var unique_name in applications)
 		{

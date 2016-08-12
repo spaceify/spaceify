@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * Messaging, 18.3.2016 Spaceify Oy
  * 
@@ -86,8 +88,11 @@ self.addConnection = function(conn)
 
 self.onDisconnected = function(id)
 	{
+	var ids;
+	
 	try	{
-		var ids = Object.keys(messageIds);
+		ids = Object.keys(messageIds);
+
 		for(var i = 0; i < ids.length; i++)
 			{
 			if(messageIds[ids[i]].connectionId == id)
@@ -170,7 +175,9 @@ self.messageIdRequested = function()
 
 var carbageCollection = function()
 	{
-	var i, ids, ts;
+	var i;
+	var ts;
+	var ids;
 
 	// Allow one minute to confirm a messageId
 	ids = Object.keys(messageIds);

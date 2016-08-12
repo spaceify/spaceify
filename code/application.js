@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * Application, 2015 Spaceify Oy
  * 
@@ -20,7 +22,7 @@ var dockerContainer = null;
 var docker_image_id = "";
 
 var runningState = false;
-var initialized = false;
+var isInitialized = false;
 var initializationError = "";
 
 var runtimeServices = [];
@@ -74,6 +76,7 @@ self.getUniqueDirectory = function()
 self.getProvidesServicesCount = function()
 	{
 	var srvc = manifest.provides_services ? manifest.provides_services : null;
+
 	return srvc ? srvc.length : 0;
 	}
 
@@ -85,6 +88,7 @@ self.getProvidesServices = function()
 self.getRequiresServicesCount = function()
 	{
 	var srvc = manifest.requires_services ? manifest.requires_services : null;
+
 	return srvc ? srvc.length : 0;
 	}
 
@@ -102,6 +106,7 @@ self.getInstallCommands = function()
 self.getInstallationPath = function()
 	{
 	var path = "";
+
 	if(self.getType() == config.SPACELET)
 		path = config.SPACELETS_PATH;
 	else if(self.getType() == config.SANDBOXED)
@@ -152,10 +157,11 @@ self.implementsWebServer = function()
 
 self.createRuntimeServices = function(ports, ip)
 	{ // Create runtime services with their ports and IPs attached to the provided services
-	runtimeServices = [];
 	var gps = self.getProvidesServices();
 	var fp = config.FIRST_SERVICE_PORT;
 	var fps = config.FIRST_SERVICE_PORT_SECURE;
+
+	runtimeServices = [];
 
 	for(var i = 0; i < gps.length; i++)
 		{
@@ -199,7 +205,8 @@ self.getRuntimeServicesCount = function()
 
 self.getRuntimeService = function(service_name, unique_name)
 	{
-	var uniqueName, serviceName;
+	var uniqueName;
+	var serviceName;
 
 	for(var s = 0; s < runtimeServices.length; s++)
 		{
@@ -234,13 +241,13 @@ self.registerService = function(service_name, state)
 
 self.setInitialized = function(status, error)
 	{
-	initialized = status;
+	isInitialized = status;
 	initializationError = error;
 	}
 
 self.isInitialized = function()
 	{
-	return initialized;
+	return isInitialized;
 	}
 
 self.getInitializationError = function()

@@ -51,11 +51,11 @@ self.loadRemoteFile = fibrous( function(fileUrl)
 		}
 	catch(err)
 		{
-		throw language.E_FAILED_TO_INITIATE_HTTP_GET.pre("SpaceifyUtility::loadRemoteFile", err);
+		throw language.E_LOAD_REMOTE_FILE_FAILED_TO_INITIATE_HTTP_GET.pre("SpaceifyUtility::loadRemoteFile", err);
 		}
 
 	if(result.statusCode != 200)
-		throw language.E_FAILED_TO_LOAD_REMOTE_FILE.preFmt("SpaceifyUtility::loadRemoteFile", {"~file": fileUrl, "~code": result.statusCode});
+		throw language.E_LOAD_REMOTE_FILE_FAILED_TO_LOAD_REMOTE_FILE.preFmt("SpaceifyUtility::loadRemoteFile", {"~file": fileUrl, "~code": result.statusCode});
 
 	return result;
 	});
@@ -73,7 +73,7 @@ self.loadRemoteFileToLocalFile = fibrous( function(fileUrl, targetDir, targetFil
 	catch(err)
 		{
 		if(throws)
-			throw language.E_LOAD_REMOTE_FILE_TO_LOCAL_FILE.pre("SpaceifyUtility::loadRemoteFileToLocalFile", err);
+			throw language.E_LOAD_REMOTE_FILE_TO_LOCAL_FILE_FAILED.pre("SpaceifyUtility::loadRemoteFileToLocalFile", err);
 		}
 
 	return false;
@@ -132,7 +132,7 @@ self.deleteDirectory = fibrous( function(source, throws)						// Recursively del
 	catch(err)
 		{
 		if(throws)
-			throw language.E_DELETE_DIRECTORY.pre("SpaceifyUtility::deleteDirectory", err);
+			throw language.E_DELETE_DIRECTORY_FAILED.pre("SpaceifyUtility::deleteDirectory", err);
 		}
 	});
 
@@ -172,7 +172,7 @@ self.copyDirectory = fibrous( function(source, target, throws, excludeDirectory)
 	catch(err)
 		{
 		if(throws)
-			throw language.E_COPY_DIRECTORY.pre("SpaceifyUtility::copyDirectory", err);
+			throw language.E_COPY_DIRECTORY_FAILED.pre("SpaceifyUtility::copyDirectory", err);
 		}
 	});
 
@@ -185,7 +185,7 @@ self.moveDirectory = fibrous( function(source, target, throws)
 	catch(err)
 		{
 		if(throws)
-			throw language.E_MOVE_DIRECTORY.pre("SpaceifyUtility::moveDirectory", err);
+			throw language.E_MOVE_DIRECTORY_FAILED.pre("SpaceifyUtility::moveDirectory", err);
 		}
 	});
 
@@ -199,7 +199,7 @@ self.deleteFile = fibrous( function(source, throws)
 	catch(err)
 		{
 		if(throws)
-			throw language.E_DELETE_FILE.pre("SpaceifyUtility::deleteFile", err);
+			throw language.E_DELETE_FILE_FAILED.pre("SpaceifyUtility::deleteFile", err);
 		}
 	});
 
@@ -218,7 +218,7 @@ self.copyFile = fibrous( function(sourceFile, targetFile, throws)
 	catch(err)
 		{
 		if(throws)
-			throw language.E_COPY_FILE.pre("SpaceifyUtility::copyFile", err);
+			throw language.E_COPY_FILE_FAILED.pre("SpaceifyUtility::copyFile", err);
 		}
 	});
 
@@ -231,7 +231,7 @@ self.moveFile = fibrous( function(sourceFile, targetFile, throws)
 	catch(err)
 		{
 		if(throws)
-			throw language.E_MOVE_FILEE.pre("SpaceifyUtility::moveFile", err);
+			throw language.E_MOVE_FILE_FAILED.pre("SpaceifyUtility::moveFile", err);
 		}
 });
 
@@ -253,7 +253,7 @@ self.zipDirectory = fibrous( function(source, zipfile)				// Craete a zip file f
 		}
 	catch(err)
 		{
-		logger.log(err, true, true, logger.ERROR);
+		throw language.E_ZIP_DIRECTORY_FAILED.pre("SpaceifyUtility::zipDirectory", err);
 		}
 	});
 
@@ -312,11 +312,11 @@ self.postForm = fibrous( function(url, form)
 		}
 	catch(err)
 		{
-		throw language.E_FAILED_TO_INITIATE_HTTP_POST.pre("SpaceifyUtility::postForm", err);
+		throw language.E_POST_FORM_FAILED_TO_INITIATE_HTTP_POST.pre("SpaceifyUtility::postForm", err);
 		}
 
 	if(result.statusCode != 200)
-		throw language.E_FAILED_TO_POST_FORM.preFmt("SpaceifyUtility::postForm", {"~url": url, "~code": result.statusCode});
+		throw language.E_POST_FORM_FAILED_TO_POST_FORM.preFmt("SpaceifyUtility::postForm", {"~url": url, "~code": result.statusCode});
 
 	return result;
 	});
@@ -363,18 +363,19 @@ self.postPublish = function(applicationPackage, username, password, release_name
 			});
 	}
 
-self.postRegister = function(edge_uuid, edge_password, callback)
+self.postRegister = function(edge_id, edge_name, edge_password, callback)
 	{
 	logger.force(language.POSTING_REGISTRATION);
 
 	request({
-		url: config.EDGE_REGISTRATION_URL,
+		url: config.EDGE_REGISTER_URL,
 		headers: { "content-type" : "multipart/form-data" },
 		method: "POST",
 		multipart:
 			[
-				{ "Content-Disposition" : 'form-data; name="eid"', body: edge_uuid },
-				{ "Content-Disposition" : 'form-data; name="epw"', body: edge_password }
+				{ "Content-Disposition" : 'form-data; name="edge_id"', body: edge_id },
+				{ "Content-Disposition" : 'form-data; name="edge_name"', body: edge_name },
+				{ "Content-Disposition" : 'form-data; name="edge_password"', body: edge_password }
 			]
 		},
 		function(err, result, body)
@@ -480,7 +481,7 @@ self.loadJSON = fibrous( function(file, bParse, throws)
 		{
 		manifest = null;
 		if(throws)
-			throw language.E_LOAD_JSON.pre("SpaceifyUtility::loadJSON", err);
+			throw language.E_LOAD_JSON_FAILED.pre("SpaceifyUtility::loadJSON", err);
 		}
 
 	return manifest;
@@ -500,7 +501,7 @@ self.saveJSON = fibrous( function(file, json, throws)
 	catch(err)
 		{
 		if(throws)
-			throw language.E_SAVE_JSON.pre("SpaceifyUtility::saveJSON", err);
+			throw language.E_SAVE_JSON_FAILED.pre("SpaceifyUtility::saveJSON", err);
 		}
 
 	return success;
@@ -516,7 +517,7 @@ self.parseJSON = function(str, throws)
 	catch(err)
 		{
 		if(throws)
-			throw (isNodeJs ?	language.E_JSON_PARSE_FAILED.pre("SpaceifyUtility::parseJSON", err) :
+			throw (isNodeJs ?	language.E_PARSE_JSON_FAILED.pre("SpaceifyUtility::parseJSON", err) :
 								self.makeErrorObject("JSON", "Failed to parse JSON.", "SpaceifyUtility::parseJSON"));
 		}
 

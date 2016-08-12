@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * Database, 17.1.2014 Spaceify Oy
  * 
@@ -112,13 +114,16 @@ self.getApplication = fibrous( function(unique_name)
 
 self.getApplications = fibrous( function(type)
 	{
+	var order;
+	var where;
+		
 	try {
 		if(!isOpen())
 			openDB();
 
-		var order = " ORDER BY type, position ASC";
+		order = " ORDER BY type, position ASC";
 
-		var where = "";
+		where = "";
 		for(var i = 0; i < type.length; i++)
 			where += (where == "" ? " WHERE " : " OR ") + "type=?";
 
@@ -132,15 +137,20 @@ self.getApplications = fibrous( function(type)
 
 self.insertApplication = fibrous( function(manifest)
 	{
+	var max;
+	var params;
+	var inject_enabled;
+	var inject_identifier;
+
 	try {
 		if(!isOpen())
 			openDB();
 
-		var max = db.sync.get("SELECT MAX(position) AS pos FROM applications WHERE type=?", [manifest.type]);
+		max = db.sync.get("SELECT MAX(position) AS pos FROM applications WHERE type=?", [manifest.type]);
 
-		var inject_identifier = (manifest.type == config.SPACELET ? manifest.inject_identifier : "");
-		var inject_enabled = (manifest.type == config.SPACELET ? "1" : "0");
-		var params = [manifest.unique_name, validator.makeUniqueDirectory(manifest.unique_name), manifest.docker_image_id, manifest.type, manifest.version, utility.getLocalDateTime(), inject_identifier, inject_enabled, max.pos + 1];
+		inject_identifier = (manifest.type == config.SPACELET ? manifest.inject_identifier : "");
+		inject_enabled = (manifest.type == config.SPACELET ? "1" : "0");
+		params = [manifest.unique_name, validator.makeUniqueDirectory(manifest.unique_name), manifest.docker_image_id, manifest.type, manifest.version, utility.getLocalDateTime(), inject_identifier, inject_enabled, max.pos + 1];
 
 		db.sync.run("INSERT INTO applications (unique_name, unique_directory, docker_image_id, type, version, install_datetime, inject_identifier, inject_enabled, position) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", params);
 
@@ -160,14 +170,17 @@ self.insertApplication = fibrous( function(manifest)
 
 self.updateApplication = fibrous( function(manifest)
 	{
+	var params;
+	var inject_identifier;
+		
 	try {
 		if(!isOpen())
 			openDB();
 
 		self.sync.begin();
 
-		var inject_identifier = (manifest.type == config.SPACELET ? manifest.inject_identifier : "");
-		var params = [validator.makeUniqueDirectory(manifest.unique_name), manifest.docker_image_id, manifest.version, utility.getLocalDateTime(), inject_identifier, manifest.unique_name];
+		inject_identifier = (manifest.type == config.SPACELET ? manifest.inject_identifier : "");
+		params = [validator.makeUniqueDirectory(manifest.unique_name), manifest.docker_image_id, manifest.version, utility.getLocalDateTime(), inject_identifier, manifest.unique_name];
 
 		db.sync.run("UPDATE applications SET unique_directory=?, docker_image_id=?, version=?, install_datetime=?, inject_identifier=? WHERE unique_name=?", params);
 
@@ -191,11 +204,13 @@ self.updateApplication = fibrous( function(manifest)
 
 self.removeApplication = fibrous( function(unique_name)
 	{
+	var results;
+
 	try {
 		if(!isOpen())
 			openDB();
 
-		var results = db.sync.get("SELECT type, position FROM applications WHERE unique_name=?", [unique_name]);
+		results = db.sync.get("SELECT type, position FROM applications WHERE unique_name=?", [unique_name]);
 
 		db.sync.run("DELETE FROM inject_hostnames WHERE unique_name=?", unique_name);
 		db.sync.run("DELETE FROM inject_files WHERE unique_name=?", unique_name);
@@ -223,7 +238,7 @@ var addProvidedServices = fibrous( function(manifest)
 		}
 	catch(err)
 		{
-		throw err;
+		throw err;	//language.E_DATABASE_ADD_PROVIDED_SERVICES.pre("Database::addProvidedServices", err);
 		}
 	finally
 		{
@@ -235,6 +250,7 @@ var addProvidedServices = fibrous( function(manifest)
 var addInjectHostnames = fibrous( function(manifest)
 	{
 	var stmt;
+	var inject_hostname;
 
 	try {
 		db.sync.run("DELETE FROM inject_hostnames WHERE unique_name=?", manifest.unique_name);
@@ -243,13 +259,13 @@ var addInjectHostnames = fibrous( function(manifest)
 
 		for(var i = 0; i < manifest.inject_hostnames.length; i++)
 			{
-			var inject_hostname = manifest.inject_hostnames[i].replace("*", "%");			// IN MANIFEST: *.google.* -> CHANGED FOR SQLITE: %.google.%
+			inject_hostname = manifest.inject_hostnames[i].replace("*", "%");			// IN MANIFEST: *.google.* -> CHANGED FOR SQLITE: %.google.%
 			stmt.sync.run([manifest.unique_name, inject_hostname]);
 			}
 		}
 	catch(err)
 		{
-		throw err;
+		throw err;	//language.E_DATABASE_ADD_INJECT_HOSTNAMES.pre("Database::addInjectHostnames", err);
 		}
 	finally
 		{
@@ -260,7 +276,13 @@ var addInjectHostnames = fibrous( function(manifest)
 
 var addInjectFiles = fibrous( function(manifest)
 	{
-	var stmt, application_path;
+	var stmt;
+	var file;
+	var type;
+	var order;
+	var directory;
+	var url_or_path;
+	var application_path;
 
 	try {
 		db.sync.run("DELETE FROM inject_files WHERE unique_name=?", manifest.unique_name);
@@ -269,23 +291,23 @@ var addInjectFiles = fibrous( function(manifest)
 
 		application_path = config.SPACELETS_PATH + validator.makeUniqueDirectory(manifest.unique_name) + config.VOLUME_DIRECTORY + config.APPLICATION_DIRECTORY + config.WWW_DIRECTORY;
 
-		var order = 1;
+		order = 1;
 		for(var i = 0; i < manifest.inject_files.length; i++)
 			{
-			var directory = (manifest.inject_files[i].directory ? manifest.inject_files[i].directory.trim() : "");
+			directory = (manifest.inject_files[i].directory ? manifest.inject_files[i].directory.trim() : "");
 			if(directory != "" && directory.search(/\/$/) == -1)
 				directory += "/";
-			var file = manifest.inject_files[i].file.trim();
-			var type = manifest.inject_files[i].type.trim();
+			file = manifest.inject_files[i].file.trim();
+			type = manifest.inject_files[i].type.trim();
 
-			var url_or_path = (type == config.FILE ? application_path : config.EDGE_HOSTNAME + "/");			// Inject as URL or file
+			url_or_path = (type == config.FILE ? application_path : config.EDGE_HOSTNAME + "/");				// Inject as URL or file
 
 			stmt.sync.run([manifest.unique_name, url_or_path, directory, file, type, order++]);
 			}
 		}
 	catch(err)
 		{
-		throw err;
+		throw err;	//language.E_DATABASE_ADD_INJECT_FILENAMES.pre("Database::addInjectFiles", err);
 		}
 	finally
 		{
@@ -298,6 +320,9 @@ var addInjectFiles = fibrous( function(manifest)
 // SERVICES  - spaceify.db // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 self.checkProvidedServices = fibrous( function(manifest)
 	{ // Checks if applications manifest has provided services which are already registered by some other application.
+	var row;
+	var errors = [];
+
 	try {
 		if(!manifest.provides_services)
 			return null;
@@ -305,17 +330,17 @@ self.checkProvidedServices = fibrous( function(manifest)
 		if(!isOpen())
 			openDB();
 
-		var errors = [];
+		errors = [];
 		for(var i = 0; i < manifest.provides_services.length; i++)
 			{
-			var row = db.sync.get("SELECT * FROM provided_services WHERE service_name=? AND unique_name<>?", [manifest.provides_services[i].service_name, manifest.unique_name]);
+			row = db.sync.get("SELECT * FROM provided_services WHERE service_name=? AND unique_name<>?", [manifest.provides_services[i].service_name, manifest.unique_name]);
 			if(row)
 				errors.push({service_name: row.service_name, unique_name: row.unique_name});
 			}
 		}
 	catch(err)
 		{
-		throw err;	//language.E_DATABASE_UPDATEAPPLICATION.pre("Database::updateApplication", err);
+		throw err;	//language.E_DATABASE_CHECK_PROVIDED_SERVICES.pre("Database::checkProvidedServices", err);
 		}
 
 	return (errors.length > 0 ? errors : null);
@@ -331,13 +356,13 @@ self.getService = fibrous( function(service_name)
 		}
 	catch(err)
 		{
-		throw err;	//language.E_DATABASE_UPDATEAPPLICATION.pre("Database::updateApplication", err);
+		throw err;	//language.E_DATABASE_GET_SERVICE.pre("Database::getService", err);
 		}
 	});
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-// SPACEIFY CORE SETTINGS, INFROMATION AND USER DATA - spaceify.db   // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-self.getSettings = fibrous( function()
+// SPACEIFY CORE AND EDGE SETTINGS, INFROMATION - spaceify.db  // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+self.getCoreSettings = fibrous( function()
 	{
 	try {
 		if(!isOpen())
@@ -347,7 +372,7 @@ self.getSettings = fibrous( function()
 		}
 	catch(err)
 		{
-		throw err;	//language.E_DATABASE_GET_SETTINGS.pre("Database::getSettings", err);
+		throw err;	//language.E_DATABASE_GET_CORE_SETTINGS.pre("Database::getCoreSettings", err);
 		}
 	finally
 		{
@@ -355,17 +380,65 @@ self.getSettings = fibrous( function()
 		}
 	});
 
-self.saveSettings = fibrous( function(settings)
+self.saveCoreSettings = fibrous( function(settings)
+	{
+	var value;
+	var values = [];
+	var columns = "";
+
+	try {
+		if(!isOpen())
+			openDB();
+
+		for(value in settings)
+			{
+			columns += (columns != "" ? ", " : "") + value + "=?";
+			values.push(settings[value]);
+			}
+
+		db.sync.run("UPDATE settings SET " + columns, values);
+		}
+	catch(err)
+		{
+		throw err;	//language.E_DATABASE_SAVE_CORE_SETTINGS.pre("Database::saveCoreSettings", err);
+		}
+	});
+
+self.getEdgeSettings = fibrous( function()
 	{
 	try {
 		if(!isOpen())
 			openDB();
 
-		db.sync.run("UPDATE settings SET locale=?, splash_ttl=?, log_in_session_ttl=?", [settings.locale, settings.splash_ttl, settings.log_in_session_ttl]);
+		return db.sync.get("SELECT * FROM user");
 		}
 	catch(err)
 		{
-		throw err;	//language.E_DATABASE_SAVE_SETTINGS.pre("Database::saveSettings", err);
+		throw err;	//language.E_DATABASE_GET_EDGE_SETTINGS.pre("Database::getEdgeSettings", err);
+		}
+	});
+
+self.saveEdgeSettings = fibrous( function(settings)
+	{
+	var value;
+	var values = [];
+	var columns = "";
+
+	try {
+		if(!isOpen())
+			openDB();
+
+		for(value in settings)
+			{
+			columns += (columns != "" ? ", " : "") + value + "=?";
+			values.push(settings[value]);
+			}
+
+		db.sync.run("UPDATE user SET " + columns, values);
+		}
+	catch(err)
+		{
+		throw err;	//language.E_DATABASE_SAVE_EDGE_SETTINGS.pre("Database::saveEdgeSettings", err);
 		}
 	});
 
@@ -379,25 +452,11 @@ self.getInformation = fibrous( function()
 		}
 	catch(err)
 		{
-		throw err;	//language.E_DATABASE_GET_SETTINGS.pre("Database::getInformation", err);
+		throw err;	//language.E_DATABASE_GET_INFORMATION.pre("Database::getInformation", err);
 		}
 	finally
 		{
 		self.close();
-		}
-	});
-
-self.getUserData = fibrous( function()
-	{
-	try {
-		if(!isOpen())
-			openDB();
-
-		return db.sync.get("SELECT * FROM user");
-		}
-	catch(err)
-		{
-		throw err;	//language.E_DATABASE_GET_USERDATA.pre("Database::getUserData", err);
 		}
 	});
 
@@ -425,7 +484,7 @@ self.test = fibrous( function()
 		}
 	catch(err)
 		{
-		throw err;	//language.E_DATABASE_REMOVE_APPLICATION.pre("Database::removeApplication", err);
+		throw err;	//language.E_DATABASE_TEST.pre("Database::removeApplication", err);
 		}
 	});
 

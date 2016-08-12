@@ -1,4 +1,5 @@
-#!/usr/bin/env node
+"use strict";
+
 /**
  * Spaceify Package Manager, 30.4.2014 Spaceify Oy
  *
@@ -13,13 +14,15 @@ var http = require("http");
 var crypto = require("crypto");
 var qs = require("querystring");
 var fibrous = require("fibrous");
+var Logger = require("./logger");
 var language = require("./language");
 var Messaging = require("./messaging");
-var Logger = require("./logger");
+var SpaceifyError = require("./spaceifyerror");
 var SecurityModel = require("./securitymodel");
-var ApplicationManager = require("./applicationmanager");
 var SpaceifyConfig = require("./spaceifyconfig");
 var SpaceifyUtility = require("./spaceifyutility");
+var EdgeSpaceifyNet = require("./edgespaceifynet");
+var ApplicationManager = require("./applicationmanager");
 var WebSocketConnection = require("./websocketconnection.js");
 var WebSocketRpcConnection = require("./websocketrpcconnection");
 
@@ -28,9 +31,11 @@ function SPM()
 var self = this;
 
 var messaging = new Messaging();
+var errorc = new SpaceifyError();
 var config = new SpaceifyConfig();
 var utility = new SpaceifyUtility();
 var securityModel = new SecurityModel();
+var edgeSpaceifyNet = new EdgeSpaceifyNet();
 
 var exitCode = 0;
 var appManConnection = null;
@@ -105,20 +110,24 @@ var manualDisconnection = false;
 
 self.start = fibrous( function()
 	{
+	var arg;
+	var auth;
 	var cwd = "";
-	var command = "", last = "";
-	var applicationPackage = "";
-	var authenticate = false;
+	var last = "";
 	var type = [];
+	var command = "";
 	var force = false;
-	var verbose = false;
 	var username = "";
 	var password = "";
+	var openMessaging;
+	var verbose = false;
 	var githubUsername = "";
 	var githubPassword = "";
+	var authenticate = false;
+	var applicationPackage = "";
 	var l, length = process.argv.length;
-
 	var versions = fs.sync.readFile(config.SPACEIFY_PATH + config.VERSIONS, {encoding: "utf8"});
+
 	versions = versions.split(":");
 
 	try {
@@ -131,7 +140,7 @@ self.start = fibrous( function()
 
 		for(var i = 4; i < length; i++)															// options are always after the command
 			{
-			var arg = process.argv[i];
+			arg = process.argv[i];
 
 			if(arg == AUTH || arg == AUTH_)
 				authenticate = true;
@@ -166,7 +175,7 @@ self.start = fibrous( function()
 		// OPTIONS
 		if((authenticate && (command == INSTALL || command == SOURCE)) || command == PUBLISH)	// Authenticate to Spaceify registry
 			{
-			var auth = (command == PUBLISH ? config.REGISTRY_HOSTNAME : applicationPackage);
+			auth = (command == PUBLISH ? config.REGISTRY_HOSTNAME : applicationPackage);
 
 			logger.force(utility.replace(language.AUTHENTICATION, {"~auth": auth}));
 			username = read.sync({ prompt: language.USERNAME });
@@ -183,7 +192,7 @@ self.start = fibrous( function()
 		// CONNECTIONS
 		if(command != PUBLISH && command != HELP && command != VERSION)
 			{
-			var openMessaging = (command != STATUS ? true : false);
+			openMessaging = (command != STATUS ? true : false);
 
 			connect.sync(openMessaging);														// Try to open required connections
 			}
@@ -225,7 +234,6 @@ self.start = fibrous( function()
 	catch(err)
 		{
 		logger.error(err, false, false, logger.FORCE);
-		logger.force();
 		}
 	finally
 		{
@@ -241,14 +249,14 @@ var connect = fibrous( function(openMessaging)
 
 		// ApplicationManager
 		appManConnection = new WebSocketRpcConnection();
-		appManConnection.sync.connect({hostname: config.ALL_IPV4_LOCAL, port: config.APPMAN_PORT_SECURE, isSecure: true, caCrt: caCrt, debug: false});
+		appManConnection.sync.connect({hostname: config.CONNECTION_HOSTNAME, port: config.APPMAN_PORT_SECURE, isSecure: true, caCrt: caCrt, debug: false});
 
 		// Messaging (Setup by ApplicationManager)
 		if(openMessaging)
 			{
 			appManMessageConnection = new WebSocketConnection();
 			appManMessageConnection.setEventListener(self);
-			appManMessageConnection.sync.connect({hostname: config.ALL_IPV4_LOCAL, port: config.APPMAN_MESSAGE_PORT_SECURE, isSecure: true, caCrt: caCrt, debug: false});
+			appManMessageConnection.sync.connect({hostname: config.CONNECTION_HOSTNAME, port: config.APPMAN_MESSAGE_PORT_SECURE, isSecure: true, caCrt: caCrt, debug: false});
 
 			messageId = appManConnection.sync.callRpc("requestMessages", [sessionId], self);								// Request a messageId
 			appManMessageConnection.send(JSON.stringify({type: messaging.MESSAGE_CONFIRM, messageId: messageId}));			// Confirm that we are listening
@@ -272,6 +280,8 @@ var disconnect = function()
 
 	appManConnection = null;
 	appManMessageConnection = null;
+
+	logger.force();
 
 	process.exit(exitCode);
 	}
@@ -308,7 +318,9 @@ self.onDisconnected = function(id)
 
 var question = function(message)
 	{
-	var answers = [], prompt = "";												// The question and valid answers
+	var prompt = "";															// The question and valid answers
+	var answers = [];
+	
 	for(var i = 0; i < message.choices.length; i++)
 		{
 		prompt += (prompt != "" ? " / " : "") + message.choices[i].screen;
@@ -332,10 +344,8 @@ var installApplicationQuestion = function(message, answers, prompt)
 
 var questionTimedOut = function(message)
 	{
-	logger.force("");
-
 	if(message.origin == applicationManager.INSTALL_APPLICATION)
-		logger.force(message.message);
+		logger.force("\n", message.message);
 	}
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -343,6 +353,8 @@ var questionTimedOut = function(message)
 // COMMANDS // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 var help = fibrous( function(bVerbose, command)
 	{
+	var spmCommand;
+	var spmCommands;
 	var spmHelpFile = fs.sync.readFile(config.DOCS_PATH + config.SPM_HELP, {encoding: "utf8"}), spmParts, help = "";
 
 	if(command == "")
@@ -353,7 +365,7 @@ var help = fibrous( function(bVerbose, command)
 
 		if(bVerbose)
 			{
-			var spmCommands = spmParts[1].split(/%%.*/);
+			spmCommands = spmParts[1].split(/%%.*/);
 
 			for(var i = 0; i < spmCommands.length; i++)
 				help += spmCommands[i].replace(/%.+?%/, "");
@@ -361,7 +373,7 @@ var help = fibrous( function(bVerbose, command)
 		}
 	else
 		{
-		var spmCommand = spmHelpFile.match(new RegExp("%" + command + "%(.|\n|\r)+?%%"));
+		spmCommand = spmHelpFile.match(new RegExp("%" + command + "%(.|\n|\r)+?%%"));
 		if(spmCommand)
 			help = spmCommand[0].replace(new RegExp("%" + command + "%"), "");
 		help = help.replace(/%/g, "");
@@ -418,7 +430,11 @@ var source = fibrous( function(applicationPackage, username, password, cwd)
 var list = fibrous( function(type, bVerbose)
 	{
 	var i, j;
+	var bLast;
+	var injfil;
+	var manifest;
 	var path = "";
+	var continues;
 	var spaceletHeader = false;
 	var sandboxedHeader = false;
 	var nativeHeader = false;
@@ -426,7 +442,7 @@ var list = fibrous( function(type, bVerbose)
 	var dbApps = appManConnection.sync.callRpc("getApplications", [type], self);
 
 	if(dbApps.length == 0)
-		logger.force(language.NO_APPLICATIONS, "\n");
+		logger.force(language.NO_APPLICATIONS);
 	else
 		{
 		for(i = 0; i < dbApps.length; i++)
@@ -438,7 +454,7 @@ var list = fibrous( function(type, bVerbose)
 			else if(dbApps[i].type == config.NATIVE && !nativeHeader)
 				{ logger.force(language.INSTALLED_HEADERS[2]); nativeHeader = true; }
 
-			var bLast = (i == dbApps.length - 1 || (i < dbApps.length - 1 && dbApps[i].type != dbApps[i + 1].type));
+			bLast = (i == dbApps.length - 1 || (i < dbApps.length - 1 && dbApps[i].type != dbApps[i + 1].type));
 
 			logger.force(p);
 
@@ -453,9 +469,9 @@ var list = fibrous( function(type, bVerbose)
 				else if(dbApps[i].type == config.NATIVE)
 					path = config.NATIVE_PATH;
 
-				var manifest = utility.sync.loadJSON(path + dbApps[i].unique_directory + config.APPLICATION_PATH + config.MANIFEST, true);
+				manifest = utility.sync.loadJSON(path + dbApps[i].unique_directory + config.APPLICATION_PATH + config.MANIFEST, true);
 
-				var continues = (bLast ? "  " + mll : p + smll);
+				continues = (bLast ? "  " + mll : p + smll);
 
 				logger.force(continues, language.M_NAME + manifest.name);
 
@@ -482,7 +498,7 @@ var list = fibrous( function(type, bVerbose)
 					logger.force((bLast ? "  " + p + salt :  ps + p + salt), language.M_INJECT_FILES);
 					for(j = 0; j < manifest.inject_files.length; j++)
 						{
-						var injfil = (manifest.inject_files[j].directory ? manifest.inject_files[j].directory + "/" : "") + manifest.inject_files[j].file + ", " + manifest.inject_files[j].type;
+						injfil = (manifest.inject_files[j].directory ? manifest.inject_files[j].directory + "/" : "") + manifest.inject_files[j].file + ", " + manifest.inject_files[j].type;
 						logger.force((bLast ? "  " :  ps) + (j < manifest.inject_files.length - 1 ? p + "   " + mll : p + "   " + all), injfil);
 						}
 					}
@@ -571,9 +587,6 @@ var list = fibrous( function(type, bVerbose)
 				// Is running
 				logger.force((bLast ? "  " : ps) + all + language.M_IS_RUNNING + (dbApps[i].isRunning ? language.M_YES : language.M_NO));
 				}
-
-			if(bLast)
-				logger.force();
 			}
 		}
 
@@ -582,31 +595,38 @@ var list = fibrous( function(type, bVerbose)
 
 var getServiceRuntimeStates = fibrous( function()
 	{
+	var services;
+	var unique_names;
+	var applications;
+	var lastService;
+	var isLastService;
+	var lastApplication;
+	var isLastApplication;
+	var applicationCount = 0;
 	var states = appManConnection.sync.callRpc("getServiceRuntimeStates", [sessionId], self);
 
-	var applicationCount = 0;
 	for(var type in states)
 		{
-		var unique_names = Object.keys(states[type]);
+		unique_names = Object.keys(states[type]);
 
 		if(unique_names.length > 0)
-			logger.force(language.RUNNING_HEADERS[config.APP_TYPE_CONVERT[type]]);
+			logger.force(language.RUNNING_HEADERS[config.APP_TYPE_NUMBER[type]]);
 
-		var applications = states[type];
+		applications = states[type];
 		applicationCount += unique_names.length;
 		for(var n = 0; n < unique_names.length; n++)
 			{
-			var isLastApplication = (n + 1 == unique_names.length ? true : false);
-			var lastApplication = (!isLastApplication ? p : " ");
+			isLastApplication = (n + 1 == unique_names.length ? true : false);
+			lastApplication = (!isLastApplication ? p : " ");
 
 			logger.force(p);
 			logger.force((isLastApplication ? alt : mlt), unique_names[n]);
 
-			var services = applications[unique_names[n]];
+			services = applications[unique_names[n]];
 			for(var s = 0; s < services.length; s++)
 				{
-				var isLastService = (s + 1 == services.length ? true : false);
-				var lastService = (!isLastService ? p : " ");
+				isLastService = (s + 1 == services.length ? true : false);
+				lastService = (!isLastService ? p : " ");
 
 				logger.force(lastApplication, (!isLastService ? mlt : alt), services[s].service_name);
 
@@ -617,13 +637,10 @@ var getServiceRuntimeStates = fibrous( function()
 				logger.force(lastApplication, lastService, all, language.M_IS_REGISTERED, (services[s].isRegistered ? language.M_YES : language.M_NO));
 				}
 			}
-
-		if(unique_names.length > 0)
-			logger.force();
 		}
 
 	if(applicationCount == 0)
-		logger.force(language.NO_RUNNING_APPLICATIONS, "\n");
+		logger.force(language.NO_RUNNING_APPLICATIONS);
 
 	disconnect();
 	});
@@ -637,16 +654,24 @@ var publish = fibrous( function(applicationPackage, username, password, githubUs
 
 var register = fibrous( function()
 	{
-	applicationManager.sync.register();
+	try {
+		edgeSpaceifyNet.sync.createEdgeId(true);
+
+		logger.force(errorc.replace(language.I_SPM_REGISTER_SUCCESSFUL, {"~registration": config.SPACEIFY_REGISTRATION_FILE}));
+		}
+	catch(err)
+		{		
+		logger.force(errorc.replace(language.E_SPM_REGISTER_FAILED, {"~message": err.message}));
+		}
 
 	disconnect();
 	});
 
 var systemStatus = fibrous( function()
 	{
+	var lines = "";
 	var result = appManConnection.sync.callRpc("systemStatus", [], self);
 
-	var lines = "";
 	for(var i in result)
 		lines += i + "=" + result[i] + "\n";
 

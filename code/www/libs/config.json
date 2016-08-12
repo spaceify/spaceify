@@ -7,7 +7,8 @@
   "SPACEIFY_TLS_PATH": "/var/lib/spaceify/data/tls/",
   "SPACEIFY_DATABASE_FILE": "/var/lib/spaceify/data/db/spaceify.db",
   "SPACEIFY_TEMP_SESSIONID": "/var/lib/spaceify/data/db/session.id",
-  "SPACEIFY_REGISTRATION_FILE": "/var/lib/spaceify/data/db/edge_id.uuid",
+  "SPACEIFY_REGISTRATION_FILE": "/var/lib/spaceify/data/db/edge.id",
+  "SPACEIFY_REGISTRATION_FILE_TMP": "/tmp/edge.id",
   "SPACEIFY_MANIFEST_RULES_FILE": "/var/lib/spaceify/data/manifest/manifest.rules",
 
   "SPACELETS_PATH": "/var/lib/spaceify/data/spacelets/",
@@ -51,7 +52,10 @@
   "TLS_PATH": "/tls/",
   "TLS_SQUID_PATH": "/etc/squid3/certs/",
 
-  "SPACEIFY_DOCKER_IMAGE": "spaceifyubuntu",
+  "UBUNTU_DISTRO_NAME": "ubuntu",
+  "RASPBIAN_DISTRO_NAME": "raspbian",
+  "UBUNTU_DOCKER_IMAGE": "spaceifyubuntu",
+  "RASPBIAN_DOCKER_IMAGE": "spaceifyraspbian",
   "CUSTOM_DOCKER_IMAGE": "custom_",
 
   "EDGE_IP": "10.0.0.1",
@@ -60,10 +64,9 @@
   "EDGE_HOSTNAME_REGX": "edge\\.spaceify\\.net",
   "EDGE_SUBNET": "10.0.0.0/16",
   "ALL_IPV4_LOCAL": "0.0.0.0",
+  "CONNECTION_HOSTNAME": "localhost",
 
   "APPLICATION_SUBNET": "172.17.0.0/16",
-
-  "SESSION_ID_COOKIE": "session_id",
 
   "EDGE_PORT_HTTP": 80,
   "EDGE_PORT_HTTPS": 443,
@@ -77,16 +80,16 @@
   "APPMAN_MESSAGE_PORT": 2950,
   "APPMAN_MESSAGE_PORT_SECURE": 4950,
 
-  "OPERATION_URL": "https://10.0.0.1/templates/operation.html",
-  "ADMIN_LOGIN_URL": "https://10.0.0.1/admin/login.html",
-  "ADMIN_INDEX_URL": "https://10.0.0.1/admin/",
+  "OPERATION_URL": "https://edge.spaceify.net/templates/operation.html",
+  "ADMIN_LOGIN_URL": "https://edge.spaceify.net/admin/login.html",
+  "ADMIN_INDEX_URL": "https://edge.spaceify.net/admin/",
   "REGISTRY_HOSTNAME": "spaceify.org",
   "REGISTRY_URL": "https://spaceify.org",
   "REGISTRY_PUBLISH_URL": "https://spaceify.org/ajax/upload.php?type=package&id=package",
   "REGISTRY_INSTALL_URL": "https://spaceify.org/install.php",
-  "EDGE_REGISTRATION_URL": "https://spaceify.net/edgeregister.php",
-  "EDGE_LOGIN_URL": "https://spaceify.net/edgelogin.php",
   "EDGE_APPSTORE_GET_PACKAGES_URL": "https://spaceify.org/appstore/getpackages.php",
+  "EDGE_REGISTER_URL": "https://spaceify.net/edge/register.php",
+  "EDGE_LOGIN_URL": "https://spaceify.net/edge/login.php",
 
   "GITHUB_HOSTNAME": "github.com",
 
@@ -110,9 +113,7 @@
   "SANDBOXED": "sandboxed",
   "NATIVE": "native",
   "ANY": "any",
-  "APP_TYPES_HR": {"spacelet": "Spacelet", "sandboxed": "Application", "native": "Native application"},
-  "APP_TYPES_HRLC": {"spacelet": "spacelet", "sandboxed": "application", "native": "native application"},
-  "APP_TYPE_CONVERT": {"spacelet": 0, "sandboxed": 1, "native": 2},
+  "APP_TYPE_NUMBER": {"spacelet": 0, "sandboxed": 1, "native": 2, "any": 3},
 
   "OPEN": "open",
   "OPEN_LOCAL": "open_local",
@@ -165,5 +166,20 @@
 		"magazines","mathematics","meteorology","multimedia","music","navigation","news","personal_information_managers","productivity","religious","science","simulation","social","sport","theatre",
 		"transport","video","weather","word_processors","workflow"],
 
-  "SESSION_COOKIE_PUBSUB_PATH": "/var/lib/spaceify/data/db/session_cookies.pub"
+  "SESSION_COOKIE_PUBSUB_PATH": "/var/lib/spaceify/data/db/session_cookies.pub",
+
+  "EVENT_APPLICATION_INSTALLED": "ApplicationInstalled",
+  "EVENT_APPLICATION_REMOVED": "ApplicationRemoved",
+  "EVENT_APPLICATION_STARTED": "ApplicationStarted",
+  "EVENT_APPLICATION_STOPPED": "ApplicationStopped",
+  "EVENT_SPACELET_INSTALLED": "SpaceletInstalled",
+  "EVENT_SPACELET_REMOVED": "SpaceletRemoved",
+  "EVENT_SPACELET_STARTED": "SpaceletStarted",
+  "EVENT_SPACELET_STOPPED": "SpaceletStopped",
+  "EVENT_NATIVE_APPLICATION_INSTALLED": "NativeApplicationInstalled",
+  "EVENT_NATIVE_APPLICATION_REMOVED": "NativeApplicationRemoved",
+  "EVENT_NATIVE_APPLICATION_STARTED": "NativeApplicationStarted",
+  "EVENT_NATIVE_APPLICATION_STOPPED": "NativeApplicationStopped",
+  "EVENT_EDGE_SETTINGS_CHANGED": "EdgeSettingsChanged",
+  "EVENT_CORE_SETTINGS_CHANGED": "CoreSettingsChanged"
 }

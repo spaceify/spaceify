@@ -1,3 +1,8 @@
+0.5.1  Alpha Centauri (developer-pre-alpha)
+    * Short URLs for the forthcoming remote operation system.
+    * New appstore_description field added to the spaceify.manifest. The field is mandatory.
+    * Event listeners for app related events.
+
 0.5.0  Alpha Centauri (developer-pre-alpha)
     * Migrated to use Node.js 5.10.1
     * 'HTTP code is 404 ...' error while installing packages is now fixed.

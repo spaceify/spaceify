@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * DNSServer, 22.10.2014 Spaceify Oy
  * 
@@ -98,14 +100,19 @@ var startServer = function(server, port, address, type)
 
 var processQuestions = function()
 	{ // Process the questions in the order they arrive
+	var name;
+	var question;
+	var response;
+	var question;
+	
 	if(!processingQuestion && questions.length > 0)
 		{
 		processingQuestion = true;
 
-		var question = questions.shift();
-		var response = question.response;
-		var question = question.question;
-		var name = question.name;
+		question = questions.shift();
+		response = question.response;
+		question = question.question;
+		name = question.name;
 
 		if(name in options.url2ip)											// Redirect URLs straight to IPs without requesting them from extrenal DNS
 			{
@@ -130,7 +137,9 @@ var processQuestions = function()
 
 var ask = function(question, response)
 	{
-	var i;
+	var i, r;
+	var cname;
+	var answer;
 
 	if(options.debug)
 		console.log("QUESTION:", question.name, dns.consts.qtypeToName(question.type), "\n");
@@ -146,8 +155,8 @@ var ask = function(question, response)
 
 	request.on("message", function(err, answers)
 		{
-		var cname = null;
-		var answer = null;
+		cname = null;
+		answer = null;
 
 		for(i = 0; i < answers.answer.length; i++)
 			{
@@ -206,7 +215,7 @@ var ask = function(question, response)
 	request.on("end", function()
 		{
 		// Finished processing the request
-		var r = request.question;
+		r = request.question;
 		//if(options.debug)
 		//	console.log("FINISHED PROCESSING REQUEST:", r.name, "TYPE:", r.type, "NAME:", dns.consts.qtypeToName(r.type), "\n");
 		});

@@ -35,7 +35,7 @@
 		this.error = function(err)
 			{
 			$("#password").empty();
-			net.showError(err[0].message);
+			net.showError(err[0] ? err[0].message : err.message);
 			}
 
 		</script>

@@ -156,6 +156,22 @@ self.setSplashAccepted = function(callback)
 	call("setSplashAccepted", [], useSecure, callback);
 	}
 
+self.setEventListeners = function(events, listeners, context, sessionId, callback)
+	{
+	call("setEventListeners", [events], useSecure, function(err, data, id, ms)
+		{
+		if(!err)
+			{
+			var wsRpcConnection = (!useSecure ? connection : secureConnection);
+
+			for(var i = 0; i < events.length; i++)
+				wsRpcConnection.exposeRpcMethod(events[i], context, listeners[i]);
+			}
+
+		callback(err, data, id, ms);
+		});
+	}
+
 /*self.saveOptions = function(unique_name, directory, filename, data, callback)
 	{
 	var post = {unique_name: unique_name, directory: directory, filename: filename, data: data};
@@ -197,10 +213,12 @@ var connect = function(isSecure, callback)
 	{
 	var port = !isSecure ? config.CORE_PORT : config.CORE_PORT_SECURE;
 
-	var connection_ = new classes.WebSocketRpcConnection();
-	!isSecure ? connection = connection_ : secureConnection = connection_;
+	var wsRpcConnection = new classes.WebSocketRpcConnection();
+	!isSecure ? connection = wsRpcConnection : secureConnection = wsRpcConnection;
 
-	connection_.connect({hostname: config.EDGE_HOSTNAME, port: port, isSecure: isSecure, caCrt: caCrt}, callback);
+	var hostname = (isNodeJs ? config.EDGE_IP : config.EDGE_HOSTNAME);
+
+	wsRpcConnection.connect({hostname: hostname, port: port, isSecure: isSecure, caCrt: caCrt}, callback);
 	}
 
 	// CACHE -- -- -- -- -- -- -- -- -- -- //

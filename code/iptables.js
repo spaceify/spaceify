@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * Spaceify iptables writer, 12.11.2014 Spaceify Oy
  * 

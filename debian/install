@@ -13,8 +13,7 @@ data/scripts/spaceifylog etc/cron.hourly
 data/docs/* var/lib/spaceify/data/docs
 data/db/create.sql var/lib/spaceify/data/db
 data/manifest/manifest.rules var/lib/spaceify/data/manifest
-data/docker/Dockerfile var/lib/spaceify/data/docker
-data/docker/image_versions var/lib/spaceify/data/docker
+data/docker/* var/lib/spaceify/data/docker
 data/logs/readme.txt var/lib/spaceify/data/logs
 
 upstart/* var/lib/spaceify/data/upstart

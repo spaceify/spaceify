@@ -92,14 +92,14 @@ var start = function(application, options)
 					{
 					opts.isSecure = false;
 					opts.port = HTTP_PORT;
-					httpServer.connect.sync(opts);
+					httpServer.listen.sync(opts);
 					}
 
 				if(options.webservers.https && options.webservers.https === true && !httpsServer.getIsOpen())
 					{
 					opts.isSecure = true;
 					opts.port = HTTPS_PORT;
-					httpsServer.connect.sync(opts);
+					httpsServer.listen.sync(opts);
 					}
 				}
 

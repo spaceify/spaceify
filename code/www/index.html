@@ -12,22 +12,24 @@
 
 			var net = new SpaceifyNet();
 			var core = new SpaceifyCore();
-			var synch = new SpaceifySynchronous();
+			var sync = new SpaceifySynchronous();
 
-			synch.waterFall(
-				[{object: core, method: net.showAdminTile, params: [null], type: "async"},
+			sync.waterFall(
+				[
+				{object: core, method: net.showAdminTile, params: [null], type: "async"},
 				{object: core, method: net.showUserUtilities, params: [null], type: "async"},
-				{object: core, method: net.showInstalledApplications, params: [null], type: "async"}],
+				{object: core, method: net.showInstalledApplications, params: [null], type: "async"}
+				],
 				function()												// finally
 					{
-					var appCount = synch.getResult(3);
+					var appCount = sync.getResult(3);
 					$("#spacelet, #spaceletHeader").css("display", (appCount[0] > 0 ? "block" : "none"));
 					$("#sandboxed, #sandboxedHeader").css("display", (appCount[1] > 0 ? "block" : "none"));
 					$("#native, #nativeHeader").css("display", (appCount[2] > 0 ? "block" : "none"));
 
 					jQuery("#userUtilities, #userUtilitiesHeader, #adminUtilities, #adminUtilitiesHeader").css("display", "block");					
 					});
-			}
+			}			
 		</script>
 	</head>
 

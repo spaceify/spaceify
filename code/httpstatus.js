@@ -1,4 +1,4 @@
-var http_status = {
+var httpStatus = {
 	100: { message: "Continue", detail: "" },
 	101: { message: "Switching Protocols", detail: "" },
 	102: { message: "Processing", detail: "" },
@@ -87,4 +87,4 @@ var http_status = {
 	"unknown": { message: "Unknown http status code was received", detail: "" }
 }
 
-module.exports = http_status;
+module.exports = httpStatus;

@@ -468,10 +468,20 @@ npm install
 # ----------
 # ----------
 # ----------
-# ---------- Docker image - At this point the spaceifyubuntu image doesn't exists and can be created safely ---------- #
-printf "\n\e[4mSearching for spaceifyubuntu Docker image\e[0m\n"
+# ---------- Docker image for different distributions ---------- #
+printf "\n\e[4mSearching suitable Docker image for this distribution\e[0m\n"
 
-if_path="/var/lib/spaceify/data/docker"
+distro=$(uname -a)
+if [[ -n $(uname -a |& grep -i "ubun") ]]; then
+	distro=$(cat /var/lib/spaceify/code/www/libs/config.json | grep "UBUNTU_DISTRO_NAME" | sed 's/[^a-z]*//g')
+	distro_image_name=$(cat /var/lib/spaceify/code/www/libs/config.json | grep "UBUNTU_DOCKER_IMAGE" | sed 's/[^a-z]*//g')
+elif [[ -n $(uname -a |& grep -i "rasp") ]]; then
+	distro=$(cat /var/lib/spaceify/code/www/libs/config.json | grep "RASPBIAN_DISTRO_NAME" | sed 's/[^a-z]*//g')
+	distro_image_name=$(cat /var/lib/spaceify/code/www/libs/config.json | grep "RASPBIAN_DOCKER_IMAGE" | sed 's/[^a-z]*//g')
+fi
+$(sqlite3 $dbpath "UPDATE information SET distribution='$distro'")
+
+if_path="/var/lib/spaceify/data/docker/$distro"
 if_version="$if_path/image_version"
 if_list="$if_path/image_versions"																# Latest image version list is supplied with the package
 
@@ -497,10 +507,10 @@ if [ -f "$if_path/$old_image" ]; then old_image_exists=1; else old_image_exists=
 #	image_name=$(echo $new_image | awk -F "." '{print $1}')
 #
 #	printf "\n\e[32mExisting image was not found and can not be downloaded. A new image is now being build.\e[0m\n\n"
-#	docker build --no-cache --rm -t spaceifyubuntu . # > /dev/null 2>&1 || true
+#	docker build --no-cache --rm -t $distro_image_name . # > /dev/null 2>&1 || true
 #
 #	printf "\n\n\e[32mExporting the image.\e[0m\n"
-#	ID=$(docker run -d spaceifyubuntu /bin/bash) > /dev/null 2>&1 || true
+#	ID=$(docker run -d $distro_image_name /bin/bash) > /dev/null 2>&1 || true
 #	sudo docker export $ID > "$if_path/$image_name.tar" > /dev/null 2>&1 || true
 #	sudo docker stop $ID > /dev/null 2>&1 || true
 #	sudo docker rm -f $ID > /dev/null 2>&1 || true
@@ -515,28 +525,28 @@ if [ $old_image_exists == 1 ] && [ "$old_image" == "$new_image" ]; then
 	# # # Use existing image
 
 	printf "\n\e[32mExisting, compatible image was found. Importing the image.\e[0m\n"
-	cat "$if_path/$new_image" | sudo docker import - spaceifyubuntu > /dev/null
+	cat "$if_path/$new_image" | sudo docker import - $distro_image_name > /dev/null
 
 else
 
 	# # # Load and import
 	# # # The image must be loaded from spaceify.org before it can be imported
 
-	rm "$if_path"/spaceifyubuntu* > /dev/null 2>&1 || true
+	rm "$if_path/$distro_image_name"* > /dev/null 2>&1 || true
 
-	printf "\n\e[32mExisting, compatible image was not found. The image is downloaded from a remote server.\e[0m\n"
+	printf "\n\e[32mExisting, compatible image was not found. The image is downloaded from remote server.\e[0m\n"
 	curl -o "$if_path/$new_image" "https://spaceify.org/downloads/$new_image"
 
 	if [ -f "$if_path/$new_image" ]; then
 		printf "\n\e[32mImporting the image.\e[0m\n"
-		cat "$if_path/$new_image" | sudo docker import - spaceifyubuntu > /dev/null
+		cat "$if_path/$new_image" | sudo docker import - $distro_image_name > /dev/null
 	fi
 
 fi
 
-ubun=$( echo $(docker images) | sed -n '/spaceifyubuntu/{p;q;}' )
+ubun=$( echo $(docker images) | sed -n "/$distro_image_name/{p;q;}" )
 if [ -z "$ubun" ]; then
-	printf "\n\e[41mThe installation is aborted because the required spaceifyubuntu Docker image doesn't exist. Run 'apt-get purge spaceify' to remove the incomplete installation. NOTICE: Save files that you want to preserve before removing the installation.\e[0m\n\n"
+	printf "\n\e[41mThe installation is aborted because the required $distro_image_name Docker image doesn't exist. Run 'apt-get purge spaceify' to remove the incomplete installation. NOTICE: Save files that you want to preserve before removing the installation.\e[0m\n\n"
 	exit 1
 else
 	printf $new_version > $if_version															# Update the version file
@@ -546,67 +556,10 @@ fi
 # ----------
 # ----------
 # ----------
-# ---------- Register edge to Spaceify - Create user name and password for edge when necessary ---------- #
-printf "\n\e[4mRegistering this edge node\e[0m\n"
+# ---------- Registration - use existing information or create new. ---------- #
+printf "\n\e[4mCreating registration information for this edge node\e[0m\n"
 
-edge_uuid=$(sqlite3 $dbpath "SELECT edge_id FROM user;")
-edge_password=$(sqlite3 $dbpath "SELECT edge_password FROM user;")
-
-registration_result=""
-registration_attempt=0
-registration_url=$(cat /var/lib/spaceify/code/www/libs/config.json | grep "EDGE_REGISTRATION_URL" | sed 's/[",_]*//g' | sed 's/EDGEREGISTRATIONURL: //g')
-
-if [[ "$edge_uuid" == "" ]]; then
-	printf "\nExisting registration was not found. Creating a new edge id and trying to register it to spaceify.net.\n"
-
-	# Try five times to register a new edge_id
-	while [ $registration_attempt -lt 5 ]; do
-		let registration_attempt+=1
-
-		printf "\nAttempt ${registration_attempt} of 5\n"
-
-		data1=$(openssl rand -hex 4)
-		data2=$(openssl rand -hex 2)
-		data3=$(openssl rand -hex 2)
-		data4i=$(openssl rand -hex 2)
-		data4r=$(openssl rand -hex 6)
-		edge_uuid="${data1}-${data2}-${data3}-${data4i}-${data4r}"
-
-		edge_password=$(openssl rand -hex 16)
-
-		registration_result=$(curl -d "eid=${edge_uuid}&epw=${edge_password}" --location $registration_url)
-		if [[ "$registration_result" == "" ]]; then
-			echo "${edge_uuid},${edge_password}" > /var/lib/spaceify/data/db/edge_id.uuid
-			break;
-		else
-			printf "\nRegistration result: ${registration_result}\n"
-		fi
-	done
-fi
-
-	# -- update the created/restored edge_id and password to the database -- #
-sqlite3 $dbpath "UPDATE user SET edge_id='$edge_uuid', edge_password='$edge_password';"
-
-	# -- Check/print registration status -- #
-if [ $registration_attempt -eq 5 ]; then
-
-	printf "\nRegistering this edge node failed: ${registration_result}. The registration is required for some operations of the Spaceify core and it is highly recommended to finish the registration. Try to finish the registration manually by running command: spm register\n"
-
-elif [ $registration_attempt -gt 0 ] && [ $registration_attempt -lt 5 ]; then
-
-	printf "\nThis edge node was registered successfully with the edge id ${edge_uuid}.\n"
-	printf "The registration file edge_id.uuid can be found from /var/lib/spaceify/data/db\n"
-	printf "Consider storing this file in a secure location for possible future use.\n"
-	printf "The registration file can be used to set or change registration when Spaceify is installed or updated.\n"
-	pritnf "By placing the file to /tmp, before updating or installing, Spaceify uses it to register itself instead\n"
-	printf "of using its previous registration or creating a new registration.\n"
-	printf "Notice! Do not use the same registration on multiple edge nodes.\n"
-
-else
-
-	printf "\nExisting registration file, containing edge id ${edge_uuid}, was found and is used to identify this edge node.\n"
-
-fi
+$(node /var/lib/spaceify/code/edgespaceifynet.js "createEdgeId")
 
 # ----------
 # ----------

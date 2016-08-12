@@ -40,11 +40,13 @@
 			else if(operation == "remove")
 				sam.removeApplication(unique_name, self, applicationRemoved);
 			else if(operation == "install")
-				sam.installApplication($("#package").val(), "", "", self, applicationInstalled);
+				sam.installApplication($("#package").val(), "", "", true, self, applicationInstalled);
 			else if(operation == "getServiceRuntimeStates")
 				sam.getServiceRuntimeStates(self, getServiceRuntimeStates);
-			else if(operation == "getSettings")
-				sam.getSettings(self, getSettings);
+			else if(operation == "getCoreSettings")
+				sam.getCoreSettings(self, getCoreSettings);
+			else if(operation == "getEdgeSettings")
+				sam.getEdgeSettings(self, getEdgeSettings);
 			}
 
 		<!-- COMMAND - RETURN CALLBACKS -->
@@ -106,33 +108,72 @@
 			acr.append($("<div>&nbsp;</div>"));
 			}
 
-		getSettings = function(settings)
+		getCoreSettings = function(settings)
 			{
-			console.log(settings);
 			var acr = $("#adminContainerRight");
-			
-			$("#adminContainerRight").append($("<div>Settings object</div>"));
-			$("#adminContainerRight").append($("<div>Object { locale: \"" + settings.locale + "\", splash_ttl: " + settings.splash_ttl + ", log_in_session_ttl: " + settings.log_in_session_ttl + " }</div>"));
+
+			$("#adminContainerRight").append($("<div>CoreSettings object</div>"));
+			$("#adminContainerRight").append($("<div>" + JSON.stringify(settings, null, 1) + "</div>"));
 
 			acr.append($("<div>&nbsp;</div>"));
 			acr.append($("<div>Locale (drop down? where to get options?)</div>"));
 			acr.append($("<div><input type='text' value='" + settings.locale + "', id='locale'></div>"));
+
 			acr.append($("<div>&nbsp;</div>"));
 			acr.append($("<div>Splash - session length before displayed again (ms)</div>"));
 			acr.append($("<div><input type='text' value='" + settings.splash_ttl + "', id='splash_ttl'></div>"));
+
 			acr.append($("<div>&nbsp;</div>"));
 			acr.append($("<div>Log in - session inactivity expiration time (ms)</div>"));
 			acr.append($("<div><input type='text' value='" + settings.log_in_session_ttl + "', id='log_in_session_ttl'></div>"));
+
 			acr.append($("<div>&nbsp;</div>"));
-			acr.append($("<div><button onclick='saveSettings();'>Save settings</button></div>"));
+			acr.append($("<div><button onclick='saveCoreSettings();'>Save CoreSettings object</button></div>"));
 			}
-		saveSettings = function()
+		saveCoreSettings = function()
 			{
 			var locale = $("#locale").val();
 			var splash_ttl = parseInt($("#splash_ttl").val());
 			var log_in_session_ttl = parseInt($("#log_in_session_ttl").val());
 
-			sam.saveSettings({locale: locale, splash_ttl: splash_ttl, log_in_session_ttl: log_in_session_ttl}, self, null);
+			sam.saveCoreSettings({locale: locale, splash_ttl: splash_ttl, log_in_session_ttl: log_in_session_ttl}, self, null);
+			}
+
+		getEdgeSettings = function(settings)
+			{
+			var acr = $("#adminContainerRight");
+
+			$("#adminContainerRight").append($("<div>EdgeSettings object</div>"));
+			$("#adminContainerRight").append($("<div>" + JSON.stringify(settings, null, 1) + "</div>"));
+
+			acr.append($("<div>&nbsp;</div>"));
+			acr.append($("<div>Edge id: " + settings.edge_id + "</div>"));
+
+			acr.append($("<div>&nbsp;</div>"));
+			acr.append($("<div>Edge name: " + settings.edge_name + "</div>"));
+
+			acr.append($("<div>&nbsp;</div>"));
+			acr.append($("<div><input type='checkbox' value='0', id='edge_enable_remote'" + (settings.edge_enable_remote == 1 ? "checked" : "") + ">Edge enable remote</div>"));
+
+			acr.append($("<div>&nbsp;</div>"));
+			acr.append($("<div><input type='checkbox' value='0', id='edge_require_password'" + (settings.edge_require_password == 1 ? "checked" : "") + ">Edge require password</div>"));
+
+			acr.append($("<div>&nbsp;</div>"));
+			acr.append($("<div>Admin login count: " + settings.admin_login_count + "</div>"));
+
+			var date = new Date(settings.admin_last_login);
+			acr.append($("<div>&nbsp;</div>"));
+			acr.append($("<div>Admin last login: " + date.toString() + "</div>"));
+
+			acr.append($("<div>&nbsp;</div>"));
+			acr.append($("<div><button onclick='saveEdgeSettings();'>Save EdgeSettings object</button></div>"));
+			}
+		saveEdgeSettings = function()
+			{
+			var edge_enable_remote = (!$("#edge_enable_remote").prop("checked") ? "0" : "1");
+			var edge_require_password = (!$("#edge_require_password").prop("checked") ? "0" : "1");
+
+			sam.saveEdgeSettings({edge_enable_remote: edge_enable_remote, edge_require_password: edge_require_password}, self, null);
 			}
 
 		<!-- APPLICATION MANAGER CALLBACKS (HANDLERS) -->
@@ -365,8 +406,13 @@
 			</button>
 
 			<br><br>
-			<button class="adminButton normal" name="operation" onclick="commandApplication('getSettings');">
-				getSettings
+			<button class="adminButton normal" name="operation" onclick="commandApplication('getCoreSettings');">
+				getCoreSettings
+			</button>
+
+			<br><br>
+			<button class="adminButton normal" name="operation" onclick="commandApplication('getEdgeSettings');">
+				getEdgeSettings
 			</button>
 
 			<br><hr>
@@ -407,7 +453,7 @@
 			<!-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -->
 			<br><hr>
 
-			<button class="adminButton normal" name="operation" onclick="window.location.assign(spaceifyPage.urlHttps + '/appstore/');">
+			<button class="adminButton normal" name="operation" onclick="window.location.assign(spaceifyPage.urlHttps + 'appstore/');">
 				Spaceify AppStore
 			</button>
 

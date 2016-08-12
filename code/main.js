@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * Spaceify main, 2.9.2013 Spaceify Oy
  *
@@ -20,6 +22,8 @@ var config = new SpaceifyConfig();
 
 self.start = fibrous( function()
 	{
+	var iptables;
+
 	process.title = "spaceify";																		// Shown in ps aux
 
 	events();																						// Exit gracefully
@@ -30,11 +34,8 @@ self.start = fibrous( function()
 		// START CORE RUNNING - CORE LISTENS ALL THE SUPPORTED SERVER TYPES
 		core.sync.connect();
 
-		// ---
-		// ToDO: enable - try { core.sync.loginToSpaceifyNet("login"); } catch(err) { logger.warn(err); }
-
 		// RESTORE IPTABLES RULES
-		var iptables = new Iptables();
+		iptables = new Iptables();
 		iptables.sync.splashRestoreRules();
 		}
 	catch(err)
@@ -80,8 +81,6 @@ var exit = function(err)
 		{
 		try {
 			core.sync.close();
-
-			// ToDO: enable - try { core.sync.loginToSpaceifyNet("logout"); } catch(err) {}
 
 			process.exit(0);
 			}

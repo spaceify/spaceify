@@ -1,3 +1,5 @@
+"use strict";
+
 /**
 * DockerHelper, 14.10.2013 Spaceify Oy
 *
@@ -28,14 +30,14 @@ self.init = function(container, callback)
 		container.attach({stream: true, stdout: true, stderr: true}, function(err, stream)
 			{
 			if(err)
-				throw language.E_ATTACH_CONTAINER_OUTPUT.preFmt("DockerHelper::init", {"~err": err.toString()});
+				throw language.E_INIT_ATTACH_CONTAINER_OUTPUT_FAILED.preFmt("DockerHelper::init", {"~err": err.toString()});
 
 			standardOutput = stream;
 
 			container.attach({stream: true, stdin: true}, function(err, stream)
 				{
 				if(err)
-					throw language.E_ATTACH_CONTAINER_INPUT.preFmt("DockerHelper::init", {"~err": err.toString()});
+					throw language.E_INIT_ATTACH_CONTAINER_INPUT_FAILED.preFmt("DockerHelper::init", {"~err": err.toString()});
 
 				standardInput = stream;
 				callback(err, null);
@@ -70,7 +72,10 @@ self.executeCommand = function(command, waitedStrings, disableInfo, callback)
 
 self.waitForOutput = function(waitedStrings, callback)
 	{
+	var seq;
+	var tdata;
 	var buf = "";
+
 	standardOutput.removeAllListeners("data");
 	standardOutput.on("data", function(data)
 		{
@@ -78,8 +83,8 @@ self.waitForOutput = function(waitedStrings, callback)
 			callback(null, "");
 
 		// <Buffer 01 00 00 00 00 00 00 ?? ...> What is this 8 byte sequence/preamble?
-		var tdata = data.toString("ascii");
-		var seq = (data.length >= 8 ? data.readInt32BE(0) : 0);
+		tdata = data.toString("ascii");
+		seq = (data.length >= 8 ? data.readInt32BE(0) : 0);
 		if(seq == 16777216)
 			tdata = tdata.substr(tdata.length > 8 ? 8 : 0, data.length - 1);
 

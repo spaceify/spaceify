@@ -68,7 +68,7 @@
 
 					var pageSize = $("#navPageSize option:selected").val();
 
-					sam.appStoreGetPackages({ "where": where,  "order": order, "page": page, "pageSize": pageSize }, results);
+					sam.appStoreGetPackages({ "where": where, "order": order, "page": page, "pageSize": pageSize }, results);
 					}
 				catch(err)
 					{}
@@ -76,6 +76,7 @@
 
 			function results(err, result)
 				{
+console.log(result);
 				$("#listContainer").empty();
 				$("#detailContainer").empty();
 				listContainer = $("#listContainer");

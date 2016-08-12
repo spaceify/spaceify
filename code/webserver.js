@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * Web Server, 29.11.2013 Spaceify Oy
  * 
@@ -11,7 +13,6 @@ var https = require("https");
 var crypto = require("crypto");
 var qs = require("querystring");
 var fibrous = require("fibrous");
-var reload = require("./reload");
 var Logger = require("./logger");
 var language = require("./language");
 var contentTypes = require("./contenttypes");
@@ -34,9 +35,9 @@ var options = {};
 var isOpen = false;
 var webServer = null;
 
+var requestListener = null;
 var serverUpListener = null;
 var serverDownListener = null;
-var externalRequestListener = null;
 
 var sessions = {};
 var SESSIONTOKEN = "";
@@ -56,8 +57,14 @@ var eventEmitter = new events.EventEmitter();
 var CARBAGE_INTERVAL = 600000;
 var SESSION_INTERVAL = 3600 * 24;
 
-self.connect = function(opts, callback)
+self.listen = function(opts, callback)
 	{
+	var key;
+	var crt;
+	var caCrt;
+	var files;
+	var body = "";
+
 	options.hostname = opts.hostname || config.ALL_IPV4_LOCAL;
 	options.port = opts.port || 80;
 
@@ -119,9 +126,9 @@ self.connect = function(opts, callback)
 		}
 	else																// Start a https server
 		{
-		var key = fs.sync.readFile(options.key);
-		var crt = fs.sync.readFile(options.crt);
-		var caCrt = fs.sync.readFile(options.caCrt);
+		key = fs.sync.readFile(options.key);
+		crt = fs.sync.readFile(options.crt);
+		caCrt = fs.sync.readFile(options.caCrt);
 
 		webServer = https.createServer({ key: key, cert: crt, ca: caCrt });
 		}
@@ -138,7 +145,7 @@ self.connect = function(opts, callback)
 
 	webServer.on("request", function(request, response)
 			{
-			var body = "";
+			body = "";
 			request.on("data", function(chunk)
 				{
 				body += chunk;
@@ -158,7 +165,7 @@ self.connect = function(opts, callback)
 		if(serverDownListener)
 			serverDownListener({isSecure: options.isSecure});
 
-		callback(language.E_WEBSERVER_FATAL_ERROR.preFmt("WebServer()::connect", {"~hostname": options.hostname, "~port": options.port, "~err": err.toString()}), null);
+		callback(language.E_LISTEN_FATAL_ERROR.preFmt("WebServer()::connect", {"~hostname": options.hostname, "~port": options.port, "~err": err.toString()}), null);
 		});
 
 	webServer.on("close", function()
@@ -196,19 +203,21 @@ self.setServerDownListener = function(listener)
 	serverDownListener = (typeof listener == "function" ? listener : null);
 	}
 
-self.setExternalRequestListener = function(listener)
+self.setRequestListener = function(listener)
 	{
-	externalRequestListener = (typeof listener == "function" ? listener : null);
+	requestListener = (typeof listener == "function" ? listener : null);
 	}
 
 // -- -- -- -- -- -- -- -- -- -- //
 var processRequest = function()
 	{
+	var rrb;
+
 	if(!processingRequest && requests.length > 0)
 		{
 		fibrous.run( function()
 			{
-			var rrb = requests.shift();
+			rrb = requests.shift();
 			loadContent.sync(rrb.request, rrb.response, rrb.body);
 			}, function(err, data) { } );
 		}
@@ -220,32 +229,42 @@ var loadContent = fibrous( function(request, response, body)
 
 	// ToDo: check request.method?
 
-	var urlObj = urlObjUnmodified = url.parse(request.url, true);
-
-	urlObj.pathname = urlObj.pathname.replace(/^\/*|\/*$/g, "");					// remove forward slash from the beginning and end
-
+	var location;
+	var reqLisObj;
+	var requestUrl;
+	var wwwPathType;
+	var status = false;
+	var wwwPath = options.wwwPath;
 	var POST = parsePost(request, body);
 	var cookies = parseCookies(request);
-
-	var status = false;
+	var urlObj = url.parse(request.url, true);
+	var urlObjUnmodified = url.parse(request.url, true);
 
 	try {
-		if(externalRequestListener)
-			{
-			var rs = externalRequestListener.sync(request, body, options.isSecure);
+		urlObj.pathname = urlObj.pathname.replace(/^\/*|\/*$/g, "");					// remove forward slash from the beginning and end
 
-			if(rs.type == "load")
-				status = load(rs.wwwPath, rs.pathname, request, response, urlObjUnmodified, urlObj.query, POST, cookies, rs.responseCode);
-			else if(rs.type == "write")
-				status = write(rs.content, rs.contentType, request, response, rs.responseCode, rs.location, []);
+		if(requestListener)
+			{
+			reqLisObj = requestListener.sync(request, body, urlObj, options.isSecure);
+
+			if(reqLisObj.type == "load")
+				{
+				wwwPath = reqLisObj.wwwPath;
+				request.url = reqLisObj.pathname;
+				urlObj.pathname = reqLisObj.pathname;
+				urlObjUnmodified.pathname = reqLisObj.pathname;
+				urlObj.pathname = urlObj.pathname.replace(/^\/*|\/*$/g, "");
+				//status = load(reqLisObj.wwwPath, reqLisObj.pathname, request, response, urlObjUnmodified, urlObj.query, POST, cookies, reqLisObj.responseCode);
+				}
+			else if(reqLisObj.type == "write")
+				status = write(reqLisObj.content, reqLisObj.contentType, request, response, reqLisObj.responseCode, reqLisObj.location, []);
 			}
 
 		if(status === false)															// Redirect back to directory if / is not at the end of the directory
 			{
-			var wwwPath = checkURL(options.wwwPath, urlObj.pathname);
-			var wwwPathType = utility.sync.getPathType(wwwPath);
+			wwwPathType = utility.sync.getPathType( checkURL(wwwPath, urlObj.pathname) );
 
-			var requestUrl = request.url;
+			requestUrl = request.url;
 			if(urlObj.search)
 				requestUrl = requestUrl.replace(urlObj.search, "");
 			if(urlObj.hash)
@@ -253,20 +272,21 @@ var loadContent = fibrous( function(request, response, body)
 
 			if(wwwPathType == "directory" && requestUrl.match(/[^\/]$/))
 				{
-				var location = options.protocol + "://" + config.EDGE_HOSTNAME + (urlObj.port ? ":" + urlObj.port : "") + requestUrl + "/";
+				location = options.protocol + "://" + config.EDGE_HOSTNAME + (urlObj.port ? ":" + urlObj.port : "") + requestUrl + "/";
 				if(urlObj.search)
 					location += urlObj.search;
 				if(urlObj.hash)
 					location += urlObj.hash;
+
 				status = redirect(request, response, 301, location, []);
 				}
 			}
 
 		if(status === false)															// www
-			status = load(options.wwwPath, urlObj.pathname, request, response, urlObjUnmodified, urlObj.query, POST, cookies);
+			status = load(wwwPath, urlObj.pathname, request, response, urlObjUnmodified, urlObj.query, POST, cookies);
 
 		if(status === false)															// www + index file
-			status = load(options.wwwPath, urlObj.pathname + "/" + options.indexFile, request, response, urlObjUnmodified, urlObj.query, POST, cookies);
+			status = load(wwwPath, urlObj.pathname + "/" + options.indexFile, request, response, urlObjUnmodified, urlObj.query, POST, cookies);
 
 		if(status === false)															// Not Found
 			status = redirect(request, response, 404, "", []);
@@ -287,7 +307,14 @@ var loadContent = fibrous( function(request, response, body)
 
 var load = function(wwwPath, pathname, request, response, urlObj, GET, POST, cookies, responseCode)
 	{
+	var file;
+	var html;
+	var contentType;
 	var status = false;
+	var isLogInPage = false;
+	var isSecurePage = false; 
+	var isAngularJS = false;
+	var isOperationPage = false;
 
 	try {
 		wwwPath = checkURL(wwwPath, pathname);										// Check URL validity
@@ -295,14 +322,12 @@ var load = function(wwwPath, pathname, request, response, urlObj, GET, POST, coo
 		if(!utility.sync.isLocal(wwwPath, "file"))									// Return if file is not found
 			throw false;
 
-		var file = fs.sync.readFile(wwwPath);										// Get the file content
+		file = fs.sync.readFile(wwwPath);											// Get the file content
 
-		var i = pathname.lastIndexOf(".");											// Get content type of the file
-		var contentType = pathname.substr(i + 1, pathname.length - i - 1);
+		contentType = pathname.lastIndexOf(".");									// Get content type of the file
+		contentType = pathname.substr(contentType + 1, pathname.length - contentType - 1);
 
-		var isAngularJS = isOperationPage = isSecurePage = isLogInPage = false;		// Determine the page type
-
-		var html = file.toString().match(regxHTML);									// The <head ...> tag has the required information
+		html = file.toString().match(regxHTML);										// The <head ...> tag has the required information
 
 		if(html)																	// Reqular or AngularJS webpage
 			{ // e.g., <html ng-app spaceify-secure spaceify-is-login> -> ['html', 'ng-app', 'spaceify-secure', 'spaceify-is-login']
@@ -340,14 +365,20 @@ var renderHTML = fibrous( function(file, contentType, request, response, respons
 
 var renderOperationPage = fibrous( function(request, response, GET, POST, cookies)
 	{
-	var error = null, data = null, operation, headers = [];
+	var userData;
+	var operation;
+	var data = null;
+	var sessiontoken;
+	var error = null;
+	var headers = [];
+	var operationData;
 
 	if(!POST["data"])
-		error = errorc.errorFromObject(language.E_INVALID_DATA_POST);
+		error = errorc.errorFromObject(language.E_RENDER_OPERATION_PAGE_INVALID_DATA_POST);
 	else
 		{
 		// SESSION
-		var sessiontoken = manageSessions(cookies, request.connection.remoteAddress, "/");
+		sessiontoken = manageSessions(cookies, config.EDGE_HOSTNAME, "/");
 
 		// HEADERS
 		headers.push["Set-Cookie", sessions[sessiontoken].cookie];
@@ -355,9 +386,9 @@ var renderOperationPage = fibrous( function(request, response, GET, POST, cookie
 		// OPERATION
 		operation = utility.parseJSON(POST["data"].body, true);
 
-		var userData = sessions[sessiontoken].userData;
+		userData = sessions[sessiontoken].userData;
 
-		var operationData = webOperation.sync.getData(operation, userData, options.isSecure);
+		operationData = webOperation.sync.getData(operation, userData, options.isSecure);
 
 		//if(operationData.error && operationData.error.code == 2)								// Admin is not logged in
 		//	return redirect(request, response, 301, config.ADMIN_LOGIN_URL, []);
@@ -371,13 +402,18 @@ var renderOperationPage = fibrous( function(request, response, GET, POST, cookie
 
 var renderAngularJS = function(file, contentType, pathname, isSecurePage, isLogInPage, request, response, urlObj, GET, POST, cookies, responseCode)
 	{
-	// SESSIONS -- -- -- -- -- -- -- -- -- -- //
-	var ip = request.connection.remoteAddress;				// Proxy? -> request.headers["x-forwarded-for"]
+	var head;
+	var script;
+	var section;
+	var headers = [];
+	var sessiontoken;
+	var operationData;
+	var locale = config.DEFAULT_LOCALE;
 
-	var sessiontoken = manageSessions(cookies, ip, "/");
+	// SESSIONS -- -- -- -- -- -- -- -- -- -- //
+	sessiontoken = manageSessions(cookies, config.EDGE_HOSTNAME, "/");
 
 	// GET THE LOCALE / LANGUAGE FOR THE CURRENT SESSION
-	var locale = config.DEFAULT_LOCALE;
 	if(GET && GET.locale)
 		locale = GET.locale;
 	else if(POST.locale)
@@ -388,7 +424,7 @@ var renderAngularJS = function(file, contentType, pathname, isSecurePage, isLogI
 		locale = options.locale;
 
 	// HEADER -- -- -- -- -- -- -- -- -- -- //
-	var headers = [];
+	headers = [];
 	headers.push(["Set-Cookie", "locale=" + locale]);
 	headers.push(["Set-Cookie", sessions[sessiontoken].cookie]);
 
@@ -397,7 +433,7 @@ var renderAngularJS = function(file, contentType, pathname, isSecurePage, isLogI
 		return redirect(request, response, 301, utility.parseURLFromURLObject(urlObj, config.EDGE_HOSTNAME, "https", urlObj.port), headers);
 	else if(options.isSecure && isSecurePage)
 		{
-		var operationData = webOperation.sync.getData({ type: "isAdminLoggedIn" }, sessions[sessiontoken].userData, options.isSecure);
+		operationData = webOperation.sync.getData({ type: "isAdminLoggedIn" }, sessions[sessiontoken].userData, options.isSecure);
 
 		if(operationData.error)															// Internal Server Error
 			return redirect(request, response, 500, "", headers);
@@ -407,17 +443,17 @@ var renderAngularJS = function(file, contentType, pathname, isSecurePage, isLogI
 			return redirect(request, response, 301, config.ADMIN_INDEX_URL, headers);
 		}
 
-	var section = pathname.replace(/\.[^.]*$/, "");
+	section = pathname.replace(/\.[^.]*$/, "");
 	section = section.replace(/^\//, "");
 	section = section.toLowerCase();
 
 	// INJECT JAVASCRIPT -- -- -- -- -- -- -- -- -- -- //
-	var head = file.toString().match(regxAngularJSHead);
+	head = file.toString().match(regxAngularJSHead);
 
 	if(head)
 		{
-		var script = "\t\tvar spaceifyPage = " + JSON.stringify({
-						ip: ip,
+		script = "\t\tvar spaceifyPage = " + JSON.stringify({
+						//ip: request.connection.remoteAddress;							// Proxy? -> request.headers["x-forwarded-for"],
 						locale: locale,
 						locales, locales,
 						section: section,
@@ -475,6 +511,7 @@ var parsePost = function(request, body)
 	{ // Simple parsing of POST body
 	var post = {};
 	var contentType;
+
 	try {
 		if(request.method.toLowerCase() != "post")
 			throw "";
@@ -527,12 +564,11 @@ var manageSessions = function(cookies, domain, path)
 
 var createSession = function(Domain, Path)
 	{
-	shasum = crypto.createHash("sha512");
-	var result = utility.bytesToHexString(crypto.randomBytes(16));
-	shasum.update(result);
+	var shasum = crypto.createHash("sha512");
+	shasum.update( utility.bytesToHexString(crypto.randomBytes(16)) );
 	var sessiontoken = shasum.digest("hex").toString();
 
-	var cookie = SESSIONTOKEN + "=" + sessiontoken + "; Path=" + Path + "; Domain=" + Domain + "; HttpOnly; session";
+	var cookie = SESSIONTOKEN + "=" + sessiontoken + "; Path=" + Path + "; Domain=" + Domain + "; HttpOnly";
 	if(options.isSecure)
 		cookie += "; Secure";
 
@@ -548,11 +584,13 @@ self.destroySessions = function()
 	
 var parseCookies = function(request)
 	{
+	var name_value;
 	var cookies = {};
 	var cookie = (request.headers.cookie || request.headers.Cookie || "").split(";");
+
 	for(var i = 0; i < cookie.length; i++)
 		{
-		var name_value = cookie[i].split("=");
+		name_value = cookie[i].split("=");
 		if(name_value.length == 2)
 			cookies[name_value[0].trim()] = {value: name_value[1].trim(), cookie: cookie[i]};
 		}
@@ -564,6 +602,7 @@ var parseCookies = function(request)
 var carbageCollection = function()
 	{
 	var sts = Object.keys(sessions);									// Remove expired sessions
+
 	for(var i = 0; i < sts.length; i++)
 		{
 		if(Date.now() - sessions[sts[i]].timestamp >= options.sessionDeleteInterval)

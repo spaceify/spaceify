@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * DNSServer service, 19.11.2014 Spaceify Oy
  * 

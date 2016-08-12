@@ -157,6 +157,13 @@
       "validator": {"type": "regx", "match": "not_empty_trimmed"},
       "errors": {"field": "E_SHORT_DESCRIPTION_UNDEFINED", "type": "E_SHORT_DESCRPTION_TYPE", "error": "E_SHORT_DESCRPTION_FORMAT"}
     },
+    "appstore_description":
+    {
+      "type": "string",
+      "required": "all",
+      "validator": {"type": "regx", "match": "not_empty_trimmed"},
+      "errors": {"field": "E_APPSTORE_DESCRIPTION_UNDEFINED", "type": "E_APPSTORE_DESCRPTION_TYPE", "error": "E_APPSTORE_DESCRPTION_FORMAT"}
+    },
     "keywords":
     {
       "type": "array",
@@ -355,7 +362,7 @@
     "E_INSTALL_COMMAND_TYPE": "Manifest: install command type must be string.",
     "E_INSTALL_COMMAND_FORMAT": "Manifest: install command can not be empty. Leave it out if it is not required.",
 
-    "E_DEVELOPER_UNDEFINED": "Manifest: developer field must be defined",
+    "E_DEVELOPER_UNDEFINED": "Manifest: developer field must be defined.",
     "E_DEVELOPER_TYPE": "Manifest: developer type must be object.",
     "E_DEVELOPER_EMPTY": "Manifest: developer must have developers defined.",
     "E_DEVELOPER_NAME_UNDEFINED": "Manifest: developer must have name field defined.",
@@ -376,9 +383,13 @@
     "E_CONTRIBUTORS_URL_TYPE": "Manifest: contributors url type must be string.",
     "E_CONTRIBUTORS_URL_FORMAT": "Manifest: contributors url can not be empty. Leave it out if it is not required.",
 
-    "E_SHORT_DESCRIPTION_UNDEFINED": "Manifest: short_description field must be defined",
+    "E_SHORT_DESCRIPTION_UNDEFINED": "Manifest: short_description field must be defined.",
     "E_SHORT_DESCRPTION_TYPE": "Manifest: short_description type must be string.",
     "E_SHORT_DESCRPTION_FORMAT": "Manifest: short_description can not be empty or have leading or trailing whitespace.",
+
+    "E_APPSTORE_DESCRIPTION_UNDEFINED": "Manifest: appstore_description field must be defined.",
+    "E_APPSTORE_DESCRPTION_TYPE": "Manifest: appstore_description type must be string.",
+    "E_APPSTORE_DESCRPTION_FORMAT": "Manifest: appstore_description can not be empty or have leading or trailing whitespace.",
 
     "E_KEYWORDS_TYPE": "Manifest: keywords type must be array.",
     "E_KEYWORDS_EMPTY": "Manifest: keywords must have keyword(s) defined.",

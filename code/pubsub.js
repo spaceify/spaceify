@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * PubSub, 19.5.2014 Spaceify Oy
  * 

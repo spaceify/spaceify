@@ -95,7 +95,7 @@ self.addjQueryTag = function(callback)
 			{
 			return callback();
 			}
-		script.src = network.getEdgeURL(false, false) + "/js/jquery.min.js";
+		script.src = network.getEdgeURL(false, false, false) + "/js/jquery.min.js";
 
 		var head = document.getElementsByTagName("head")[0] || document.documentElement;
 		head.parentNode.insertBefore(script, head.nextSibling);
@@ -181,7 +181,7 @@ var returnURL = function(src, urls, callback)
 	src = (src.search(/^\//) != -1 ? "" : "/") + src;
 
 	if(!urls || (urls && !urls.type))														// Forced to use cores web server (type = null = unknown application)
-		callback(null, network.getEdgeURL(false, false) + src);
+		callback(null, network.getEdgeURL(false, false, false) + src);
 	else
 		{
 		var objQuery = network.parseQuery(src, false);

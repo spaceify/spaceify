@@ -186,7 +186,7 @@ self.errorToString = function(err, printPath, printCode)
 	}
 
 self.replace = function(str, strs, replaceWith)
-	{ // Replace all occurances of named colon prefixed, alphanumerical parameters (e.g. :name, :Name1) supplied in the strs object in the str.
+	{ // Replace all occurances of named tilde prefixed, alphanumerical parameters (e.g. :name, :Name1) supplied in the strs object in the str.
 	var rw = (replaceWith ? replaceWith : "");
 
 	for(var i in strs)

@@ -998,8 +998,6 @@ var install = fibrous( function(manifest, sessionId)
 			dockerImageName = config.UBUNTU_DOCKER_IMAGE;
 		else if(information.distribution == config.RASPBIAN_DISTRO_NAME)
 			dockerImageName = config.RASPBIAN_DOCKER_IMAGE;
-
-		var dockerImageName = (customDockerImage ? config.CUSTOM_DOCKER_IMAGE + manifest.unique_name : config.UBUNTU_DOCKER_IMAGE);
 			
 		dbApp = database.sync.getApplication(manifest.unique_name);
 

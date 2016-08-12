@@ -471,7 +471,6 @@ npm install
 # ---------- Docker image for different distributions ---------- #
 printf "\n\e[4mSearching suitable Docker image for this distribution\e[0m\n"
 
-distro=$(uname -a)
 if [[ -n $(uname -a |& grep -i "ubun") ]]; then
 	distro=$(cat /var/lib/spaceify/code/www/libs/config.json | grep "UBUNTU_DISTRO_NAME" | sed 's/[^a-z]*//g')
 	distro_image_name=$(cat /var/lib/spaceify/code/www/libs/config.json | grep "UBUNTU_DOCKER_IMAGE" | sed 's/[^a-z]*//g')

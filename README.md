@@ -1,6 +1,8 @@
 Spaceify
 ========
 
+This repository of Spaceify is deprecated. The new repository can be found from [here](https://github.com/spaceify/spaceifyedge).
+
 **Version 0.6.0 Alpha Centauri (developer-pre-alpha)**
 
 Spaceify is a client-edge-server ecosystem that seamlessly integrates your physical space with the web. With Spaceify you can give web apps controlled access to resources such as big screens, sensors and lighting in your space.

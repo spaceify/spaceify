@@ -1,7 +1,7 @@
+# This repository of Spaceify is deprecated. The new repository can be found from [here](https://github.com/spaceify/spaceifyedge).
+
 Spaceify
 ========
-
-This repository of Spaceify is deprecated. The new repository can be found from [here](https://github.com/spaceify/spaceifyedge).
 
 **Version 0.6.0 Alpha Centauri (developer-pre-alpha)**
 
